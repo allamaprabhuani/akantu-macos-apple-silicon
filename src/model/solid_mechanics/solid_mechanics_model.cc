@@ -540,7 +540,7 @@ Real SolidMechanicsModel::getKineticEnergy(const Element & element) {
       *velocity, vel_on_quad, Model::spatial_dimension, element.type,
       _not_ghost, filter_element);
   Vector<Real> rho_v2(nb_quadrature_points);
-  Real rho = getConstitutiveLaw(element).getRho();
+  Real rho = getConstitutiveLaw(element).getRho(element);
 
   for (auto && data : enumerate(make_view(vel_on_quad, spatial_dimension))) {
     auto && vel = std::get<1>(data);

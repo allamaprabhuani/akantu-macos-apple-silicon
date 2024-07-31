@@ -103,9 +103,6 @@ public:
   /// solve the coupled model
   void solve(const ID & solid_solver_id = "", const ID & phase_solver_id = "");
 
-  /// degrade the mass with damage
-  void degradeMass();
-
 private:
   /// test the convergence criteria
   bool checkConvergence(Array<Real> & /*u_new*/, Array<Real> & /*u_old*/,

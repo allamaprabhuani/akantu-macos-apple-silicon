@@ -217,6 +217,17 @@ inline void Material::unpackData(CommunicationBuffer & buffer,
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/// return rho per quad point of element
+Vector<Real> Material::getRho(Element & element) {
+  auto & fem = getFEEngine();
+  auto nb_quadrature_points = fem.getNbIntegrationPoints(element.type, element.ghost_type);
+
+  Vector<Real> rhos(nb_quadrature_points);
+  rhos.set(rho);
+  return rhos;
+}
+
 } // namespace akantu
 
 // #endif /* __AKANTU_MATERIAL_INLINE_IMPL_CC__ */

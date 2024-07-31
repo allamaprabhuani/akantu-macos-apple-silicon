@@ -34,11 +34,15 @@ public:
       : model(model){};
 
   void operator()(Matrix<Real> & rho, const Element & element) {
-    const auto & mat_indexes =
-        model.getMaterialByElement(element.type, element.ghost_type);
-    Real mat_rho =
-        model.getMaterial(mat_indexes(element.element)).getParam("rho");
-    rho.set(mat_rho);
+    // rho (N DOFs x N Quads)
+    Element mat_element = element;
+    auto && mat_id = model.getMaterialByElement(element);
+    mat_element.element =  model.getMaterialLocalNumbering(element);
+   
+    auto && mat_rho = model.getMaterial(mat_id).getRho(mat_element);
+    for (auto & rho_row : rho.rowwise()) {
+      rho_row = mat_rho;
+    }
   }
 
 private:
@@ -48,6 +52,12 @@ private:
 /* -------------------------------------------------------------------------- */
 void SolidMechanicsModel::assembleMassLumped() {
   AKANTU_DEBUG_IN();
+
+  bool need_to_reassemble = need_to_reassemble_lumped_mass;
+
+  for_each_constitutive_law([&](auto && material) {
+    need_to_reassemble |= material.hasMatrixChanged("M");
+  });
 
   if (not need_to_reassemble_lumped_mass) {
     return;

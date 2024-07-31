@@ -57,6 +57,8 @@ CouplerSolidPhaseField::CouplerSolidPhaseField(Mesh & mesh, Int dim,
     this->registerSynchronizer(synchronizer, SynchronizationTag::_csp_damage);
     this->registerSynchronizer(synchronizer, SynchronizationTag::_csp_strain);
   }
+
+  this->initial_mass = Array<Real>(mesh.getNbNodes() * Model::spatial_dimension);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -417,34 +419,6 @@ void CouplerSolidPhaseField::solve(const ID & solid_solver_id,
   // this->computeDamageOnQuadPoints(_ghost);
 
   solid->assembleInternalForces();
-}
-
-/* ------------------------------------------------------------------------- */
-void CouplerSolidPhaseField::degradeMass() {
-  phase->synchronize(SynchronizationTag::_pfm_damage);
-  Array<Real> & mass = aka::as_type<SolverVectorDefault>(
-                           solid->getDOFManager().getLumpedMatrix("M"))
-                           .getVector();
-  if (!this->mass_initialized) {
-    this->initial_mass = Array<Real>(mass);
-    this->mass_initialized = true;
-  }
-
-  Array<Real> & damage = phase->getDamage();
-
-  auto d_it = damage.begin();
-  auto m_it = mass.begin();
-  auto im_it = this->initial_mass.begin();
-  Real eta = 1e-13;
-
-  for (Int n = 0; n < damage.size(); ++n, ++d_it) {
-    for (Int i = 0; i < this->spatial_dimension; ++i) {
-      *m_it = *im_it * (1 - *d_it) * (1 - *d_it);
-      *m_it = std::max(*m_it, eta);
-      ++m_it;
-      ++im_it;
-    }
-  }
 }
 
 /* ------------------------------------------------------------------------- */

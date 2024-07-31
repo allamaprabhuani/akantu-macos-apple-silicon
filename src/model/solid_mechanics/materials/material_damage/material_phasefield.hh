@@ -49,6 +49,11 @@ public:
   void computeTangentModuli(ElementType el_type, Array<Real> & tangent_matrix,
                             GhostType ghost_type = _not_ghost) override;
 
+  /// get mass density degraded by damage
+  Vector<Real> getRho(const Element & element) override;
+
+  bool hasMassMatrixChanged() override { return true; };
+
   /* ------------------------------------------------------------------------ */
   decltype(auto) getArguments(ElementType el_type,
                               GhostType ghost_type = _not_ghost) {

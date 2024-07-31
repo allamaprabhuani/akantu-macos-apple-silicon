@@ -153,6 +153,9 @@ public:
   /* Mass (solid_mechanics_model_mass.cc)                                     */
   /* ------------------------------------------------------------------------ */
 public:
+  /// force reassembly of the lumped mass matrix
+  void forceReassembleMassLumped();
+
   /// assemble the lumped mass matrix
   void assembleMassLumped();
 
