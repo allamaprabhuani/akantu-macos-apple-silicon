@@ -433,8 +433,8 @@ public:
   AKANTU_SET_MACRO(Rho, rho, Real);
 
   /// return rho per quad point of element
-  virtual Vector<Real> getRho(Element & element);
-  
+  virtual Vector<Real> getRho(const Element & element) const;
+
   /// return the potential energy for the subset of elements contained by the
   /// material
   Real getPotentialEnergy();
@@ -502,7 +502,7 @@ public:
   /// specify if the matrix need to be recomputed for this material
   virtual bool hasStiffnessMatrixChanged() { return true; }
 
-    /// specify if the matrix need to be recomputed for this material
+  /// specify if the matrix need to be recomputed for this material
   virtual bool hasMassMatrixChanged() { return false; }
 
   /// specify the type of matrix, if not overloaded the material is not valid

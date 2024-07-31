@@ -36,11 +36,10 @@ public:
   void operator()(Matrix<Real> & rho, const Element & element) {
     // rho (N DOFs x N Quads)
     Element mat_element = element;
-    auto && mat_id = model.getMaterialByElement(element);
-    mat_element.element =  model.getMaterialLocalNumbering(element);
-   
-    auto && mat_rho = model.getMaterial(mat_id).getRho(mat_element);
-    for (auto & rho_row : rho.rowwise()) {
+    mat_element.element = model.getConstitutiveLawLocalNumbering()(element);
+
+    auto && mat_rho = model.getConstitutiveLaw(element).getRho(mat_element);
+    for (auto rho_row : rho.rowwise()) {
       rho_row = mat_rho;
     }
   }
