@@ -71,5 +71,25 @@ MaterialPhaseField<dim>::computeEffectiveDamageOnQuad(Args && args) {
       args["damage"_n] * (strain_energy_minus < strain_energy_plus);
 }
 
+/* -------------------------------------------------------------------------- */
+template <Int dim>
+inline Vector<Real>
+MaterialPhaseField<dim>::getRho(const Element & element) const {
+  auto damage_it = this->damage(element.type).begin();
+  auto damage_end = this->damage(element.type).begin();
+
+  auto & fem = this->getFEEngine();
+  UInt nb_quadrature_points = fem.getNbIntegrationPoints(element.type);
+
+  damage_it += element.element * nb_quadrature_points;
+
+  Vector<Real> rhos = Parent::getRho(element);
+  for (auto & rho : rhos) {
+    rho *= (1 - *damage_it) * (1 - *damage_it) + eta;
+    ++damage_it;
+  }
+  return rhos;
+}
+
 } // namespace akantu
 #endif

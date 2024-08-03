@@ -219,7 +219,7 @@ inline void Material::unpackData(CommunicationBuffer & buffer,
 
 /* -------------------------------------------------------------------------- */
 /// return rho per quad point of element
-Vector<Real> Material::getRho(const Element & element) const {
+inline Vector<Real> Material::getRho(const Element & element) const {
   auto & fem = getFEEngine();
   auto nb_quadrature_points =
       fem.getNbIntegrationPoints(element.type, element.ghost_type);

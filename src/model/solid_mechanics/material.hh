@@ -433,7 +433,7 @@ public:
   AKANTU_SET_MACRO(Rho, rho, Real);
 
   /// return rho per quad point of element
-  virtual Vector<Real> getRho(const Element & element) const;
+  virtual inline Vector<Real> getRho(const Element & element) const;
 
   /// return the potential energy for the subset of elements contained by the
   /// material

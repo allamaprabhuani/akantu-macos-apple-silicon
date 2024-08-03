@@ -80,24 +80,6 @@ void MaterialPhaseField<dim>::computeTangentModuli(ElementType el_type,
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-Vector<Real> MaterialPhaseField<dim>::getRho(const Element & element) {
-  auto damage_it = this->damage(element.type).begin();
-  auto damage_end = this->damage(element.type).begin();
-
-  auto & fem = this->getFEEngine();
-  UInt nb_quadrature_points = fem.getNbIntegrationPoints(element.type);
-
-  damage_it += element.element * nb_quadrature_points;
-
-  Vector<Real> rhos = Parent::getRho(element);
-  for (auto & rho : rhos) {
-    rho *= (1 - *damage_it) * (1 - *damage_it) + eta;
-    damage_it++;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-template <Int dim>
 void MaterialPhaseField<dim>::computeEffectiveDamage(ElementType el_type,
                                                      GhostType ghost_type) {
 
@@ -114,4 +96,4 @@ template class MaterialPhaseField<3>;
 const bool material_is_allocated_phasefield [[maybe_unused]] =
     instantiateMaterial<MaterialPhaseField>("phasefield");
 
-} // namespace akantu
+} // namespace akant

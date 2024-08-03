@@ -41,6 +41,7 @@
 
 #if __cplusplus >= 201703L
 #include <functional>
+#include <algorithm>
 #endif
 /* -------------------------------------------------------------------------- */
 
