@@ -19,6 +19,7 @@
  */
 
 #include "material_phasefield.hh"
+#include "solid_mechanics_model.hh"
 #include <algorithm>
 #include <iostream>
 
@@ -75,20 +76,67 @@ MaterialPhaseField<dim>::computeEffectiveDamageOnQuad(Args && args) {
 template <Int dim>
 inline Vector<Real>
 MaterialPhaseField<dim>::getRho(const Element & element) const {
-  auto damage_it = this->damage(element.type).begin();
-  auto damage_end = this->damage(element.type).begin();
+  Vector<Real> rhos = Parent::getRho(element);
+
+  if (not degrade_mass) {
+    return rhos;
+  }
+
+  auto damage_it = this->damage(element.type, element.ghost_type).begin();
 
   auto & fem = this->getFEEngine();
-  UInt nb_quadrature_points = fem.getNbIntegrationPoints(element.type);
+  UInt nb_quadrature_points =
+      fem.getNbIntegrationPoints(element.type, element.ghost_type);
 
   damage_it += element.element * nb_quadrature_points;
 
-  Vector<Real> rhos = Parent::getRho(element);
+  Real rho_base = Parent::getRho();
   for (auto & rho : rhos) {
     rho *= (1 - *damage_it) * (1 - *damage_it) + eta;
+    rho = std::min(rho_base, rho);
     ++damage_it;
   }
   return rhos;
+}
+
+/* -------------------------------------------------------------------------- */
+template <Int dim>
+inline Int
+MaterialPhaseField<dim>::getNbData(const Array<Element> & elements,
+                                   const SynchronizationTag & tag) const {
+
+  if (tag == SynchronizationTag::_smm_density && degrade_mass) {
+    return Int(sizeof(Real)) *
+           this->getHandler().getNbIntegrationPoints(elements);
+  }
+
+  return Parent::getNbData(elements, tag);
+}
+
+/* -------------------------------------------------------------------------- */
+template <Int dim>
+inline void
+MaterialPhaseField<dim>::packData(CommunicationBuffer & buffer,
+                                  const Array<Element> & elements,
+                                  const SynchronizationTag & tag) const {
+  Parent::packData(buffer, elements, tag);
+
+  if (tag == SynchronizationTag::_smm_density && degrade_mass) {
+    this->packInternalFieldHelper(this->damage, buffer, elements);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+template <Int dim>
+inline void
+MaterialPhaseField<dim>::unpackData(CommunicationBuffer & buffer,
+                                    const Array<Element> & elements,
+                                    const SynchronizationTag & tag) {
+  Parent::unpackData(buffer, elements, tag);
+
+  if (tag == SynchronizationTag::_smm_density && degrade_mass) {
+    this->unpackInternalFieldHelper(this->damage, buffer, elements);
+  }
 }
 
 } // namespace akantu

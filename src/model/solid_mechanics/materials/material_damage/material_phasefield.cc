@@ -31,9 +31,13 @@ MaterialPhaseField<dim>::MaterialPhaseField(SolidMechanicsModel & model,
                                             const ID & id)
     : Parent(model, id),
       effective_damage(this->registerInternal("effective_damage", 1)) {
-  this->registerParam("eta", eta, Real(0.), _pat_parsable, "eta");
+  this->registerParam("eta", eta, Real(0.), _pat_parsable,
+                      "Residual rigidity factor");
   this->registerParam("is_hybrid", is_hybrid, false,
                       _pat_parsable | _pat_readable, "Use hybrid formulation");
+  this->registerParam("degrade_mass", degrade_mass, false,
+                      _pat_parsable | _pat_readable,
+                      "Degrade mass with damage");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -96,4 +100,4 @@ template class MaterialPhaseField<3>;
 const bool material_is_allocated_phasefield [[maybe_unused]] =
     instantiateMaterial<MaterialPhaseField>("phasefield");
 
-} // namespace akant
+} // namespace akantu

@@ -319,6 +319,7 @@ enum CommunicatorType { _communicator_mpi, _communicator_dummy };
   (smm_res)                                     \
   (smm_stress)                                  \
   (smm_gradu)                                   \
+  (smm_density)                                 \
   (smmc_facets)                                 \
   (smmc_facets_conn)                            \
   (smmc_facets_stress)                          \
@@ -371,6 +372,7 @@ enum class SynchronizationTag {
                   /// forces
   _smm_gradu,     ///< synchronization of the gradu to compute the
                   ///< strain
+  _smm_density,   ///< synchronization of data for lumped mass assembly
   _smmc_facets,   ///< synchronization of facet data to setup facet synch
   _smmc_facets_conn,   ///< synchronization of facet global connectivity
   _smmc_facets_stress, ///< synchronization of facets' stress to setup
@@ -516,7 +518,7 @@ namespace {
   inline void set##name(type variable) { this->variable = variable; }
 
 #define AKANTU_GET_MACRO(name, variable, type)                                 \
-  [[nodiscard]] inline auto get##name() const -> type { return variable; }
+  [[nodiscard]] inline auto get##name() const->type { return variable; }
 
 #define AKANTU_GET_MACRO_AUTO(name, variable)                                  \
   [[nodiscard]] inline decltype(auto) get##name() const { return (variable); }
@@ -525,7 +527,7 @@ namespace {
   inline decltype(auto) get##name() { return (variable); }
 
 #define AKANTU_GET_MACRO_NOT_CONST(name, variable, type)                       \
-  [[nodiscard]] inline auto get##name() -> type { return variable; }
+  [[nodiscard]] inline auto get##name()->type { return variable; }
 
 #define AKANTU_GET_MACRO_DEREF_PTR(name, ptr)                                  \
   [[nodiscard]] inline const auto & get##name() const {                        \

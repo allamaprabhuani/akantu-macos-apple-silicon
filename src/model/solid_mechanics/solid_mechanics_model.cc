@@ -69,6 +69,7 @@ SolidMechanicsModel::SolidMechanicsModel(
     this->registerSynchronizer(synchronizer, SynchronizationTag::_smm_mass);
     this->registerSynchronizer(synchronizer, SynchronizationTag::_smm_stress);
     this->registerSynchronizer(synchronizer, SynchronizationTag::_smm_gradu);
+    this->registerSynchronizer(synchronizer, SynchronizationTag::_smm_density);
     this->registerSynchronizer(synchronizer, SynchronizationTag::_for_dump);
   }
 

@@ -19,8 +19,6 @@
  */
 
 /* -------------------------------------------------------------------------- */
-#include "aka_common.hh"
-#include "material.hh"
 #include "material_damage.hh"
 /* -------------------------------------------------------------------------- */
 
@@ -50,9 +48,9 @@ public:
                             GhostType ghost_type = _not_ghost) override;
 
   /// get mass density degraded by damage
-  inline Vector<Real> getRho(const Element & element) const override;
+  Vector<Real> getRho(const Element & element) const override;
 
-  bool hasMassMatrixChanged() override { return true; };
+  bool hasMassMatrixChanged() override { return degrade_mass; };
 
   /* ------------------------------------------------------------------------ */
   decltype(auto) getArguments(ElementType el_type,
@@ -70,6 +68,22 @@ public:
         "effective_damage"_n =
             make_view(this->effective_damage(el_type, ghost_type)));
   }
+
+  /* ------------------------------------------------------------------------ */
+  /* DataAccessor inherited members                                           */
+  /* ------------------------------------------------------------------------ */
+public:
+  [[nodiscard]] inline Int
+  getNbData(const Array<Element> & elements,
+            const SynchronizationTag & tag) const override;
+
+  inline void packData(CommunicationBuffer & buffer,
+                       const Array<Element> & elements,
+                       const SynchronizationTag & tag) const override;
+
+  inline void unpackData(CommunicationBuffer & buffer,
+                         const Array<Element> & elements,
+                         const SynchronizationTag & tag) override;
 
 protected:
   /// constitutive law for a given quadrature point
@@ -92,6 +106,8 @@ protected:
 
   /// Phasefield isotropic
   bool is_hybrid;
+
+  bool degrade_mass;
 
   // effective damage to conserve stiffness in compression
   InternalField<Real> & effective_damage;

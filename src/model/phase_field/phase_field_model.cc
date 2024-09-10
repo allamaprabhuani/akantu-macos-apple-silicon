@@ -252,7 +252,7 @@ void PhaseFieldModel::afterSolveStep(bool converged) {
     auto & blocked = std::get<1>(values);
 
     dam = std::min(1., dam);
-    if (!blocked) {
+    if (!blocked && dam > 0.98) {
       blocked = Math::are_float_equal(dam, 1.);
     }
   }

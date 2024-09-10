@@ -58,7 +58,8 @@ CouplerSolidPhaseField::CouplerSolidPhaseField(Mesh & mesh, Int dim,
     this->registerSynchronizer(synchronizer, SynchronizationTag::_csp_strain);
   }
 
-  this->initial_mass = Array<Real>(mesh.getNbNodes() * Model::spatial_dimension);
+  this->initial_mass =
+      Array<Real>(mesh.getNbNodes() * Model::spatial_dimension);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -349,12 +350,16 @@ void CouplerSolidPhaseField::computeDamageOnQuadPoints(GhostType ghost_type) {
               constexpr auto && dim_ = aka::decay_v<decltype(_)>;
               auto & mat = static_cast<MaterialPhaseField<dim_> &>(material);
               auto & damage = mat.getDamage();
+              auto & phase_damage = phasefield.getDamage();
               for (const auto & type :
                    mesh.elementTypes(this->spatial_dimension, ghost_type)) {
                 auto & damage_on_qpoints_vect = damage(type, ghost_type);
-                fem.interpolateOnIntegrationPoints(phase->getDamage(),
-                                                   damage_on_qpoints_vect, 1,
-                                                   type, ghost_type);
+                auto & phase_damage_on_qpoints_vect =
+                    phase_damage(type, ghost_type);
+                // fem.interpolateOnIntegrationPoints(phase->getDamage(),
+                //                                    damage_on_qpoints_vect, 1,
+                //                                    type, ghost_type);
+                damage_on_qpoints_vect.copy(phase_damage_on_qpoints_vect);
               }
             },
             this->spatial_dimension);
@@ -415,8 +420,8 @@ void CouplerSolidPhaseField::solve(const ID & solid_solver_id,
   AKANTU_DEBUG_INFO("exchange damage for local elements");
   this->computeDamageOnQuadPoints(_not_ghost);
 
-  // AKANTU_DEBUG_INFO("exchange damage for ghost elements");
-  // this->computeDamageOnQuadPoints(_ghost);
+  AKANTU_DEBUG_INFO("exchange damage for ghost elements");
+  this->computeDamageOnQuadPoints(_ghost);
 
   solid->assembleInternalForces();
 }

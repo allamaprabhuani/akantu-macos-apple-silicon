@@ -58,7 +58,7 @@ void SolidMechanicsModel::assembleMassLumped() {
     need_to_reassemble |= material.hasMatrixChanged("M");
   });
 
-  if (not need_to_reassemble_lumped_mass) {
+  if (not need_to_reassemble) {
     return;
   }
 
@@ -71,7 +71,16 @@ void SolidMechanicsModel::assembleMassLumped() {
 
   this->getDOFManager().zeroLumpedMatrix("M");
 
+  // communicate the "densities"
+  AKANTU_DEBUG_INFO("Send data for lumped mass assembly");
+  this->asynchronousSynchronize(SynchronizationTag::_smm_density);
+
   assembleMassLumped(_not_ghost);
+
+  // finalize communications
+  AKANTU_DEBUG_INFO("Wait distant densities");
+  this->waitEndSynchronize(SynchronizationTag::_smm_density);
+
   assembleMassLumped(_ghost);
 
   this->getDOFManager().getLumpedMatrixPerDOFs("displacement", "M",
