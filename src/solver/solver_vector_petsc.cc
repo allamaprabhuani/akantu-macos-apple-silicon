@@ -252,7 +252,7 @@ SparseSolverVectorPETSc::operator const Array<Real> &() const {
   auto xl = internal::make_petsc_local_vector(x);
   auto cachep = internal::make_petsc_wraped_vector(this->cache);
 
-  PETSc_call(VecCopy, cachep, xl);
+  PETSc_call(VecCopy, xl, cachep);
   return cache;
 }
 
@@ -286,8 +286,8 @@ SparseSolverVectorPETSc::operator+(const SparseSolverVector & y) {
 
 bool SparseSolverVectorPETSc::isFinite() const {
   Real max, min;
-  PETSc_call(VecMax, x, PETSC_NULL, &max);
-  PETSc_call(VecMin, x, PETSC_NULL, &min);
+  PETSc_call(VecMax, x, PETSC_NULLPTR, &max);
+  PETSc_call(VecMin, x, PETSC_NULLPTR, &min);
   return std::isfinite(min) and std::isfinite(max);
 }
 

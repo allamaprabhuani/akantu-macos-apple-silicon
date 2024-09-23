@@ -4,4 +4,9 @@ material elastic_anisotropic [
     C11 = 105.092023 #eV/Å^3
 
     n1 = [-1]
+dof_manager_type = petsc
+time_step_solver dynamic [
+name = tss
+sparse_solver_type = petsc
+]
 ]

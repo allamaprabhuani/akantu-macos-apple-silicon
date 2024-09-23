@@ -141,6 +141,7 @@ namespace internal {
   template <bool read_only> class PETScLocalVector : public PETScVector {
   public:
     PETScLocalVector(const Vec & g) : g(g) {
+      PETSc_call(VecCreateLocalVector, g, &x);
       PETSc_call(VecGetLocalVectorRead, g, x);
     }
     PETScLocalVector(const SparseSolverVectorPETSc & g)
