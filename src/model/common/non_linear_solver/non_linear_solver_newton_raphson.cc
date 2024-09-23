@@ -22,6 +22,7 @@
 #include "non_linear_solver_newton_raphson.hh"
 #include "communicator.hh"
 #include "dof_manager_default.hh"
+#include "dof_manager_petsc.hh"
 #include "solver_callback.hh"
 #include "solver_vector.hh"
 #include "sparse_solver_eigen.hh"
@@ -58,23 +59,38 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 
 NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
-    DOFManagerDefault & dof_manager,
+    DOFManager & dof_manager,
     const NonLinearSolverType & non_linear_solver_type,
     const SparseSolverType & sparse_solver_type, const ID & id)
     : NonLinearSolver(dof_manager, non_linear_solver_type, id) {
 
   switch (sparse_solver_type) {
   case SparseSolverType::_mumps:
-    sparse_solver = std::make_unique<SparseSolverMumps>(dof_manager, "J",
-                                                        id + ":sparse_solver");
+    if (aka::is_of_type<DOFManagerDefault>(dof_manager)) {
+      sparse_solver = std::make_unique<SparseSolverMumps>(
+          aka::as_type<DOFManagerDefault>(dof_manager), "J",
+          id + ":sparse_solver");
+    } else {
+      AKANTU_EXCEPTION("Can only use MUMPS solver with DOFManageDefault");
+    }
     break;
   case SparseSolverType::_eigen:
-    sparse_solver = std::make_unique<SparseSolverEigen>(dof_manager, "J",
-                                                        id + ":sparse_solver");
+    if (aka::is_of_type<DOFManagerDefault>(dof_manager)) {
+      sparse_solver = std::make_unique<SparseSolverEigen>(
+          aka::as_type<DOFManagerDefault>(dof_manager), "J",
+          id + ":sparse_solver");
+    } else {
+      AKANTU_EXCEPTION("Can only use EIGEN solver with DOFManageDefault");
+    }
     break;
   case SparseSolverType::_petsc:
-    sparse_solver = std::make_unique<SparseSolverPETSc>(dof_manager, "J",
-                                                        id + ":sparse_solver");
+    if (aka::is_of_type<DOFManagerPETSc>(dof_manager)) {
+      sparse_solver = std::make_unique<SparseSolverPETSc>(
+          aka::as_type<DOFManagerPETSc>(dof_manager), "J",
+          id + ":sparse_solver");
+    } else {
+      AKANTU_EXCEPTION("Can only use PETSc solver with DOFManagePETSc");
+    }
     break;
   case SparseSolverType::_auto:
     AKANTU_TO_IMPLEMENT();
@@ -103,7 +119,8 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
                       "Force reassembly of the jacobian matrix");
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 NonLinearSolverNewtonRaphson::~NonLinearSolverNewtonRaphson() = default;
 
 /* ------------------------------------------------------------------------ */
@@ -207,7 +224,8 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
   }
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 bool NonLinearSolverNewtonRaphson::testConvergence(
     const SparseSolverVector & solver_vector) {
   AKANTU_DEBUG_IN();
@@ -267,6 +285,7 @@ void NonLinearSolverNewtonRaphson::solve_linear(
   solver_callback.afterSolveStep(true);
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 
 } // namespace akantu

@@ -23,6 +23,7 @@
 #include "aka_iterators.hh"
 #include "communicator.hh"
 #include "cppargparse.hh"
+#include "non_linear_solver_default.hh"
 #include "non_linear_solver_petsc.hh"
 #include "solver_vector_petsc.hh"
 #include "sparse_matrix_petsc.hh"
@@ -48,7 +49,7 @@ private:
       char **& argv = argparser.getArgV();
       PETSc_call(PetscInitialize, &argc, &argv, nullptr, nullptr);
       PETSc_call(
-          PetscPopErrorHandler); // remove the default PETSc signal handler
+          PetscPopErrorHandler, ); // remove the default PETSc signal handler
       PETSc_call(PetscPushErrorHandler, PetscIgnoreErrorHandler, nullptr);
     }
   }
@@ -233,8 +234,30 @@ NonLinearSolver &
 DOFManagerPETSc::getNewNonLinearSolver(const ID & id,
                                        const NonLinearSolverType & type,
                                        const SparseSolverType & s_type) {
-  return this->registerNonLinearSolver<NonLinearSolverPETSc>(*this, id, type,
-                                                             s_type);
+  switch (type) {
+  case NonLinearSolverType::_newton_raphson:
+    /* FALLTHRU */
+    /* [[fallthrough]]; un-comment when compiler will get it */
+  case NonLinearSolverType::_newton_raphson_contact:
+  case NonLinearSolverType::_newton_raphson_modified: {
+    return this->registerNonLinearSolver<NonLinearSolverNewtonRaphson>(
+        *this, id, type, s_type);
+  }
+  case NonLinearSolverType::_linear: {
+    return this->registerNonLinearSolver<NonLinearSolverLinear>(*this, id, type,
+                                                                s_type);
+  }
+  case NonLinearSolverType::_lumped: {
+    AKANTU_TO_IMPLEMENT(); // need to revise the lumped solver if petsc vectors
+                           // are used
+    // return this->registerNonLinearSolver<NonLinearSolverLumped>(*this, id,
+    // type,
+    //                                                             s_type);
+  }
+  default:
+    return this->registerNonLinearSolver<NonLinearSolverPETSc>(*this, id, type,
+                                                               s_type);
+  }
 }
 
 /* -------------------------------------------------------------------------- */

@@ -63,9 +63,6 @@ private:
   /// PETSc linear solver
   KSP ksp;
 
-  /// Matrix defining the system of equations
-  SparseMatrixPETSc & matrix;
-
   /// options to pass to petsc
   std::string petsc_options;
 };
