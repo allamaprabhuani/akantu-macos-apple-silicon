@@ -1,12 +1,10 @@
+model solid_mechanics_model [
 material elastic_anisotropic [
     name = aluminum
     rho = 1.6465129043044597 #gramm/mol/Å
     C11 = 105.092023 #eV/Å^3
 
     n1 = [-1]
+    ]
 dof_manager_type = petsc
-time_step_solver dynamic [
-name = tss
-sparse_solver_type = petsc
-]
 ]

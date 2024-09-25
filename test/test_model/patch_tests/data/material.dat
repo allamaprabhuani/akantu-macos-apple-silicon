@@ -1,11 +1,11 @@
+permissive_parser = true
+
+model solid_mechanics_model [
 material elastic [
 	 name = steel
 	 rho = 7800   # density
 	 E   = 2.1e11 # young's modulus
 	 nu  = 0.0    # poisson's ratio
-dof_manager_type = petsc
-time_step_solver dynamic [
-name = tss
-sparse_solver_type = petsc
 ]
+dof_manager_type = petsc
 ]

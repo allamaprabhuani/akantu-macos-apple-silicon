@@ -46,11 +46,7 @@ SparseSolverPETSc::SparseSolverPETSc(DOFManager & dof_manager,
 /* -------------------------------------------------------------------------- */
 void SparseSolverPETSc::initialize() {}
 /* -------------------------------------------------------------------------- */
-SparseSolverPETSc::~SparseSolverPETSc() {
-  if (ksp != nullptr) {
-    PETSc_call(KSPDestroy, &ksp);
-  }
-}
+SparseSolverPETSc::~SparseSolverPETSc() { PETSc_call(KSPDestroy, &ksp); }
 
 /* -------------------------------------------------------------------------- */
 void SparseSolverPETSc::setOperators() {

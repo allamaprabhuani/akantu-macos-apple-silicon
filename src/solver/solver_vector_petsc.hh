@@ -158,6 +158,7 @@ namespace internal {
   template <> class PETScLocalVector<false> : public PETScVector {
   public:
     PETScLocalVector(Vec & g) : g(g) {
+      PETSc_call(VecCreateLocalVector, g, &x);
       PETSc_call(VecGetLocalVectorRead, g, x);
     }
     PETScLocalVector(SparseSolverVectorPETSc & g)

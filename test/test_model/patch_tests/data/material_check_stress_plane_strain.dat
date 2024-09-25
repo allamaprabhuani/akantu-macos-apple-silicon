@@ -10,8 +10,4 @@ material elastic [
    finite_deformation = false
 ]
 dof_manager_type = petsc
-time_step_solver dynamic [
-name = tss
-sparse_solver_type = petsc
-]
 ]

@@ -98,12 +98,18 @@ ModelSolver::initDOFManager(const std::shared_ptr<DOFManager> & dof_manager) {
 std::shared_ptr<DOFManager>
 ModelSolver::initDOFManager(const ID & solver_type) {
   if (dof_manager) {
-    AKANTU_EXCEPTION("The DOF manager for this model is already initialized !");
+    dof_manager.reset();
   }
 
   try {
     this->dof_manager = DOFManagerFactory::getInstance().allocate(
         solver_type, mesh, this->id + ":dof_manager_" + solver_type);
+  } catch (std::exception & e) {
+    AKANTU_EXCEPTION(
+        "To use the solver "
+        << solver_type
+        << " you will have to code it. This is an unknown solver type."
+        << e.what());
   } catch (...) {
     AKANTU_EXCEPTION(
         "To use the solver "
@@ -310,7 +316,13 @@ void ModelSolver::getNewSolver(const ID & solver_id,
   }
 
   if (sparse_solver_type == SparseSolverType::_auto) {
-    sparse_solver_type = SparseSolverType::_mumps;
+    if (aka::is_of_type<DOFManagerDefault>(*this->dof_manager.get())) {
+      sparse_solver_type = SparseSolverType::_mumps;
+    } else if (aka::is_of_type<DOFManagerPETSc>(*this->dof_manager.get())) {
+      sparse_solver_type = SparseSolverType::_petsc;
+    } else {
+      AKANTU_TO_IMPLEMENT();
+    }
   }
 
   this->initSolver(time_step_solver_type, non_linear_solver_type,

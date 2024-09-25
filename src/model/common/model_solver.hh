@@ -54,7 +54,7 @@ public:
   std::shared_ptr<DOFManager>
   initDOFManager(const std::shared_ptr<DOFManager> & dof_manager = nullptr);
   /// initialize the dof manager based on the used chosen solver type
-  std::shared_ptr<DOFManager> initDOFManager(const ID & solver_type);
+  std::shared_ptr<DOFManager> initDOFManager(const ID & dof_manager_type);
 
 protected:
   /// initialize the dof manager based on the used chosen solver type

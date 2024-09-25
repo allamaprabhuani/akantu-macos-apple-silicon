@@ -47,7 +47,7 @@ public:
     MeshUtils::buildFacets(*mesh);
     mesh->createBoundaryGroupFromGeometry();
 
-    model = std::make_unique<M>(*mesh);
+    model = std::make_unique<M>(*mesh, _all_dimensions, std::to_string(type));
   }
 
   void TearDown() override {
@@ -60,6 +60,7 @@ public:
     debug::setDebugLevel(dblError);
     getStaticParser().parse(material_file);
 
+    this->model->initDOFManager(std::shared_ptr<DOFManager>(nullptr), true);
     this->model->initFull(_analysis_method = method);
     this->applyBC();
 
