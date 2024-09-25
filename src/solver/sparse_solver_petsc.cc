@@ -74,14 +74,14 @@ void SparseSolverPETSc::solve() {
   Vec & rhs(getDOFManager()._getResidual());
   Vec & solution(getDOFManager()._getSolution());
 
-  auto && matrix = getDOFManager().getMatrix(matrix_id);
+  // auto && matrix = getDOFManager().getMatrix(matrix_id);
 
   this->setOperators();
   // MatView(matrix.getMat(), PETSC_VIEWER_STDOUT_WORLD);
-  VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
+  // VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
 
   PETSc_call(KSPSolve, ksp, rhs, solution);
-  VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
+  // VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
 
   this->dof_manager.splitSolutionPerDOFs();
 }
