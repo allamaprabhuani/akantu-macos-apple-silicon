@@ -59,29 +59,26 @@ class LinearCohesive(aka.MaterialCohesive):
 
             nb_quad_facet = fe_engine.getNbIntegrationPoints(type_facet)
             normals = fe_engine.getNormalsOnIntegrationPoints(type_facet)
-            facets_stresses = model.getStressOnFacets(type_facet).reshape(
-                normals.shape[0] // nb_quad_facet,
-                nb_quad_facet,
-                2,
-                spatial_dimension,
-                spatial_dimension,
-            )
+            facets_stresses = model.getStressOnFacets(type_facet)
 
             tangents = model.getTangents(type_facet)
 
-            for facet, facet_stresses in zip(facet_filter, facets_stresses):
+            for facet in facet_filter:
                 if not facets_check[facet]:
                     continue
 
                 ref_stress = 0
 
-                for q, quad_stresses in enumerate(facet_stresses):
+                for q in range(nb_quad_facet):
                     current_quad = facet * nb_quad_facet + q
                     normal = normals[current_quad, :].ravel()
                     tangent = tangents[current_quad, :].ravel()
 
-                    stress_1 = quad_stresses.T[0]
-                    stress_2 = quad_stresses.T[1]
+                    quad_stresses = facets_stresses[current_quad, :].reshape(
+                        2, spatial_dimension, spatial_dimension)
+
+                    stress_1 = quad_stresses[0]
+                    stress_2 = quad_stresses[1]
 
                     avg_stress = stress_1 + stress_2 / 2.0
                     traction = avg_stress.dot(normal)

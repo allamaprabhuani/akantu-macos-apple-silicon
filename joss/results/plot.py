@@ -58,7 +58,7 @@ for plot_name, data in plots.items():
     if data["material"] == "cohesive":
         step = step + df["check_cohesive_stress"] * df["check_cohesive_stress nb_rep"]
 
-    df["TTS"] = step
+    df["TTS"] = step / 1000
     df["speedup"] = step[0] / step
     df["mumps"] = df["static_solve"] * df["static_solve nb_rep"]
 
