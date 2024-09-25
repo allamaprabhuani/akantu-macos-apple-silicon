@@ -35,10 +35,10 @@
 
 using namespace akantu;
 
-template <typename type_, typename M>
+template <typename element_type_, typename Model_, typename DOFManager_>
 class TestPatchTestLinear : public ::testing::Test {
 public:
-  static constexpr ElementType type = type_::value;
+  static constexpr ElementType type = element_type_::value;
   static constexpr Int dim = ElementClass<type>::getSpatialDimension();
 
   void SetUp() override {
@@ -47,7 +47,12 @@ public:
     MeshUtils::buildFacets(*mesh);
     mesh->createBoundaryGroupFromGeometry();
 
-    model = std::make_unique<M>(*mesh, _all_dimensions, std::to_string(type));
+    model =
+        std::make_unique<Model_>(*mesh, _all_dimensions, std::to_string(type));
+
+    if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
+      model->initDOFManager("petsc");
+    }
   }
 
   void TearDown() override {
@@ -59,8 +64,6 @@ public:
                          const std::string & material_file) {
     debug::setDebugLevel(dblError);
     getStaticParser().parse(material_file);
-
-    this->model->initDOFManager(std::shared_ptr<DOFManager>(nullptr));
     this->model->initFull(_analysis_method = method);
     this->applyBC();
 
@@ -155,7 +158,7 @@ public:
 
 protected:
   std::unique_ptr<Mesh> mesh;
-  std::unique_ptr<M> model;
+  std::unique_ptr<Model_> model;
   Matrix<Real> alpha{{0.01, 0.02, 0.03, 0.04},
                      {0.05, 0.06, 0.07, 0.08},
                      {0.09, 0.10, 0.11, 0.12}};

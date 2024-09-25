@@ -19,6 +19,8 @@
  */
 
 /* -------------------------------------------------------------------------- */
+#include "dof_manager_default.hh"
+#include "dof_manager_petsc.hh"
 #include "patch_test_linear_fixture.hh"
 #include "solid_mechanics_model.hh"
 /* -------------------------------------------------------------------------- */
@@ -30,9 +32,11 @@
 template <typename tuple_>
 class TestPatchTestSMMLinear
     : public TestPatchTestLinear<std::tuple_element_t<0, tuple_>,
-                                 SolidMechanicsModel> {
+                                 SolidMechanicsModel,
+                                 std::tuple_element_t<2, tuple_>> {
   using parent =
-      TestPatchTestLinear<std::tuple_element_t<0, tuple_>, SolidMechanicsModel>;
+      TestPatchTestLinear<std::tuple_element_t<0, tuple_>, SolidMechanicsModel,
+                          std::tuple_element_t<2, tuple_>>;
 
 public:
   static constexpr bool plane_strain = std::tuple_element_t<1, tuple_>::value;
@@ -130,8 +134,8 @@ template <typename tuple_>
 constexpr bool TestPatchTestSMMLinear<tuple_>::plane_strain;
 
 template <typename T> struct invalid_plan_stress : std::true_type {};
-template <typename type, typename bool_c>
-struct invalid_plan_stress<std::tuple<type, bool_c>>
+template <typename type, typename bool_c, typename DM>
+struct invalid_plan_stress<std::tuple<type, bool_c, DM>>
     : aka::bool_constant<ElementClass<type::value>::getSpatialDimension() !=
                              2 and
                          not bool_c::value> {};
@@ -139,10 +143,11 @@ struct invalid_plan_stress<std::tuple<type, bool_c>>
 using true_false =
     std::tuple<aka::bool_constant<true>, aka::bool_constant<false>>;
 
+using dof_managers = std::tuple<DOFManagerDefault, DOFManagerPETSc>;
 template <typename T> using valid_types = aka::negation<invalid_plan_stress<T>>;
 
-using model_types = gtest_list_t<
-    tuple_filter_t<valid_types, cross_product_t<TestElementTypes, true_false>>>;
+using model_types = gtest_list_t<tuple_filter_t<
+    valid_types, cross_product_t<TestElementTypes, true_false, dof_managers>>>;
 
 TYPED_TEST_SUITE(TestPatchTestSMMLinear, model_types, );
 
