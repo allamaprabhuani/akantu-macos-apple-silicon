@@ -12,5 +12,4 @@ material elastic_anisotropic [
     n1 = [-1, 1]
     n2 = [ 1, 1]
     ]  
-dof_manager_type = petsc
 ]

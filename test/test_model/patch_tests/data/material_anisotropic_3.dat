@@ -36,5 +36,4 @@ material elastic_anisotropic [
 #    alpha = 1e-3    # viscous proportion useless unless manually activated in material_elastic_linear_anisotropic.cc
 ]
 
-dof_manager_type = petsc
 ]

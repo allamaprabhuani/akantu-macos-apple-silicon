@@ -9,5 +9,4 @@ material elastic [
    Plane_Stress = true # plane stress
    finite_deformation = true
 ]
-dof_manager_type = petsc
 ]
