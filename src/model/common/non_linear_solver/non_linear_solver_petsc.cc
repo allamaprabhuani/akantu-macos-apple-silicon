@@ -218,11 +218,11 @@ void NonLinearSolverPETSc::updateInternalParameters() {
 
   for (auto && [param, param_akantu] : akantu_to_petsc_option) {
     Real value = this->get(param);
-    PetscOptionsSetValue(nullptr, param_akantu.c_str(),
-                         std::to_string(value).c_str());
+    PETSc_call(PetscOptionsSetValue, nullptr, param_akantu.c_str(),
+               std::to_string(value).c_str());
   }
-  SNESSetFromOptions(snes);
-  PetscOptionsClear(nullptr);
+  PETSc_call(SNESSetFromOptions, snes);
+  PETSc_call(PetscOptionsClear, nullptr);
 }
 /* --------------------------------------------------------------------------
  */

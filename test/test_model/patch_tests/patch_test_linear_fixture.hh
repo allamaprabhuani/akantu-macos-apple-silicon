@@ -67,6 +67,14 @@ public:
     this->model->initFull(_analysis_method = method);
     this->applyBC();
 
+    if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
+      auto & solver = model.getNonLinearSolver();
+      auto & sparse_solver = solver.getSparseSolver();
+      sparse_solver.set("max_iterations", 2);
+
+      model->getSolver() initDOFManager("petsc");
+    }
+
     if (method != _static) {
       this->model->setTimeStep(0.8 * this->model->getStableTimeStep());
     }
