@@ -60,7 +60,7 @@ public:
     debug::setDebugLevel(dblError);
     getStaticParser().parse(material_file);
 
-    this->model->initDOFManager(std::shared_ptr<DOFManager>(nullptr), true);
+    this->model->initDOFManager(std::shared_ptr<DOFManager>(nullptr));
     this->model->initFull(_analysis_method = method);
     this->applyBC();
 
