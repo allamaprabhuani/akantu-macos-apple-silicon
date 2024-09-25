@@ -25,6 +25,7 @@
         compare_to: 'master'
         paths:
           - "**/*.{cc, hh, txt, cmake, py}"
+          - "third-party/akantu-iterators/**/*.{cc, hh, txt, cmake, py}"
           - .gitlab-ci.yml
           - .gitlab/ci.d/**
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -187,7 +188,7 @@
                --print-summary
                --output coverage.xml
                --object-directory ${CI_PROJECT_DIR}/build
-               --root ${CI_PROJECT_DIR}  -s || true
+               --root ${CI_PROJECT_DIR}  -s || true;
       fi
   artifacts:
     when: always
@@ -239,6 +240,7 @@
             -DAKANTU_CONTACT_MECHANICS:BOOL=TRUE
             -DAKANTU_EXAMPLES:BOOL=FALSE
             -DAKANTU_TESTS:BOOL=FALSE
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="14.0"
             -DCMAKE_INSTALL_PREFIX:PATH=${CI_PROJECT_DIR}/install
             -DCMAKE_BUILD_TYPE:STRING=${BUILD_TYPE} ..
   artifacts:

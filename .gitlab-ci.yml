@@ -52,6 +52,7 @@ version_determination:
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 500
+    GIT_FETCH_EXTRA_FLAGS: --prune --prune-tags --quiet
   script:
     - python3 cmake/semver.py > VERSION
     - cat VERSION

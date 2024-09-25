@@ -20,7 +20,6 @@
 
 /* -------------------------------------------------------------------------- */
 #include "aka_common.hh"
-//#include "aka_types.hh"
 /* -------------------------------------------------------------------------- */
 #include <memory>
 /* -------------------------------------------------------------------------- */
@@ -260,6 +259,12 @@ namespace detail {
       return proxy;
     }
 
+    inline reference operator*() const {
+      this->reset_proxy();
+      return proxy;
+    }
+
+
     inline pointer operator->() {
       reset_proxy();
       return &proxy;
@@ -377,6 +382,8 @@ namespace detail {
     Idx getCurrentIndex() { return (this->ret - this->initial); };
 
     inline reference operator*() { return *ret; }
+    inline reference operator*() const { return *ret; }
+
     inline pointer operator->() { return ret; };
 
     inline daughter & operator++() {
