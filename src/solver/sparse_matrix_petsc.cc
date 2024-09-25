@@ -133,11 +133,10 @@ void SparseMatrixPETSc::matVecMul(const SparseSolverVector & _x,
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::addMeToImpl(SparseMatrixPETSc & B, Real alpha) const {
-  std::cout << "addMeTo" << std::endl;
-  PETSc_call(MatView, B.mat, PETSC_VIEWER_STDOUT_WORLD);
+  // std::cout << "addMeTo" << std::endl;
+  // PETSc_call(MatView, B.mat, PETSC_VIEWER_STDOUT_WORLD);
   PETSc_call(MatAXPY, B.mat, alpha, mat, SAME_NONZERO_PATTERN);
-  PETSc_call(MatView, B.mat, PETSC_VIEWER_STDOUT_WORLD);
-
+  // PETSc_call(MatView, B.mat, PETSC_VIEWER_STDOUT_WORLD);
   B.release++;
 }
 
@@ -271,8 +270,7 @@ void SparseMatrixPETSc::addValues(const Vector<Int> & rows,
                                   const Matrix<Real> & values,
                                   MatrixType values_type) {
 
-  std::cout << "AAAAA\n" << values << std::endl;
-  PETSc_call(MatView, mat, PETSC_VIEWER_STDOUT_WORLD);
+  // PETSc_call(MatView, mat, PETSC_VIEWER_STDOUT_WORLD);
   if (values_type == _unsymmetric and matrix_type == _symmetric) {
     PETSc_call(MatSetOption, mat, MAT_SYMMETRIC, PETSC_FALSE);
     PETSc_call(MatSetOption, mat, MAT_STRUCTURALLY_SYMMETRIC, PETSC_FALSE);
@@ -281,7 +279,7 @@ void SparseMatrixPETSc::addValues(const Vector<Int> & rows,
   PETSc_call(MatSetValues, mat, rows.size(), rows.data(), cols.size(),
              cols.data(), values.data(), ADD_VALUES);
 
-  PETSc_call(MatView, mat, PETSC_VIEWER_STDOUT_WORLD);
+  // PETSc_call(MatView, mat, PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /* -------------------------------------------------------------------------- */

@@ -77,7 +77,7 @@ void SparseSolverPETSc::solve() {
   auto && matrix = getDOFManager().getMatrix(matrix_id);
 
   this->setOperators();
-  MatView(matrix.getMat(), PETSC_VIEWER_STDOUT_WORLD);
+  // MatView(matrix.getMat(), PETSC_VIEWER_STDOUT_WORLD);
   VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
 
   PETSc_call(KSPSolve, ksp, rhs, solution);

@@ -204,7 +204,7 @@ void DOFManagerPETSc::assembleElementalMatricesToMatrix(
       filter_elements);
 
   A.applyModifications();
-  PETSc_call(MatView, A.getMat(), PETSC_VIEWER_STDOUT_WORLD);
+  // PETSc_call(MatView, A.getMat(), PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /* -------------------------------------------------------------------------- */
