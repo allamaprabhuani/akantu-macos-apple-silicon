@@ -200,12 +200,12 @@ void SparseMatrixPETSc::applyBoundary(Real block_val) {
 
   static int c = 0;
 
-  saveMatrix("before_blocked_" + std::to_string(c) + ".mtx");
+  // saveMatrix("before_blocked_" + std::to_string(c) + ".mtx");
 
   PETSc_call(MatZeroRowsColumnsLocal, mat, blocked_dofs.size(),
              blocked_dofs.data(), block_val, nullptr, nullptr);
 
-  saveMatrix("after_blocked_" + std::to_string(c) + ".mtx");
+  // saveMatrix("after_blocked_" + std::to_string(c) + ".mtx");
   ++c;
 
   AKANTU_DEBUG_OUT();
