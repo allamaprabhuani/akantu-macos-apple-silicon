@@ -82,12 +82,12 @@ protected:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void assembleToLumpedMatrix(const ID & /*dof_id*/,
-                              Array<Real> & /*array_to_assemble*/,
-                              const ID & /*lumped_mtx*/,
-                              Real /*scale_factor*/ = 1.) override {
-    AKANTU_TO_IMPLEMENT();
-  }
+  // void assembleToLumpedMatrix(const ID & /*dof_id*/,
+  //                             Array<Real> & /*array_to_assemble*/,
+  //                             const ID & /*lumped_mtx*/,
+  //                             Real /*scale_factor*/ = 1.) override {
+  //   AKANTU_TO_IMPLEMENT();
+  // }
 
   void assembleElementalMatricesToMatrix(
       const ID & /*matrix_id*/, const ID & /*dof_id*/,

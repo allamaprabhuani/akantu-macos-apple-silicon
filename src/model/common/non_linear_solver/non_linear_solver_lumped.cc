@@ -30,7 +30,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 NonLinearSolverLumped::NonLinearSolverLumped(
-    DOFManagerDefault & dof_manager,
+    DOFManager & dof_manager,
     const NonLinearSolverType & non_linear_solver_type,
     const SparseSolverType & sparse_solver_type, const ID & id)
     : NonLinearSolver(dof_manager, non_linear_solver_type, id) {

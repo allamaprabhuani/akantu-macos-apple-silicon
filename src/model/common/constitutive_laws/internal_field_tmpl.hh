@@ -32,8 +32,8 @@ template <typename T>
 InternalField<T>::InternalField(
     const ID & id, ConstitutiveLawInternalHandler & constitutive_law, Int dim,
     const ID & fem_id, const ElementTypeMapArray<Idx> & element_filter)
-    : InternalFieldBase(id), ElementTypeMapArray<T>(id,
-                                                    constitutive_law.getID()),
+    : InternalFieldBase(id),
+      ElementTypeMapArray<T>(id, constitutive_law.getID()),
       constitutive_law(constitutive_law),
       fem(constitutive_law.getFEEngine(fem_id)), element_filter(element_filter),
       spatial_dimension(dim) {}
@@ -58,8 +58,8 @@ InternalField<T>::InternalField(
 /* -------------------------------------------------------------------------- */
 template <typename T>
 InternalField<T>::InternalField(const ID & id, const InternalField<T> & other)
-    : InternalFieldBase(id), ElementTypeMapArray<T>(
-                                 id, other.constitutive_law.getID()),
+    : InternalFieldBase(id),
+      ElementTypeMapArray<T>(id, other.constitutive_law.getID()),
       constitutive_law(other.constitutive_law), fem(other.fem),
       element_filter(other.element_filter), default_value(other.default_value),
       spatial_dimension(other.spatial_dimension),
@@ -294,6 +294,12 @@ ParameterTyped<InternalField<Real>>::setAuto(const ParserParameter & in_param) {
   Parameter::setAuto(in_param);
   Real r = in_param;
   param.setDefaultValue(r);
+}
+/* -------------------------------------------------------------------------- */
+
+template <>
+inline void ParameterTyped<InternalField<Real>>::set(std::any value) {
+  param.setDefaultValue(std::any_cast<Real>(value));
 }
 
 /* -------------------------------------------------------------------------- */

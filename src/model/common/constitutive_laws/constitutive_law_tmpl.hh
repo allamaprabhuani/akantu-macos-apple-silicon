@@ -486,7 +486,7 @@ template <typename T>
 inline void
 ConstitutiveLaw<ConstitutiveLawsHandler_>::setParam(const ID & param, T value) {
   try {
-    set<T>(param, value);
+    set(param, value);
   } catch (...) {
     AKANTU_EXCEPTION("No parameter " << param << " in the constitutive law "
                                      << getID());

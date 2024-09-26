@@ -110,5 +110,22 @@ void SparseSolverPETSc::parseSection(const ParserSection & section) {
   KSPSetFromOptions(ksp);
   PetscOptionsClear(nullptr);
 }
+/* -------------------------------------------------------------------------- */
+
+void SparseSolverPETSc::set(const std::string & name, std::any value) {
+  if (this->hasParameter(name)) {
+    SparseSolver::set(name, value);
+  } else {
+    try {
+      std::string option = std::any_cast<const char *>(value);
+      PetscOptionsSetValue(nullptr, name.c_str(), option.c_str());
+      KSPSetFromOptions(ksp);
+      PetscOptionsClear(nullptr);
+    } catch (std::bad_any_cast & c) {
+      std::cout << c.what() << std::endl;
+      std::cout << value.type().name() << std::endl;
+    }
+  }
+}
 
 } // namespace akantu

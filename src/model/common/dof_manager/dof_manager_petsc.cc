@@ -249,11 +249,8 @@ DOFManagerPETSc::getNewNonLinearSolver(const ID & id,
                                                                 s_type);
   }
   case NonLinearSolverType::_lumped: {
-    AKANTU_TO_IMPLEMENT(); // need to revise the lumped solver if petsc vectors
-                           // are used
-    // return this->registerNonLinearSolver<NonLinearSolverLumped>(*this, id,
-    // type,
-    //                                                             s_type);
+    return this->registerNonLinearSolver<NonLinearSolverLumped>(*this, id, type,
+                                                                s_type);
   }
   default:
     return this->registerNonLinearSolver<NonLinearSolverPETSc>(*this, id, type,

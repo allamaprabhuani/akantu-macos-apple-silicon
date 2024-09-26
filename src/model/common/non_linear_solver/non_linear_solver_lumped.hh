@@ -36,7 +36,7 @@ class NonLinearSolverLumped : public NonLinearSolver {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  NonLinearSolverLumped(DOFManagerDefault & dof_manager,
+  NonLinearSolverLumped(DOFManager & dof_manager,
                         const NonLinearSolverType & non_linear_solver_type,
                         const SparseSolverType & sparse_solver_type,
                         const ID & id = "non_linear_solver_lumped");

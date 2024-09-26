@@ -22,6 +22,8 @@
 #include "element_group.hh"
 #include "mesh_utils.hh"
 #include "model.hh"
+#include "non_linear_solver_newton_raphson.hh"
+#include "sparse_solver.hh"
 #include "test_gtest_utils.hh"
 /* -------------------------------------------------------------------------- */
 #include <gtest/gtest.h>
@@ -68,11 +70,14 @@ public:
     this->applyBC();
 
     if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
-      auto & solver = model.getNonLinearSolver();
-      auto & sparse_solver = solver.getSparseSolver();
-      sparse_solver.set("max_iterations", 2);
+      auto & solver = model->getNonLinearSolver();
 
-      model->getSolver() initDOFManager("petsc");
+      if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+        auto & sparse_solver =
+            aka::as_type<NonLinearSolverNewtonRaphson>(solver)
+                .getSparseSolver();
+        sparse_solver.set("pc_type", "lu");
+      }
     }
 
     if (method != _static) {
