@@ -118,7 +118,7 @@ void SparseSolverPETSc::set(const std::string & name, std::any value) {
   } else {
     try {
       std::string option = std::any_cast<const char *>(value);
-      PetscOptionsSetValue(nullptr, name.c_str(), option.c_str());
+      PetscOptionsSetValue(nullptr, ("-" + name).c_str(), option.c_str());
       KSPSetFromOptions(ksp);
       PetscOptionsClear(nullptr);
     } catch (std::bad_any_cast & c) {
