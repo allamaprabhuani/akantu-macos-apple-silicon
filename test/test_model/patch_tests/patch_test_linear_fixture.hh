@@ -76,7 +76,7 @@ public:
         auto & sparse_solver =
             aka::as_type<NonLinearSolverNewtonRaphson>(solver)
                 .getSparseSolver();
-        sparse_solver.set("pc_type", "lu");
+        sparse_solver.set("pc_type", "cholesky");
       }
     }
 
