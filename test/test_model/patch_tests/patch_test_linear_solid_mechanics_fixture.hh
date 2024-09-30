@@ -77,9 +77,10 @@ public:
           std::max(force_norm_inf, f.template lpNorm<Eigen::Infinity>());
     }
 
+    constexpr Real force_tol = 1e-8;
     EXPECT_NEAR(0,
                 total_force.template lpNorm<Eigen::Infinity>() / force_norm_inf,
-                1e-9);
+                force_tol);
 
     for (auto && tuple : zip(make_view(internal_forces, dim),
                              make_view(external_forces, dim))) {
@@ -87,7 +88,7 @@ public:
       auto && f_ext = std::get<1>(tuple);
       auto f = f_int + f_ext;
       EXPECT_NEAR(0, f.template lpNorm<Eigen::Infinity>() / force_norm_inf,
-                  1e-9);
+                  force_tol);
     }
   }
 

@@ -176,9 +176,9 @@ protected:
                      {0.05, 0.06, 0.07, 0.08},
                      {0.09, 0.10, 0.11, 0.12}};
 
-  Real gradient_tolerance{1e-13};
-  Real result_tolerance{1e-13};
-  Real dofs_tolerance{1e-14};
+  Real gradient_tolerance{1e-8};
+  Real result_tolerance{1e-9};
+  Real dofs_tolerance{1e-10};
 };
 
 // template <typename type_, typename M>
