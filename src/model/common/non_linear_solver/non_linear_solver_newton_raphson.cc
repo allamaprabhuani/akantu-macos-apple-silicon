@@ -22,12 +22,14 @@
 #include "non_linear_solver_newton_raphson.hh"
 #include "communicator.hh"
 #include "dof_manager_default.hh"
+#if defined(AKANTU_USE_PETSC)
 #include "dof_manager_petsc.hh"
+#include "sparse_solver_petsc.hh"
+#endif
 #include "solver_callback.hh"
 #include "solver_vector.hh"
 #include "sparse_solver_eigen.hh"
 #include "sparse_solver_mumps.hh"
-#include "sparse_solver_petsc.hh"
 /* -------------------------------------------------------------------------- */
 
 // #if !defined(AKANTU_USE_MUMPS) && !defined(AKANTU_USE_PETSC)
@@ -83,6 +85,7 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
       AKANTU_EXCEPTION("Can only use EIGEN solver with DOFManageDefault");
     }
     break;
+#if defined(AKANTU_USE_PETSC)
   case SparseSolverType::_petsc:
     if (aka::is_of_type<DOFManagerPETSc>(dof_manager)) {
       sparse_solver = std::make_unique<SparseSolverPETSc>(
@@ -92,6 +95,7 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
       AKANTU_EXCEPTION("Can only use PETSc solver with DOFManagePETSc");
     }
     break;
+#endif
   case SparseSolverType::_auto:
     AKANTU_TO_IMPLEMENT();
   }

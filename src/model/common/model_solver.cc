@@ -318,8 +318,10 @@ void ModelSolver::getNewSolver(const ID & solver_id,
   if (sparse_solver_type == SparseSolverType::_auto) {
     if (aka::is_of_type<DOFManagerDefault>(*this->dof_manager.get())) {
       sparse_solver_type = SparseSolverType::_mumps;
+#if defined(AKANTU_USE_PETSC)
     } else if (aka::is_of_type<DOFManagerPETSc>(*this->dof_manager.get())) {
       sparse_solver_type = SparseSolverType::_petsc;
+#endif
     } else {
       AKANTU_TO_IMPLEMENT();
     }

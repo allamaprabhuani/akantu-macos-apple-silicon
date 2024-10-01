@@ -24,7 +24,9 @@
 #include "dof_manager_default.hh"
 #include "solver_callback.hh"
 #include "solver_vector_default.hh"
+#if defined(AKANTU_USE_PETSC)
 #include "solver_vector_petsc.hh"
+#endif
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -67,9 +69,12 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
   // type
   x.zero();
 
-  if (aka::is_of_type<SparseSolverVectorPETSc>(x)) {
+  if (1 == 2) {
+#if defined(AKANTU_USE_PETSC)
+  } else if (aka::is_of_type<SparseSolverVectorPETSc>(x)) {
     auto & _x = aka::as_type<SparseSolverVectorPETSc>(x);
     NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
+#endif
   } else {
     auto & _x = aka::as_type<SparseSolverVectorDefault>(x);
     NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
@@ -97,6 +102,7 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
 }
 
 /* -------------------------------------------------------------------------- */
+#if defined(AKANTU_USE_PETSC)
 
 void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
                                         SparseSolverVectorPETSc & xs,
@@ -113,7 +119,7 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
   //   }
   // }
 }
-
+#endif
 /* -------------------------------------------------------------------------- */
 
 } // namespace akantu
