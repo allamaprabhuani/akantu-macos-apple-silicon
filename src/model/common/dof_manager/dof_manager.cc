@@ -49,7 +49,11 @@ DOFManager::DOFManager(Mesh & mesh, const ID & id)
 }
 
 /* -------------------------------------------------------------------------- */
-DOFManager::~DOFManager() { this->mesh->unregisterEventHandler(*this); }
+DOFManager::~DOFManager() {
+  if (this->mesh) {
+    this->mesh->unregisterEventHandler(*this);
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 std::vector<ID> DOFManager::getDOFIDs() const {
