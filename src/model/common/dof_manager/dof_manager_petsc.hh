@@ -103,9 +103,7 @@ public:
   void assembleLumpedMatMulVectToResidual(const ID & /*dof_id*/,
                                           const ID & /*A_id*/,
                                           const Array<Real> & /*x*/,
-                                          Real /*scale_factor*/ = 1) override {
-    AKANTU_TO_IMPLEMENT();
-  }
+                                          Real /*scale_factor*/ = 1) override;
 
   void assemblePreassembledMatrix(const ID & matrix_id,
                                   const TermsToAssemble & /*terms*/) override;

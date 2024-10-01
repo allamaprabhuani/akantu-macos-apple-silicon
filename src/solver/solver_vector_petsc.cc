@@ -199,7 +199,7 @@ void SparseSolverVectorPETSc::addValues(const Array<Int> & gidx,
                                         const Array<Real> & values,
                                         Real scale_factor) {
   auto to_add = values.data();
-  Array<Real> scaled_array;
+  Array<Real> scaled_array(0, values.getNbComponent());
   if (scale_factor != 1.) {
     scaled_array.copy(values, false);
     scaled_array *= scale_factor;

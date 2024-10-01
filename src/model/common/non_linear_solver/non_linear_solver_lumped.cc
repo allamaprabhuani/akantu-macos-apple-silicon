@@ -24,6 +24,7 @@
 #include "dof_manager_default.hh"
 #include "solver_callback.hh"
 #include "solver_vector_default.hh"
+#include "solver_vector_petsc.hh"
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -52,8 +53,8 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 
   solver_callback.assembleResidual();
 
-  auto & x =
-      aka::as_type<SparseSolverVectorDefault>(this->dof_manager.getSolution());
+  SparseSolverVector & x =
+      aka::as_type<SparseSolverVector>(this->dof_manager.getSolution());
   const auto & b = this->dof_manager.getResidual();
 
   x.resize();
@@ -65,7 +66,14 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
   // in model coupled with atomistic \todo find a way to define alpha per dof
   // type
   x.zero();
-  NonLinearSolverLumped::solveLumped(A, x, b, alpha, blocked_dofs);
+
+  if (aka::is_of_type<SparseSolverVectorPETSc>(x)) {
+    auto & _x = aka::as_type<SparseSolverVectorPETSc>(x);
+    NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
+  } else {
+    auto & _x = aka::as_type<SparseSolverVectorDefault>(x);
+    NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
+  }
 
   this->dof_manager.splitSolutionPerDOFs();
 
@@ -78,6 +86,7 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
                                         Array<Real> & xs,
                                         const Array<Real> & bs, Real alpha,
                                         const Array<bool> & blocked_dofs) {
+
   for (auto && [A, x, b, blocked] :
        zip(make_view(As), make_view(xs), make_view(bs),
            make_view(blocked_dofs))) {
@@ -85,6 +94,24 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
       x = alpha * (b / A);
     }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+
+void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
+                                        SparseSolverVectorPETSc & xs,
+                                        const Array<Real> & bs, Real alpha,
+                                        const Array<bool> & blocked_dofs) {
+
+  VecPointwiseDivide(xs.getVec(), internal::make_petsc_wraped_vector(As),
+                     internal::make_petsc_wraped_vector(bs));
+  // for (auto && [A, x, b, blocked] :
+  //      zip(make_view(As), make_view(xs), make_view(bs),
+  //          make_view(blocked_dofs))) {
+  //   if (not blocked) {
+  //     x = alpha * (b / A);
+  //   }
+  // }
 }
 
 /* -------------------------------------------------------------------------- */

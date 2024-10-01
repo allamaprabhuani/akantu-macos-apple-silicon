@@ -173,22 +173,28 @@ namespace internal {
   };
 
   /* ------------------------------------------------------------------------ */
+  // concepts
+  template <typename V>
+  concept SparseSolverVectorType =
+      std::is_base_of<SparseSolverVector, std::decay_t<V>>::value;
+
+  template <typename V>
+  concept PETScVectorType = std::is_same<Vec, std::decay_t<V>>::value;
+
+  /* ------------------------------------------------------------------------ */
+
   template <class Array>
   decltype(auto) make_petsc_wraped_vector(Array && array) {
     return PETScWrapedVector<Array>(std::forward<Array>(array));
   }
 
-  template <
-      typename V,
-      std::enable_if_t<std::is_same<Vec, std::decay_t<V>>::value> * = nullptr>
+  template <PETScVectorType V>
   decltype(auto) make_petsc_local_vector(V && vec) {
     constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
     return PETScLocalVector<read_only>(vec);
   }
 
-  template <typename V,
-            std::enable_if_t<std::is_base_of<
-                SparseSolverVector, std::decay_t<V>>::value> * = nullptr>
+  template <SparseSolverVectorType V>
   decltype(auto) make_petsc_local_vector(V && vec) {
     constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
     return PETScLocalVector<read_only>(

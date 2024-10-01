@@ -26,7 +26,7 @@
 #define AKANTU_NON_LINEAR_SOLVER_LUMPED_HH_
 
 namespace akantu {
-class DOFManagerDefault;
+class SparseSolverVectorPETSc;
 }
 
 namespace akantu {
@@ -52,6 +52,10 @@ public:
 
 private:
   static void solveLumped(const Array<Real> & A, Array<Real> & x,
+                          const Array<Real> & b, Real alpha,
+                          const Array<bool> & blocked_dofs);
+
+  static void solveLumped(const Array<Real> & A, SparseSolverVectorPETSc & x,
                           const Array<Real> & b, Real alpha,
                           const Array<bool> & blocked_dofs);
 

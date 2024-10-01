@@ -307,6 +307,33 @@ const SparseSolverVectorPETSc & DOFManagerPETSc::_getResidual() const {
 }
 
 /* -------------------------------------------------------------------------- */
+void DOFManagerPETSc::assembleLumpedMatMulVectToResidual(const ID & dof_id,
+                                                         const ID & A_id,
+                                                         const Array<Real> & x,
+                                                         Real scale_factor) {
+  const auto & A =
+      aka::as_type<SparseSolverVectorPETSc>(this->getLumpedMatrix(A_id))
+          .getVec();
+  auto & cache = aka::as_type<SparseSolverVectorPETSc>(*this->data_cache);
+
+  // int sz;
+  // VecGetSize(A, &sz);
+  // std::cout << "AAAAAA: A " << sz << std::endl;
+
+  // VecGetSize(cache, &sz);
+  // std::cout << "AAAAAA: cache " << sz << std::endl;
+
+  cache.zero();
+  this->assembleToGlobalArray(dof_id, x, cache, scale_factor);
+
+  auto & r = aka::as_type<SparseSolverVectorPETSc>(this->getResidual());
+
+  // VecGetSize(r, &sz);
+  // std::cout << "AAAAAA: r " << sz << std::endl;
+
+  VecPointwiseMult(r, A, cache);
+}
+/* -------------------------------------------------------------------------- */
 static bool dof_manager_is_registered =
     DOFManagerFactory::getInstance().registerAllocator(
         "petsc", [](Mesh & mesh, const ID & id) -> std::unique_ptr<DOFManager> {
