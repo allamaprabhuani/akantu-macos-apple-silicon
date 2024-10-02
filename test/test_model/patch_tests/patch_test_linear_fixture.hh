@@ -52,9 +52,11 @@ public:
     model =
         std::make_unique<Model_>(*mesh, _all_dimensions, std::to_string(type));
 
+#ifdef AKANTU_USE_PETSC
     if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
       model->initDOFManager("petsc");
     }
+#endif
   }
 
   void TearDown() override {
@@ -69,6 +71,7 @@ public:
     this->model->initFull(_analysis_method = method);
     this->applyBC();
 
+#if defined(AKANTU_USE_PETSC)
     if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
       auto & solver = model->getNonLinearSolver();
 
@@ -79,7 +82,7 @@ public:
         sparse_solver.set("pc_type", "cholesky");
       }
     }
-
+#endif
     if (method != _static) {
       this->model->setTimeStep(0.8 * this->model->getStableTimeStep());
     }

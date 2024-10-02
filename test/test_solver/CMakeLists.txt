@@ -58,7 +58,7 @@ register_test(test_sparse_solver_eigen
 
 register_test(test_sparse_solver_petsc
   SOURCES test_sparse_solver_petsc.cc
-  PACKAGE mumps
+  PACKAGE petsc
   PARALLEL
   )
   

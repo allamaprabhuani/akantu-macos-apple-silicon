@@ -20,15 +20,19 @@
 
 /* -------------------------------------------------------------------------- */
 #include "dof_manager_default.hh"
+#if defined(AKANTU_USE_PETSC)
 #include "dof_manager_petsc.hh"
+#endif
 #include "patch_test_linear_fixture.hh"
 #include "solid_mechanics_model.hh"
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 
 #ifndef AKANTU_PATCH_TEST_LINEAR_SOLID_MECHANICS_FIXTURE_HH_
 #define AKANTU_PATCH_TEST_LINEAR_SOLID_MECHANICS_FIXTURE_HH_
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename tuple_>
 class TestPatchTestSMMLinear
     : public TestPatchTestLinear<std::tuple_element_t<0, tuple_>,
@@ -144,7 +148,12 @@ struct invalid_plan_stress<std::tuple<type, bool_c, DM>>
 using true_false =
     std::tuple<aka::bool_constant<true>, aka::bool_constant<false>>;
 
-using dof_managers = std::tuple<DOFManagerDefault, DOFManagerPETSc>;
+using dof_managers = std::tuple<DOFManagerDefault
+#ifdef AKANTU_USE_PETSC
+                                ,
+                                DOFManagerPETSc
+#endif
+                                >;
 template <typename T> using valid_types = aka::negation<invalid_plan_stress<T>>;
 
 using model_types = gtest_list_t<tuple_filter_t<
