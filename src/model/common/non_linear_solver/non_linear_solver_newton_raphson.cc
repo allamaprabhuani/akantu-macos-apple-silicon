@@ -102,6 +102,9 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
 #endif
   case SparseSolverType::_auto:
     AKANTU_TO_IMPLEMENT();
+    break;
+  default:
+    AKANTU_EXCEPTION(sparse_solver_type << " compilation was not activated");
   }
   this->supported_type.insert(NonLinearSolverType::_newton_raphson_modified);
   this->supported_type.insert(NonLinearSolverType::_newton_raphson_contact);
