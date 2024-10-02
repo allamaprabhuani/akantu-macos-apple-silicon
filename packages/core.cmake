@@ -255,8 +255,6 @@ package_declare_sources(core
   model/common/non_linear_solver/non_linear_solver_default.hh
   model/common/non_linear_solver/non_linear_solver_lumped.cc
   model/common/non_linear_solver/non_linear_solver_lumped.hh
-  model/common/non_linear_solver/non_linear_solver_newton_raphson.cc
-  model/common/non_linear_solver/non_linear_solver_newton_raphson.hh
 
   model/common/time_step_solvers/time_step_solver.hh
   model/common/time_step_solvers/time_step_solver.cc

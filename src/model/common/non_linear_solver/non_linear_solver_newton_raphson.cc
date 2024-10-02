@@ -29,7 +29,9 @@
 #include "solver_callback.hh"
 #include "solver_vector.hh"
 #include "sparse_solver_eigen.hh"
+#if defined(AKANTU_USE_MUMPS)
 #include "sparse_solver_mumps.hh"
+#endif
 /* -------------------------------------------------------------------------- */
 
 // #if !defined(AKANTU_USE_MUMPS) && !defined(AKANTU_USE_PETSC)
@@ -67,6 +69,7 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
     : NonLinearSolver(dof_manager, non_linear_solver_type, id) {
 
   switch (sparse_solver_type) {
+#if defined(AKANTU_USE_MUMPS)
   case SparseSolverType::_mumps:
     if (aka::is_of_type<DOFManagerDefault>(dof_manager)) {
       sparse_solver = std::make_unique<SparseSolverMumps>(
@@ -76,6 +79,7 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
       AKANTU_EXCEPTION("Can only use MUMPS solver with DOFManageDefault");
     }
     break;
+#endif
   case SparseSolverType::_eigen:
     if (aka::is_of_type<DOFManagerDefault>(dof_manager)) {
       sparse_solver = std::make_unique<SparseSolverEigen>(

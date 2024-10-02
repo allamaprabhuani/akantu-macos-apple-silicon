@@ -25,8 +25,6 @@ package_declare(Mumps EXTERNAL
   )
 
 package_declare_sources(Mumps
-  model/common/non_linear_solver/non_linear_solver_newton_raphson.cc
-  model/common/non_linear_solver/non_linear_solver_newton_raphson.hh
   solver/sparse_solver_mumps.cc
   solver/sparse_solver_mumps.hh
   )

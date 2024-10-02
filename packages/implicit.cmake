@@ -34,6 +34,11 @@ set_property(CACHE AKANTU_IMPLICIT_SOLVER PROPERTY STRINGS
   Mumps+PETSc
 )
 
+package_declare_sources(implicit
+  model/common/non_linear_solver/non_linear_solver_newton_raphson.cc
+  model/common/non_linear_solver/non_linear_solver_newton_raphson.hh
+)
+
 package_is_activated(parallel _is_parallel)
 
 if(_is_parallel AND AKANTU_IMPLICIT_SOLVER MATCHES "Eigen")
