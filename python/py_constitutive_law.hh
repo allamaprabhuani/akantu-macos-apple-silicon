@@ -66,28 +66,28 @@ void register_constitutive_law(py::module & mod) {
       .def(
           "setReal",
           [](CL & self, const ID & name, const Real value) -> void {
-            self.setParam(name, value);
+            self.set(name, value);
             return;
           },
           py::arg("name"), py::arg("value"))
       .def(
           "setBool",
           [](CL & self, const ID & name, const bool value) -> void {
-            self.setParam(name, value);
+            self.set(name, value);
             return;
           },
           py::arg("name"), py::arg("value"))
       .def(
           "setString",
           [](CL & self, const ID & name, const std::string & value) -> void {
-            self.setParam(name, value);
+            self.set(name, value);
             return;
           },
           py::arg("name"), py::arg("value"))
       .def(
           "setInt",
           [](CL & self, const ID & name, const int value) -> void {
-            self.setParam(name, value);
+            self.set(name, value);
             return;
           },
           py::arg("name"), py::arg("value"));

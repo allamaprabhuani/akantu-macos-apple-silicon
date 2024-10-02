@@ -181,7 +181,7 @@ private:
 
 struct ModelSolverOptions {
   NonLinearSolverType non_linear_solver_type;
-  SparseSolverType sparse_solver_type;
+  SparseSolverType sparse_solver_type{SparseSolverType::_auto};
   std::map<ID, IntegrationSchemeType> integration_scheme_type;
   std::map<ID, IntegrationScheme::SolutionType> solution_type;
 };
