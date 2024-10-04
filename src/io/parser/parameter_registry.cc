@@ -135,17 +135,11 @@ void ParameterRegistry::setParameterAccessType(const std::string & name,
 
 /* -------------------------------------------------------------------------- */
 void ParameterRegistry::set(const std::string & name, std::any value) {
-  this->setMixed(name, value);
-  updateInternalParameters();
-}
-/* -------------------------------------------------------------------------- */
-
-void ParameterRegistry::setMixed(const std::string & name, std::any value) {
   auto it = params.find(name);
   if (it == params.end()) {
     if (consisder_sub) {
       for (auto && [_, registry] : sub_registries) {
-        registry.get().setMixed(name, value);
+        registry.get().set(name, value);
       }
     } else {
       AKANTU_CUSTOM_EXCEPTION(debug::ParameterUnexistingException(name, *this));
@@ -154,6 +148,7 @@ void ParameterRegistry::setMixed(const std::string & name, std::any value) {
     Parameter & param = *(it->second);
     param.set(value);
   }
+  updateInternalParameters();
 }
 /* -------------------------------------------------------------------------- */
 

@@ -161,9 +161,6 @@ protected:
 
   /* ------------------------------------------------------------------------ */
 public:
-  /// Set value to a parameter (with possible different type)
-  void setMixed(const std::string & name, std::any value);
-
   /// function called to update the internal parameters when the
   /// modifiable parameters are modified
   virtual void updateInternalParameters() {}
