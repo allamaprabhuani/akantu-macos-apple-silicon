@@ -198,15 +198,15 @@ void SparseMatrixPETSc::applyBoundary(Real block_val) {
   // }
   // applyModifications();
 
-  static int c = 0;
+  // static int c = 0;
 
-  saveMatrix("before_blocked_" + std::to_string(c) + ".mtx");
+  // saveMatrix("before_blocked_" + std::to_string(c) + ".mtx");
 
   MatZeroRowsColumnsLocal(mat, blocked_dofs.size(), blocked_dofs.data(),
                           block_val, nullptr, nullptr);
 
-  saveMatrix("after_blocked_" + std::to_string(c) + ".mtx");
-  ++c;
+  // saveMatrix("after_blocked_" + std::to_string(c) + ".mtx");
+  // ++c;
 
   AKANTU_DEBUG_OUT();
 }
