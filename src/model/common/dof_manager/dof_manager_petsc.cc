@@ -204,8 +204,7 @@ void DOFManagerPETSc::assembleElementalMatricesToMatrix(
       filter_elements);
 
   A.applyModifications();
-  std::cout << "BBBBB" << std::endl;
-  MatView(A.getMat(), PETSC_VIEWER_STDOUT_WORLD);
+  // MatView(A.getMat(), PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /* -------------------------------------------------------------------------- */
