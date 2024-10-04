@@ -46,12 +46,12 @@ namespace internal {
 
     Int size() const {
       PetscInt n;
-      PETSc_call(VecGetSize, x, &n);
+      VecGetSize(x, &n);
       return n;
     }
     Int local_size() const {
       PetscInt n;
-      PETSc_call(VecGetLocalSize, x, &n);
+      VecGetLocalSize(x, &n);
       return n;
     }
 
@@ -127,11 +127,10 @@ namespace internal {
   template <class Array> class PETScWrapedVector : public PETScVector {
   public:
     PETScWrapedVector(Array && array) : array(array) {
-      PETSc_call(VecCreateSeqWithArray, PETSC_COMM_SELF, 1, array.size(),
-                 array.data(), &x);
+      VecCreateSeqWithArray(PETSC_COMM_SELF, 1, array.size(), array.data(), &x);
     }
 
-    ~PETScWrapedVector() override { PETSc_call(VecDestroy, &x); }
+    ~PETScWrapedVector() override { VecDestroy(&x); }
 
   private:
     Array array;
@@ -141,14 +140,14 @@ namespace internal {
   template <bool read_only> class PETScLocalVector : public PETScVector {
   public:
     PETScLocalVector(const Vec & g) : g(g) {
-      PETSc_call(VecCreateLocalVector, g, &x);
-      PETSc_call(VecGetLocalVectorRead, g, x);
+      VecCreateLocalVector(g, &x);
+      VecGetLocalVectorRead(g, x);
     }
     PETScLocalVector(const SparseSolverVectorPETSc & g)
         : PETScLocalVector(g.getVec()) {}
     ~PETScLocalVector() override {
-      PETSc_call(VecRestoreLocalVectorRead, g, x);
-      PETSc_call(VecDestroy, &x);
+      VecRestoreLocalVectorRead(g, x);
+      VecDestroy(&x);
     }
 
   private:
@@ -158,14 +157,14 @@ namespace internal {
   template <> class PETScLocalVector<false> : public PETScVector {
   public:
     PETScLocalVector(Vec & g) : g(g) {
-      PETSc_call(VecCreateLocalVector, g, &x);
-      PETSc_call(VecGetLocalVectorRead, g, x);
+      VecCreateLocalVector(g, &x);
+      VecGetLocalVectorRead(g, x);
     }
     PETScLocalVector(SparseSolverVectorPETSc & g)
         : PETScLocalVector(g.getVec()) {}
     ~PETScLocalVector() override {
-      PETSc_call(VecRestoreLocalVectorRead, g, x);
-      PETSc_call(VecDestroy, &x);
+      VecRestoreLocalVectorRead(g, x);
+      VecDestroy(&x);
     }
 
   private:

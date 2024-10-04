@@ -37,16 +37,13 @@ SparseSolverPETSc::SparseSolverPETSc(DOFManager & dof_manager,
     : SparseSolver(dof_manager, matrix_id, id) {
   auto && mpi_comm = getDOFManager().getMPIComm();
 
-  this->registerParam("petsc_options", petsc_options, _pat_parsable,
-                      "PETSc options");
-
   /// create a solver context
-  PETSc_call(KSPCreate, mpi_comm, &this->ksp);
+  KSPCreate(mpi_comm, &this->ksp);
 }
 /* -------------------------------------------------------------------------- */
 void SparseSolverPETSc::initialize() {}
 /* -------------------------------------------------------------------------- */
-SparseSolverPETSc::~SparseSolverPETSc() { PETSc_call(KSPDestroy, &ksp); }
+SparseSolverPETSc::~SparseSolverPETSc() { KSPDestroy(&ksp); }
 
 /* -------------------------------------------------------------------------- */
 void SparseSolverPETSc::setOperators() {
@@ -55,7 +52,7 @@ void SparseSolverPETSc::setOperators() {
   // set the matrix that defines the linear system and the matrix for
 // preconditioning (here they are the same)
 #if PETSC_VERSION_MAJOR >= 3 && PETSC_VERSION_MINOR >= 5
-  PETSc_call(KSPSetOperators, ksp, matrix.getMat(), matrix.getMat());
+  KSPSetOperators(ksp, matrix.getMat(), matrix.getMat());
 #else
   PETSc_call(KSPSetOperators, ksp, matrix.getMat(), matrix.getMat(),
              SAME_NONZERO_PATTERN);
@@ -63,8 +60,16 @@ void SparseSolverPETSc::setOperators() {
 
   // If this is not called the solution vector is zeroed in the call to
   // KSPSolve().
-  PETSc_call(KSPSetInitialGuessNonzero, ksp, PETSC_TRUE);
-  PETSc_call(KSPSetFromOptions, ksp);
+  KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+  KSPSetFromOptions(ksp);
+  try {
+    KSPSetUp(ksp);
+  } catch (std::exception & e) {
+    AKANTU_EXCEPTION("KSP(PETSc sparse solver) initialization failed: is your "
+                     "matrix singular ?"
+                     << std::endl
+                     << e.what());
+  }
 
   AKANTU_DEBUG_OUT();
 }
@@ -80,7 +85,7 @@ void SparseSolverPETSc::solve() {
   // MatView(matrix.getMat(), PETSC_VIEWER_STDOUT_WORLD);
   // VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
 
-  PETSc_call(KSPSolve, ksp, rhs, solution);
+  KSPSolve(ksp, rhs, solution);
   // VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
 
   this->dof_manager.splitSolutionPerDOFs();
@@ -108,6 +113,7 @@ void SparseSolverPETSc::parseSection(const ParserSection & section) {
                          param.getValue().c_str());
   }
   KSPSetFromOptions(ksp);
+  KSPSetUp(ksp);
   PetscOptionsClear(nullptr);
 }
 /* -------------------------------------------------------------------------- */
@@ -120,6 +126,7 @@ void SparseSolverPETSc::set(const std::string & name, std::any value) {
       std::string option = std::any_cast<const char *>(value);
       PetscOptionsSetValue(nullptr, ("-" + name).c_str(), option.c_str());
       KSPSetFromOptions(ksp);
+      KSPSetUp(ksp);
       PetscOptionsClear(nullptr);
     } catch (std::bad_any_cast & c) {
       std::cout << c.what() << std::endl;

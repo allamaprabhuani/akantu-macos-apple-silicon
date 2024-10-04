@@ -36,20 +36,20 @@ SparseMatrixPETSc::SparseMatrixPETSc(DOFManagerPETSc & dof_manager,
 
   auto && mpi_comm = dof_manager.getMPIComm();
 
-  PETSc_call(MatCreate, mpi_comm, &mat);
+  MatCreate(mpi_comm, &mat);
   detail::PETScSetName(mat, id);
 
   resize();
 
-  PETSc_call(MatSetFromOptions, mat);
+  MatSetFromOptions(mat);
 
-  PETSc_call(MatSetUp, mat);
+  MatSetUp(mat);
 
-  PETSc_call(MatSetOption, mat, MAT_ROW_ORIENTED, PETSC_TRUE);
-  PETSc_call(MatSetOption, mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
+  MatSetOption(mat, MAT_ROW_ORIENTED, PETSC_TRUE);
+  MatSetOption(mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
 
   if (matrix_type == _symmetric) {
-    PETSc_call(MatSetOption, mat, MAT_SYMMETRIC, PETSC_TRUE);
+    MatSetOption(mat, MAT_SYMMETRIC, PETSC_TRUE);
   }
 
   AKANTU_DEBUG_OUT();
@@ -59,7 +59,7 @@ SparseMatrixPETSc::SparseMatrixPETSc(DOFManagerPETSc & dof_manager,
 SparseMatrixPETSc::SparseMatrixPETSc(const SparseMatrixPETSc & matrix,
                                      const ID & id)
     : SparseMatrix(matrix, id), dof_manager(matrix.dof_manager) {
-  PETSc_call(MatDuplicate, matrix.mat, MAT_COPY_VALUES, &mat);
+  MatDuplicate(matrix.mat, MAT_COPY_VALUES, &mat);
   detail::PETScSetName(mat, id);
 }
 
@@ -68,7 +68,7 @@ SparseMatrixPETSc::~SparseMatrixPETSc() {
   AKANTU_DEBUG_IN();
 
   if (mat != nullptr) {
-    PETSc_call(MatDestroy, &mat);
+    MatDestroy(&mat);
   }
 
   AKANTU_DEBUG_OUT();
@@ -77,10 +77,10 @@ SparseMatrixPETSc::~SparseMatrixPETSc() {
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::resize() {
   auto local_size = dof_manager.getPureLocalSystemSize();
-  PETSc_call(MatSetSizes, mat, local_size, local_size, size_, size_);
+  MatSetSizes(mat, local_size, local_size, size_, size_);
 
   auto & is_ltog_mapping = dof_manager.getISLocalToGlobalMapping();
-  PETSc_call(MatSetLocalToGlobalMapping, mat, is_ltog_mapping, is_ltog_mapping);
+  MatSetLocalToGlobalMapping(mat, is_ltog_mapping, is_ltog_mapping);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -95,11 +95,11 @@ void SparseMatrixPETSc::saveMatrix(const std::string & filename) const {
 
   /// create Petsc viewer
   PetscViewer viewer;
-  PETSc_call(PetscViewerASCIIOpen, mpi_comm, filename.c_str(), &viewer);
-  PETSc_call(PetscViewerPushFormat, viewer, PETSC_VIEWER_ASCII_MATRIXMARKET);
-  PETSc_call(MatView, mat, viewer);
-  PETSc_call(PetscViewerPopFormat, viewer);
-  PETSc_call(PetscViewerDestroy, &viewer);
+  PetscViewerASCIIOpen(mpi_comm, filename.c_str(), &viewer);
+  PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATRIXMARKET);
+  MatView(mat, viewer);
+  PetscViewerPopFormat(viewer);
+  PetscViewerDestroy(&viewer);
 
   AKANTU_DEBUG_OUT();
 }
@@ -117,25 +117,25 @@ void SparseMatrixPETSc::matVecMul(const SparseSolverVector & _x,
 
   // w = A x
   if (release == 0) {
-    PETSc_call(VecZeroEntries, w);
+    VecZeroEntries(w);
   } else {
-    PETSc_call(MatMult, mat, x, w);
+    MatMult(mat, x, w);
   }
 
   if (alpha != 1.) {
     // w = alpha w
-    PETSc_call(VecScale, w, alpha);
+    VecScale(w, alpha);
   }
 
   // y = w + beta y
-  PETSc_call(VecAYPX, y, beta, w);
+  VecAYPX(y, beta, w);
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::addMeToImpl(SparseMatrixPETSc & B, Real alpha) const {
   // std::cout << "addMeTo" << std::endl;
   // PETSc_call(MatView, B.mat, PETSC_VIEWER_STDOUT_WORLD);
-  PETSc_call(MatAXPY, B.mat, alpha, mat, SAME_NONZERO_PATTERN);
+  MatAXPY(B.mat, alpha, mat, SAME_NONZERO_PATTERN);
   // PETSc_call(MatView, B.mat, PETSC_VIEWER_STDOUT_WORLD);
   B.release++;
 }
@@ -164,13 +164,13 @@ void SparseMatrixPETSc::applyModifications() {
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::beginAssembly() {
-  PETSc_call(MatAssemblyBegin, mat, MAT_FINAL_ASSEMBLY);
+  MatAssemblyBegin(mat, MAT_FINAL_ASSEMBLY);
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::endAssembly() {
-  PETSc_call(MatAssemblyEnd, mat, MAT_FINAL_ASSEMBLY);
-  PETSc_call(MatSetOption, mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+  MatAssemblyEnd(mat, MAT_FINAL_ASSEMBLY);
+  MatSetOption(mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
 
   this->release++;
 }
@@ -200,12 +200,12 @@ void SparseMatrixPETSc::applyBoundary(Real block_val) {
 
   static int c = 0;
 
-  // saveMatrix("before_blocked_" + std::to_string(c) + ".mtx");
+  saveMatrix("before_blocked_" + std::to_string(c) + ".mtx");
 
-  PETSc_call(MatZeroRowsColumnsLocal, mat, blocked_dofs.size(),
-             blocked_dofs.data(), block_val, nullptr, nullptr);
+  MatZeroRowsColumnsLocal(mat, blocked_dofs.size(), blocked_dofs.data(),
+                          block_val, nullptr, nullptr);
 
-  // saveMatrix("after_blocked_" + std::to_string(c) + ".mtx");
+  saveMatrix("after_blocked_" + std::to_string(c) + ".mtx");
   ++c;
 
   AKANTU_DEBUG_OUT();
@@ -213,55 +213,55 @@ void SparseMatrixPETSc::applyBoundary(Real block_val) {
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::mul(Real alpha) {
-  PETSc_call(MatScale, mat, alpha);
+  MatScale(mat, alpha);
   this->release++;
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::zero() {
-  PETSc_call(MatZeroEntries, mat);
+  MatZeroEntries(mat);
   this->release++;
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::clearProfile() {
   SparseMatrix::clearProfile();
-  PETSc_call(MatResetPreallocation, mat);
-  PETSc_call(MatSetOption, mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
-  //   PETSc_call(MatSetOption, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE);
-  //   PETSc_call(MatSetOption, MAT_NEW_NONZERO_ALLOCATIONS, PETSC_TRUE);
-  //   PETSc_call(MatSetOption, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE);
+  MatResetPreallocation(mat);
+  MatSetOption(mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
+  //   MatSetOption( MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE);
+  //   MatSetOption( MAT_NEW_NONZERO_ALLOCATIONS, PETSC_TRUE);
+  //   MatSetOption( MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE);
 
   this->zero();
 }
 
 /* -------------------------------------------------------------------------- */
 Idx SparseMatrixPETSc::add(Idx i, Idx j) {
-  PETSc_call(MatSetValue, mat, i, j, 0, ADD_VALUES);
+  MatSetValue(mat, i, j, 0, ADD_VALUES);
   return 0;
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::add(Idx i, Idx j, Real val) {
-  PETSc_call(MatSetValue, mat, i, j, val, ADD_VALUES);
+  MatSetValue(mat, i, j, val, ADD_VALUES);
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::addLocal(Idx i, Idx j) {
-  PETSc_call(MatSetValueLocal, mat, i, j, 0, ADD_VALUES);
+  MatSetValueLocal(mat, i, j, 0, ADD_VALUES);
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::addLocal(Idx i, Idx j, Real val) {
-  PETSc_call(MatSetValueLocal, mat, i, j, val, ADD_VALUES);
+  MatSetValueLocal(mat, i, j, val, ADD_VALUES);
 }
 
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::addLocal(const Vector<Int> & rows,
                                  const Vector<Int> & cols,
                                  const Matrix<Real> & values) {
-  PETSc_call(MatSetValuesLocal, mat, rows.size(), rows.data(), cols.size(),
-             cols.data(), values.data(), ADD_VALUES);
+  MatSetValuesLocal(mat, rows.size(), rows.data(), cols.size(), cols.data(),
+                    values.data(), ADD_VALUES);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -270,16 +270,13 @@ void SparseMatrixPETSc::addValues(const Vector<Int> & rows,
                                   const Matrix<Real> & values,
                                   MatrixType values_type) {
 
-  // PETSc_call(MatView, mat, PETSC_VIEWER_STDOUT_WORLD);
   if (values_type == _unsymmetric and matrix_type == _symmetric) {
-    PETSc_call(MatSetOption, mat, MAT_SYMMETRIC, PETSC_FALSE);
-    PETSc_call(MatSetOption, mat, MAT_STRUCTURALLY_SYMMETRIC, PETSC_FALSE);
+    MatSetOption(mat, MAT_SYMMETRIC, PETSC_FALSE);
+    MatSetOption(mat, MAT_STRUCTURALLY_SYMMETRIC, PETSC_FALSE);
   }
 
-  PETSc_call(MatSetValues, mat, rows.size(), rows.data(), cols.size(),
-             cols.data(), values.data(), ADD_VALUES);
-
-  // PETSc_call(MatView, mat, PETSC_VIEWER_STDOUT_WORLD);
+  MatSetValues(mat, rows.size(), rows.data(), cols.size(), cols.data(),
+               values.data(), ADD_VALUES);
 }
 
 /* -------------------------------------------------------------------------- */

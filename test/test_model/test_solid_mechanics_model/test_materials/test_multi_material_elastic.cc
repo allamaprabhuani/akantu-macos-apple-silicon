@@ -53,7 +53,7 @@ int main(int argc, char * argv[]) {
   model.addDumpField("stress");
   model.addDumpField("grad_u");
 
-  // model.dump();
+  model.dump();
   auto & solver = model.getNonLinearSolver("static");
   solver.set("max_iterations", 1);
   solver.set("threshold", 1e-8);

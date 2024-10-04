@@ -27,7 +27,7 @@
 #ifndef AKANTU_DOF_MANAGER_PETSC_HH_
 #define AKANTU_DOF_MANAGER_PETSC_HH_
 
-#define PETSc_call(func, ...)                                                  \
+#define _PETSc_call(func, ...)                                                 \
   do {                                                                         \
     auto ierr = func(__VA_ARGS__);                                             \
     if (PetscUnlikely(ierr != 0)) {                                            \
@@ -38,11 +38,23 @@
     }                                                                          \
   } while (false)
 
+inline PetscErrorCode petscErrorHandler(MPI_Comm /* comm */, int line,
+                                        const char * fun, const char * file,
+                                        PetscErrorCode n, PetscErrorType p,
+                                        const char * mess, void * /* ctx */) {
+  if (PetscUnlikely(n != 0)) {
+    const char * desc;
+    PetscErrorMessage(n, &desc, nullptr);
+    AKANTU_EXCEPTION(file << ":" << line << ": Error(" << p
+                          << ") in PETSc call to \'" << fun << "\': " << mess);
+  }
+  return n;
+}
+
 namespace akantu {
 namespace detail {
   template <typename T> void PETScSetName(T t, const ID & id) {
-    PETSc_call(PetscObjectSetName, reinterpret_cast<PetscObject>(t),
-               id.c_str());
+    PetscObjectSetName(reinterpret_cast<PetscObject>(t), id.c_str());
   }
 } // namespace detail
 } // namespace akantu
@@ -55,9 +67,11 @@ class SparseSolverVectorPETSc;
 namespace akantu {
 
 class DOFManagerPETSc : public DOFManager {
-  /* ------------------------------------------------------------------------ */
-  /* Constructors/Destructors                                                 */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Constructors/Destructors */
+  /* ------------------------------------------------------------------------
+   */
 public:
   DOFManagerPETSc(const ID & id = "dof_manager_petsc");
   DOFManagerPETSc(Mesh & mesh, const ID & id = "dof_manager_petsc");
@@ -78,9 +92,11 @@ protected:
     }
   };
 
-  /* ------------------------------------------------------------------------ */
-  /* Methods                                                                  */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Methods */
+  /* ------------------------------------------------------------------------
+   */
 public:
   // void assembleToLumpedMatrix(const ID & /*dof_id*/,
   //                             Array<Real> & /*array_to_assemble*/,
@@ -142,9 +158,11 @@ protected:
                        NonLinearSolver & non_linear_solver,
                        SolverCallback & solver_callback) override;
 
-  /* ------------------------------------------------------------------------ */
-  /* Accessors                                                                */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Accessors */
+  /* ------------------------------------------------------------------------
+   */
 public:
   /// Get an instance of a new SparseMatrix
   SparseMatrix & getNewMatrix(const ID & matrix_id,
@@ -174,9 +192,11 @@ public:
   SparseSolverVectorPETSc & _getResidual();
   const SparseSolverVectorPETSc & _getResidual() const;
 
-  /* ------------------------------------------------------------------------ */
-  /* Class Members                                                            */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Class Members */
+  /* ------------------------------------------------------------------------
+   */
 private:
   using PETScMatrixMap = std::map<ID, SparseMatrixPETSc *>;
   using PETScLumpedMatrixMap = std::map<ID, SparseSolverVectorPETSc *>;
@@ -197,7 +217,8 @@ private:
   std::vector<ID> dofs_ids;
 };
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 
 } // namespace akantu
 

@@ -41,16 +41,16 @@ namespace akantu {
 class PETScSingleton {
 private:
   PETScSingleton() {
-    PETSc_call(PetscInitialized, &is_initialized);
+    _PETSc_call(PetscInitialized, &is_initialized);
 
     if (is_initialized == 0U) {
       cppargparse::ArgumentParser & argparser = getStaticArgumentParser();
       int & argc = argparser.getArgC();
       char **& argv = argparser.getArgV();
-      PETSc_call(PetscInitialize, &argc, &argv, nullptr, nullptr);
-      PETSc_call(
+      _PETSc_call(PetscInitialize, &argc, &argv, nullptr, nullptr);
+      _PETSc_call(
           PetscPopErrorHandler, ); // remove the default PETSc signal handler
-      PETSc_call(PetscPushErrorHandler, PetscIgnoreErrorHandler, nullptr);
+      _PETSc_call(PetscPushErrorHandler, petscErrorHandler, nullptr);
     }
   }
 
@@ -126,7 +126,7 @@ DOFManagerPETSc::registerDOFsInternal(const ID & dof_id,
   auto && vector =
       std::make_unique<SparseSolverVectorPETSc>(*this, id + ":solution");
   auto * x = vector->getVec();
-  PETSc_call(VecGetLocalToGlobalMapping, x, &is_ltog_map);
+  VecGetLocalToGlobalMapping(x, &is_ltog_map);
 
   // redoing the indexes based on the petsc numbering
   for (auto & dof_id : dofs_ids) {
@@ -142,8 +142,8 @@ DOFManagerPETSc::registerDOFsInternal(const ID & dof_id,
       lidx.resize(gidx.size());
 
       PetscInt n;
-      PETSc_call(ISGlobalToLocalMappingApply, is_ltog_map, IS_GTOLM_MASK,
-                 gidx.size(), gidx.data(), &n, lidx.data());
+      ISGlobalToLocalMappingApply(is_ltog_map, IS_GTOLM_MASK, gidx.size(),
+                                  gidx.data(), &n, lidx.data());
     }
   }
 
@@ -204,7 +204,8 @@ void DOFManagerPETSc::assembleElementalMatricesToMatrix(
       filter_elements);
 
   A.applyModifications();
-  // PETSc_call(MatView, A.getMat(), PETSC_VIEWER_STDOUT_WORLD);
+  std::cout << "BBBBB" << std::endl;
+  MatView(A.getMat(), PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /* -------------------------------------------------------------------------- */
