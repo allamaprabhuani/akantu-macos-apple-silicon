@@ -60,7 +60,10 @@ public:
 
   ~PETScSingleton() {
     if (is_initialized == 0U) {
-      PetscFinalize();
+      int mpi_finalized;
+      MPI_Finalized(&mpi_finalized);
+      if (not mpi_finalized)
+        PetscFinalize();
     }
   }
 
