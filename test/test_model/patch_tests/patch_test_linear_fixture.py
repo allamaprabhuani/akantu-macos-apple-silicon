@@ -55,6 +55,11 @@ class TestPatchTestLinear(unittest.TestCase):
         self.model.initFull(method)
         self.applyBC()
 
+        solver = self.model.getNonLinearSolver()
+        if hasattr(solver, "getSparseSolver"):
+            sparse_solver = solver.getSparseSolver()
+            sparse_solver.set("pc_type", "cholesky")
+
         if method != akantu._static:
             self.model.setTimeStep(0.8 * self.model.getStableTimeStep())
 
