@@ -109,8 +109,13 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
                                         const Array<Real> & bs, Real alpha,
                                         const Array<bool> & blocked_dofs) {
 
+  // Array<Real> _xs(As.size(), As.getNbComponent());
+  // NonLinearSolverLumped::solveLumped(As, _xs, bs, alpha, blocked_dofs);
+  // VecCopy(internal::make_petsc_wraped_vector(_xs), xs);
+
   VecPointwiseDivide(xs.getVec(), internal::make_petsc_wraped_vector(As),
                      internal::make_petsc_wraped_vector(bs));
+
   // for (auto && [A, x, b, blocked] :
   //      zip(make_view(As), make_view(xs), make_view(bs),
   //          make_view(blocked_dofs))) {
