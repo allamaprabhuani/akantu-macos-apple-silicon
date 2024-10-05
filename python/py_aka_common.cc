@@ -49,11 +49,23 @@ namespace akantu {
   PY_AKANTU_REGISTER_ENUM_(type_name, list, , mod)
 
 /* -------------------------------------------------------------------------- */
+
+std::vector<std::string> python_argv_str;
+std::vector<char *> python_argv_char_ptr;
+char ** python_argv = nullptr;
+int python_argc;
+
 void register_initialize(py::module & mod) {
   mod.def("__initialize", []() {
-    int nb_args = 0;
-    char ** null = nullptr;
-    initialize(nb_args, null);
+    auto && sys = py::module::import("sys");
+    auto && argv = sys.attr("argv");
+    python_argv_str = py::cast<std::vector<std::string>>(argv);
+    for (auto && v : python_argv_str) {
+      python_argv_char_ptr.push_back((char *)v.c_str());
+    }
+    python_argc = python_argv_str.size();
+    python_argv = &python_argv_char_ptr[0];
+    initialize(python_argc, python_argv);
   });
 }
 
