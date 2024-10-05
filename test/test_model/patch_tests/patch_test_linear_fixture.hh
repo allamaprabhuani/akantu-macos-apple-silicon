@@ -52,7 +52,7 @@ public:
     model =
         std::make_unique<Model_>(*mesh, _all_dimensions, std::to_string(type));
 
-#ifdef AKANTU_USE_PETSC
+#if defined(AKANTU_USE_PETSC)
     if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
       model->initDOFManager("petsc");
     }
@@ -80,6 +80,7 @@ public:
             aka::as_type<NonLinearSolverNewtonRaphson>(solver)
                 .getSparseSolver();
         sparse_solver.set("pc_type", "cholesky");
+        sparse_solver.set("ksp_rtol", "1e-30");
       }
     }
 #endif

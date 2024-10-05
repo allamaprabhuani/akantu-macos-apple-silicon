@@ -148,12 +148,17 @@ struct invalid_plan_stress<std::tuple<type, bool_c, DM>>
 using true_false =
     std::tuple<aka::bool_constant<true>, aka::bool_constant<false>>;
 
-using dof_managers = std::tuple<DOFManagerDefault
-#ifdef AKANTU_USE_PETSC
-                                ,
-                                DOFManagerPETSc
+using dof_managers = std::tuple<
+#ifdef AKANTU_USE_MUMPS
+    DOFManagerDefault
 #endif
-                                >;
+#if defined(AKANTU_USE_MUMPS) and defined(AKANTU_USE_PETSC)
+    ,
+#endif
+#ifdef AKANTU_USE_PETSC
+    DOFManagerPETSc
+#endif
+    >;
 template <typename T> using valid_types = aka::negation<invalid_plan_stress<T>>;
 
 using model_types = gtest_list_t<tuple_filter_t<

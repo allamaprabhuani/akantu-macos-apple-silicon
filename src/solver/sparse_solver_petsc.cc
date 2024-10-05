@@ -113,7 +113,6 @@ void SparseSolverPETSc::parseSection(const ParserSection & section) {
                          param.getValue().c_str());
   }
   KSPSetFromOptions(ksp);
-  KSPSetUp(ksp);
   PetscOptionsClear(nullptr);
 }
 /* -------------------------------------------------------------------------- */
@@ -124,9 +123,9 @@ void SparseSolverPETSc::set(const std::string & name, std::any value) {
   } else {
     try {
       std::string option = std::any_cast<const char *>(value);
+      // std::cout << name << ": " << option << std::endl;
       PetscOptionsSetValue(nullptr, ("-" + name).c_str(), option.c_str());
       KSPSetFromOptions(ksp);
-      KSPSetUp(ksp);
       PetscOptionsClear(nullptr);
     } catch (std::bad_any_cast & c) {
       std::cout << c.what() << std::endl;
