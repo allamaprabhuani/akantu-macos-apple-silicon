@@ -98,28 +98,19 @@ protected:
   /* ------------------------------------------------------------------------
    */
 public:
-  // void assembleToLumpedMatrix(const ID & /*dof_id*/,
-  //                             Array<Real> & /*array_to_assemble*/,
-  //                             const ID & /*lumped_mtx*/,
-  //                             Real /*scale_factor*/ = 1.) override {
-  //   AKANTU_TO_IMPLEMENT();
-  // }
-
   void assembleElementalMatricesToMatrix(
-      const ID & /*matrix_id*/, const ID & /*dof_id*/,
-      const Array<Real> & /*elementary_mat*/, ElementType /*type*/,
-      GhostType /*ghost_type*/, const MatrixType & /*elemental_matrix_type*/,
-      const Array<Idx> & /*filter_elements*/) override;
+      const ID & matrix_id, const ID & dof_id,
+      const Array<Real> & elementary_mat, ElementType type,
+      GhostType ghost_type, const MatrixType & elemental_matrix_type,
+      const Array<Idx> & filter_elements) override;
 
-  void assembleMatMulVectToArray(const ID & /*dof_id*/, const ID & /*A_id*/,
-                                 const Array<Real> & /*x*/,
-                                 Array<Real> & /*array*/,
-                                 Real /*scale_factor*/ = 1.) override;
+  void assembleMatMulVectToArray(const ID & dof_id, const ID & A_id,
+                                 const Array<Real> & x, Array<Real> & array,
+                                 Real scale_factor = 1.) override;
 
-  void assembleLumpedMatMulVectToResidual(const ID & /*dof_id*/,
-                                          const ID & /*A_id*/,
-                                          const Array<Real> & /*x*/,
-                                          Real /*scale_factor*/ = 1) override;
+  void assembleLumpedMatMulVectToResidual(const ID & dof_id, const ID & A_id,
+                                          const Array<Real> & x,
+                                          Real scale_factor = 1) override;
 
   void assemblePreassembledMatrix(const ID & matrix_id,
                                   const TermsToAssemble & /*terms*/) override;
@@ -145,9 +136,6 @@ protected:
                       const std::function<Idx(Idx)> & getNode);
 
 protected:
-  void getLumpedMatrixPerDOFs(const ID & /*dof_id*/, const ID & /*lumped_mtx*/,
-                              Array<Real> & /*lumped*/) override {}
-
   NonLinearSolver &
   getNewNonLinearSolver(const ID & nls_solver_id,
                         const NonLinearSolverType & non_linear_solver_type,
@@ -180,7 +168,6 @@ public:
   SparseSolverVector & getNewLumpedMatrix(const ID & matrix_id) override;
 
   /// Get the blocked dofs array
-  //  AKANTU_GET_MACRO(BlockedDOFs, blocked_dofs, const Array<bool> &);
   AKANTU_GET_MACRO(MPIComm, mpi_communicator, MPI_Comm);
 
   AKANTU_GET_MACRO_NOT_CONST(ISLocalToGlobalMapping, is_ltog_map,
