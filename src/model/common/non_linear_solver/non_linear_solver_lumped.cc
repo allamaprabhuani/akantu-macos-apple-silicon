@@ -73,6 +73,8 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 #if defined(AKANTU_USE_PETSC)
   } else if (aka::is_of_type<SparseSolverVectorPETSc>(x)) {
     auto & _x = aka::as_type<SparseSolverVectorPETSc>(x);
+    // VecView(aka::as_type<SparseSolverVectorPETSc>(b).getVec(),
+    //         PETSC_VIEWER_STDOUT_WORLD);
     NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
 #endif
   } else {
@@ -113,16 +115,10 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
   // NonLinearSolverLumped::solveLumped(As, _xs, bs, alpha, blocked_dofs);
   // VecCopy(internal::make_petsc_wraped_vector(_xs), xs);
 
-  VecPointwiseDivide(xs.getVec(), internal::make_petsc_wraped_vector(As),
-                     internal::make_petsc_wraped_vector(bs));
+  VecPointwiseDivide(xs.getVec(), internal::make_petsc_wraped_vector(bs),
+                     internal::make_petsc_wraped_vector(As));
 
-  // for (auto && [A, x, b, blocked] :
-  //      zip(make_view(As), make_view(xs), make_view(bs),
-  //          make_view(blocked_dofs))) {
-  //   if (not blocked) {
-  //     x = alpha * (b / A);
-  //   }
-  // }
+  // VecView(xs.getVec(), PETSC_VIEWER_STDOUT_WORLD);
 }
 #endif
 /* -------------------------------------------------------------------------- */

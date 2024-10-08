@@ -334,7 +334,8 @@ void DOFManagerPETSc::assembleLumpedMatMulVectToResidual(const ID & dof_id,
   // VecGetSize(r, &sz);
   // std::cout << "AAAAAA: r " << sz << std::endl;
 
-  VecPointwiseMult(r, A, cache);
+  VecPointwiseMult(cache, A, cache);
+  VecAXPY(r.getVec(), 1., cache.getVec());
 }
 /* -------------------------------------------------------------------------- */
 static bool dof_manager_is_registered =

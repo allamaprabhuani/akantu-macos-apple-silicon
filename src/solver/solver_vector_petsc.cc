@@ -173,6 +173,8 @@ void SparseSolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
   // VecScatterBegin(scatter, x, x_local, INSERT_VALUES, SCATTER_FORWARD);
   // VecScatterEnd(scatter, x, x_local, INSERT_VALUES, SCATTER_FORWARD);
 
+  // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
+
   if (x_ghosted == nullptr) {
     const PetscScalar * array;
     VecGetArrayRead(x, &array);
@@ -207,8 +209,9 @@ void SparseSolverVectorPETSc::addValues(const Array<Int> & gidx,
 
   VecSetOption(x, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetValues(x, gidx.size(), gidx.data(), to_add, ADD_VALUES);
-
+  // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
   applyModifications();
+  // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /* -------------------------------------------------------------------------- */
