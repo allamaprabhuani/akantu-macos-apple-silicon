@@ -64,15 +64,13 @@ int main(int argc, char * argv[]) {
   solver.set("convergence_type", SolveConvergenceCriteria::_residual);
 
 #if defined(AKANTU_USE_PETSC)
-  {
-    if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
-      auto & sparse_solver =
-          aka::as_type<NonLinearSolverNewtonRaphson>(solver).getSparseSolver();
+  if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+    auto & sparse_solver =
+        aka::as_type<NonLinearSolverNewtonRaphson>(solver).getSparseSolver();
 
-      if (aka::is_of_type<SparseSolverPETSc>(sparse_solver)) {
-        sparse_solver.set("pc_type", "cholesky");
-        sparse_solver.set("ksp_rtol", "1e-30");
-      }
+    if (aka::is_of_type<SparseSolverPETSc>(sparse_solver)) {
+      sparse_solver.set("pc_type", "cholesky");
+      sparse_solver.set("ksp_rtol", "1e-30");
     }
   }
 #endif
