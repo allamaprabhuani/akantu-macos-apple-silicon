@@ -97,7 +97,8 @@ setup(
     license="L-GPLv3",
     license_files=["COPYING", "COPYING.lesser"],
     project_urls={
-        "Bug Tracker": "https://github.com/akantu/akantu/issues",
+        "Bug Tracker": "https://gitlab.com/akantu/akantu/-/issues",
+        "Source": "https://gitlab.com/akantu/akantu",
     },
     setup_requires=setup_requires,
     install_requires=["numpy", "scipy"],
