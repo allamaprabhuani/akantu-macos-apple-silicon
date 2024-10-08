@@ -170,7 +170,7 @@ void SparseMatrixPETSc::beginAssembly() {
 /* -------------------------------------------------------------------------- */
 void SparseMatrixPETSc::endAssembly() {
   MatAssemblyEnd(mat, MAT_FINAL_ASSEMBLY);
-  MatSetOption(mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+  MatSetOption(mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
 
   this->release++;
 }
