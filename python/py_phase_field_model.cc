@@ -24,6 +24,7 @@
 /* -------------------------------------------------------------------------- */
 #include <coupler_solid_phasefield.hh>
 #include <non_linear_solver.hh>
+#include <phase_field_element_filter.hh>
 #include <phase_field_model.hh>
 /* -------------------------------------------------------------------------- */
 #include <pybind11/pybind11.h>
@@ -142,5 +143,12 @@ void register_phase_field_coupler(py::module & mod) {
       .def("computeDamageOnQuadPoints",
            &CouplerSolidPhaseField::computeDamageOnQuadPoints,
            py::arg("ghost_type") = _not_ghost);
+}
+
+void register_phase_field_element_filter(py::module & mod) {
+  py::class_<PhaseFieldElementFilter, GroupManager::ClusteringFilter>(
+      mod, "PhaseFieldElementFilter")
+      .def(py::init<const PhaseFieldModel &, const Real>(), py::arg("model"),
+           py::arg("max_damage"));
 }
 } // namespace akantu

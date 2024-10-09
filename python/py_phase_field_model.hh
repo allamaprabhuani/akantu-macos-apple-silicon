@@ -26,6 +26,7 @@
 namespace akantu {
 void register_phase_field_model(pybind11::module & mod);
 void register_phase_field_coupler(pybind11::module & mod);
+void register_phase_field_element_filter(pybind11::module & mod);
 } // namespace akantu
 
 #endif // AKANTU_PY_PHASE_FIELD_MODEL_HH_

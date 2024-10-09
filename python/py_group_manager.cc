@@ -170,7 +170,17 @@ void register_group_manager(py::module & mod) {
           },
           py::return_value_policy::reference)
       .def("createBoundaryGroupFromGeometry",
-           &GroupManager::createBoundaryGroupFromGeometry);
+           &GroupManager::createBoundaryGroupFromGeometry)
+      .def("createClusters", [](GroupManager & self, Int element_dimension,
+                                std::string cluster_name_prefix,
+                                const GroupManager::ClusteringFilter & filter) {
+        return self.createClusters(element_dimension, cluster_name_prefix,
+                                   filter);
+      });
+
+  /* ------------------------------------------------------------------------ */
+  py::class_<GroupManager::ClusteringFilter>(mod, "ClusteringFilter")
+      .def(py::init<>());
 }
 
 } // namespace akantu
