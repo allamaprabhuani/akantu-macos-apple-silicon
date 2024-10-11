@@ -31,11 +31,11 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 SparseMatrix::SparseMatrix(DOFManager & dof_manager,
                            const MatrixType & matrix_type, const ID & id)
-    : id(id), _dof_manager(dof_manager), matrix_type(matrix_type),
+    : id(id), dof_manager(dof_manager), matrix_type(matrix_type),
       size_(dof_manager.getSystemSize()), nb_non_zero(0) {
   AKANTU_DEBUG_IN();
 
-  const auto & comm = _dof_manager.getCommunicator();
+  const auto & comm = dof_manager.getCommunicator();
   this->nb_proc = comm.getNbProc();
 
   AKANTU_DEBUG_OUT();
@@ -43,7 +43,7 @@ SparseMatrix::SparseMatrix(DOFManager & dof_manager,
 
 /* -------------------------------------------------------------------------- */
 SparseMatrix::SparseMatrix(const SparseMatrix & matrix, const ID & id)
-    : SparseMatrix(matrix._dof_manager, matrix.matrix_type, id) {
+    : SparseMatrix(matrix.dof_manager, matrix.matrix_type, id) {
   nb_non_zero = matrix.nb_non_zero;
 }
 

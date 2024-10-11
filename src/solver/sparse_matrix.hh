@@ -131,7 +131,7 @@ protected:
   ID id;
 
   /// Underlying dof manager
-  DOFManager & _dof_manager;
+  DOFManager & dof_manager;
 
   /// sparce matrix type
   MatrixType matrix_type;

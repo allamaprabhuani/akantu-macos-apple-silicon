@@ -136,9 +136,6 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // DOFManagerPETSc that contains the numbering for petsc
-  DOFManagerPETSc & dof_manager;
-
   /// store the PETSc matrix
   Mat mat;
 

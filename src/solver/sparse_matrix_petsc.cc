@@ -31,7 +31,7 @@ namespace akantu {
 SparseMatrixPETSc::SparseMatrixPETSc(DOFManagerPETSc & dof_manager,
                                      const MatrixType & matrix_type,
                                      const ID & id)
-    : SparseMatrix(dof_manager, matrix_type, id), dof_manager(dof_manager) {
+    : SparseMatrix(dof_manager, matrix_type, id) {
   AKANTU_DEBUG_IN();
 
   auto && mpi_comm = dof_manager.getMPIComm();
@@ -58,7 +58,7 @@ SparseMatrixPETSc::SparseMatrixPETSc(DOFManagerPETSc & dof_manager,
 /* -------------------------------------------------------------------------- */
 SparseMatrixPETSc::SparseMatrixPETSc(const SparseMatrixPETSc & matrix,
                                      const ID & id)
-    : SparseMatrix(matrix, id), dof_manager(matrix.dof_manager) {
+    : SparseMatrix(matrix, id) {
   MatDuplicate(matrix.mat, MAT_COPY_VALUES, &mat);
   detail::PETScSetName(mat, id);
 }
@@ -79,7 +79,8 @@ void SparseMatrixPETSc::resize() {
   auto local_size = dof_manager.getPureLocalSystemSize();
   MatSetSizes(mat, local_size, local_size, size_, size_);
 
-  auto & is_ltog_mapping = dof_manager.getISLocalToGlobalMapping();
+  auto & is_ltog_mapping =
+      aka::as_type<DOFManagerPETSc>(dof_manager).getISLocalToGlobalMapping();
   MatSetLocalToGlobalMapping(mat, is_ltog_mapping, is_ltog_mapping);
 }
 
@@ -91,7 +92,7 @@ void SparseMatrixPETSc::resize() {
 void SparseMatrixPETSc::saveMatrix(const std::string & filename) const {
   AKANTU_DEBUG_IN();
 
-  auto && mpi_comm = dof_manager.getMPIComm();
+  auto && mpi_comm = aka::as_type<DOFManagerPETSc>(dof_manager).getMPIComm();
 
   /// create Petsc viewer
   PetscViewer viewer;
