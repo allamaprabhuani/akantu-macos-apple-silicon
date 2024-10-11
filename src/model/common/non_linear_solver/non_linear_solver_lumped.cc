@@ -35,7 +35,7 @@ namespace akantu {
 NonLinearSolverLumped::NonLinearSolverLumped(
     DOFManager & dof_manager,
     const NonLinearSolverType & non_linear_solver_type,
-    const SparseSolverType & sparse_solver_type, const ID & id)
+    const SparseSolverType &, const ID & id)
     : NonLinearSolver(dof_manager, non_linear_solver_type, id) {
   this->supported_type.insert(NonLinearSolverType::_lumped);
   this->checkIfTypeIsSupported();
@@ -115,9 +115,9 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
   // NonLinearSolverLumped::solveLumped(As, _xs, bs, alpha, blocked_dofs);
   // VecCopy(internal::make_petsc_wraped_vector(_xs), xs);
 
-  VecPointwiseDivide(xs.getVec(), internal::make_petsc_wraped_vector(bs),
+  VecPointwiseDivide(xs, internal::make_petsc_wraped_vector(bs),
                      internal::make_petsc_wraped_vector(As));
-
+  VecScale(xs, alpha);
   // VecView(xs.getVec(), PETSC_VIEWER_STDOUT_WORLD);
 }
 #endif
