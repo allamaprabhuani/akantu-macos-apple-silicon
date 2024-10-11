@@ -38,9 +38,9 @@ template <> void FriendMaterial<MaterialThermal<3>>::testComputeStress() {
   Real E = 1.;
   Real nu = .3;
   Real alpha = 2;
-  setParam("E", E);
-  setParam("nu", nu);
-  setParam("alpha", alpha);
+  set("E", E);
+  set("nu", nu);
+  set("alpha", alpha);
 
   Real deltaT = 1;
   Real sigma = 0;
@@ -55,9 +55,9 @@ template <> void FriendMaterial<MaterialThermal<2>>::testComputeStress() {
   Real E = 1.;
   Real nu = .3;
   Real alpha = 2;
-  setParam("E", E);
-  setParam("nu", nu);
-  setParam("alpha", alpha);
+  set("E", E);
+  set("nu", nu);
+  set("alpha", alpha);
 
   Real deltaT = 1;
   Real sigma = 0;
@@ -72,9 +72,9 @@ template <> void FriendMaterial<MaterialThermal<1>>::testComputeStress() {
   Real E = 1.;
   Real nu = .3;
   Real alpha = 2;
-  setParam("E", E);
-  setParam("nu", nu);
-  setParam("alpha", alpha);
+  set("E", E);
+  set("nu", nu);
+  set("alpha", alpha);
 
   Real deltaT = 1;
   Real sigma = 0;
