@@ -67,11 +67,9 @@ class SparseSolverVectorPETSc;
 namespace akantu {
 
 class DOFManagerPETSc : public DOFManager {
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors */
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
 public:
   DOFManagerPETSc(const ID & id = "dof_manager_petsc");
   DOFManagerPETSc(Mesh & mesh, const ID & id = "dof_manager_petsc");
@@ -92,11 +90,11 @@ protected:
     }
   };
 
-  /* ------------------------------------------------------------------------
-   */
+  void updateLocalEquationNumber(const ID & dof_id);
+
+  /* ------------------------------------------------------------------------ */
   /* Methods */
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
 public:
   void assembleElementalMatricesToMatrix(
       const ID & matrix_id, const ID & dof_id,
@@ -131,9 +129,10 @@ protected:
   std::tuple<Int, Int, Int>
   registerDOFsInternal(const ID & dof_id, Array<Real> & dofs_array) override;
 
-  void updateDOFsData(DOFDataPETSc & dof_data, Int nb_new_local_dofs,
-                      Int nb_new_pure_local, Int nb_node,
-                      const std::function<Idx(Idx)> & getNode);
+  std::pair<Int, Int> updateNodalDOFs(const ID & dof_id,
+                                      const Array<Idx> & nodes_list) override;
+
+  void setISLocalToGlobalMapping();
 
 protected:
   NonLinearSolver &
@@ -146,11 +145,9 @@ protected:
                        NonLinearSolver & non_linear_solver,
                        SolverCallback & solver_callback) override;
 
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
   /* Accessors */
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
 public:
   /// Get an instance of a new SparseMatrix
   SparseMatrix & getNewMatrix(const ID & matrix_id,
@@ -179,11 +176,9 @@ public:
   SparseSolverVectorPETSc & _getResidual();
   const SparseSolverVectorPETSc & _getResidual() const;
 
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
   /* Class Members */
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
 private:
   using PETScMatrixMap = std::map<ID, SparseMatrixPETSc *>;
   using PETScLumpedMatrixMap = std::map<ID, SparseSolverVectorPETSc *>;
@@ -204,8 +199,7 @@ private:
   std::vector<ID> dofs_ids;
 };
 
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 
 } // namespace akantu
 
