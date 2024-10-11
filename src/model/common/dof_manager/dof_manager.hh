@@ -594,13 +594,13 @@ protected:
 
     /* ---------------------------------------------------------------------- */
     /// number of dofs to consider locally for this dof id
-    Int local_nb_dofs{0};
+    // Int local_nb_dofs{0};
 
     /// Number of purely local dofs
-    Int pure_local_nb_dofs{0};
+    // Int pure_local_nb_dofs{0};
 
     /// number of ghost dofs
-    Int ghosts_nb_dofs{0};
+    // Int ghosts_nb_dofs{0};
 
     /// local numbering equation numbers
     Array<Idx> local_equation_number;
