@@ -61,7 +61,7 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 
   x.resize();
 
-  const auto & blocked_dofs = this->dof_manager.getGlobalBlockedDOFs();
+  // const auto & blocked_dofs = this->dof_manager.getGlobalBlockedDOFs();
   const auto & A = this->dof_manager.getLumpedMatrix("M");
 
   // alpha is the conversion factor from from force/mass to acceleration needed
@@ -81,7 +81,7 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 #endif
   } else {
     auto & _x = aka::as_type<SolverVectorDefault>(x);
-    NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
+    NonLinearSolverLumped::solveLumped(A, _x, b, alpha);
   }
 
   this->dof_manager.splitSolutionPerDOFs();
@@ -93,15 +93,10 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 /* -------------------------------------------------------------------------- */
 void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
                                         Array<Real> & xs,
-                                        const Array<Real> & bs, Real alpha,
-                                        const Array<bool> & blocked_dofs) {
+                                        const Array<Real> & bs, Real alpha) {
 
-  for (auto && [A, x, b, blocked] :
-       zip(make_view(As), make_view(xs), make_view(bs),
-           make_view(blocked_dofs))) {
-    if (not blocked) {
-      x = alpha * (b / A);
-    }
+  for (auto && [A, x, b] : zip(make_view(As), make_view(xs), make_view(bs))) {
+    x = alpha * (b / A);
   }
 }
 

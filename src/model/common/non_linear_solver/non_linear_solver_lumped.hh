@@ -54,8 +54,7 @@ public:
 
 private:
   static void solveLumped(const Array<Real> & A, Array<Real> & x,
-                          const Array<Real> & b, Real alpha,
-                          const Array<bool> & blocked_dofs);
+                          const Array<Real> & b, Real alpha);
 
 #if defined(AKANTU_USE_PETSC)
 
