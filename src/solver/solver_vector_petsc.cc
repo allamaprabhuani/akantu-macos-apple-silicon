@@ -37,39 +37,8 @@ SparseSolverVectorPETSc::SparseSolverVectorPETSc(DOFManagerPETSc & dof_manager,
   VecCreate(mpi_comm, &x);
   detail::PETScSetName(x, id);
 
+  resize();
   VecSetFromOptions(x);
-
-  auto local_system_size = dof_manager.getLocalSystemSize();
-  auto nb_local_dofs = dof_manager.getPureLocalSystemSize();
-  VecSetSizes(x, nb_local_dofs, PETSC_DECIDE);
-
-  VecType vec_type;
-  VecGetType(x, &vec_type);
-  if (std::string(vec_type) == std::string(VECMPI)) {
-    PetscInt lowest_gidx;
-    PetscInt highest_gidx;
-    VecGetOwnershipRange(x, &lowest_gidx, &highest_gidx);
-
-    std::vector<PetscInt> ghost_idx;
-    for (auto && d : arange(local_system_size)) {
-      int gidx = dof_manager.localToGlobalEquationNumber(d);
-      if (gidx != -1) {
-        if ((gidx < lowest_gidx) or (gidx >= highest_gidx)) {
-          ghost_idx.push_back(gidx);
-        }
-      }
-    }
-
-    VecMPISetGhost(x, ghost_idx.size(), ghost_idx.data());
-  } else {
-    std::vector<int> idx(nb_local_dofs);
-    std::iota(idx.begin(), idx.end(), 0);
-    ISLocalToGlobalMapping is;
-    ISLocalToGlobalMappingCreate(PETSC_COMM_SELF, 1, idx.size(), idx.data(),
-                                 PETSC_COPY_VALUES, &is);
-    VecSetLocalToGlobalMapping(x, is);
-    ISLocalToGlobalMappingDestroy(&is);
-  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -116,8 +85,20 @@ SparseSolverVectorPETSc::~SparseSolverVectorPETSc() {
 
 /* -------------------------------------------------------------------------- */
 void SparseSolverVectorPETSc::resize() {
-  // the arrays are destroyed and recreated in the dof manager
-  // resize is so not implemented
+  if (x != nullptr) {
+    VecDestroy(&x);
+    auto && mpi_comm = aka::as_type<DOFManagerPETSc>(dof_manager).getMPIComm();
+    VecCreate(mpi_comm, &x);
+    detail::PETScSetName(x, id);
+    VecSetFromOptions(x);
+  }
+
+  auto nb_local_dofs = dof_manager.getPureLocalSystemSize();
+  VecSetSizes(x, nb_local_dofs, dof_manager.getSystemSize());
+
+  auto & is_ltog_mapping =
+      aka::as_type<DOFManagerPETSc>(dof_manager).getISLocalToGlobalMapping();
+  VecSetLocalToGlobalMapping(x, is_ltog_mapping);
 }
 
 /* -------------------------------------------------------------------------- */
