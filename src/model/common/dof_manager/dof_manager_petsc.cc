@@ -205,10 +205,9 @@ DOFManagerPETSc::registerDOFsInternal(const ID & dof_id,
     this->updateLocalEquationNumber(dof_id);
   }
 
-  solution = std::make_unique<SparseSolverVectorPETSc>(*this, id + ":solution");
-  residual = std::make_unique<SparseSolverVectorPETSc>(*this, id + ":residual");
-  data_cache =
-      std::make_unique<SparseSolverVectorPETSc>(*this, id + ":data_cache");
+  solution = std::make_unique<SolverVectorPETSc>(*this, id + ":solution");
+  residual = std::make_unique<SolverVectorPETSc>(*this, id + ":residual");
+  data_cache = std::make_unique<SolverVectorPETSc>(*this, id + ":data_cache");
 
   for (auto & mat : matrices) {
     auto & A = this->getMatrix(mat.first);
@@ -221,9 +220,9 @@ DOFManagerPETSc::registerDOFsInternal(const ID & dof_id,
 /* -------------------------------------------------------------------------- */
 void DOFManagerPETSc::assembleToGlobalArray(
     const ID & dof_id, const Array<Real> & array_to_assemble,
-    SparseSolverVector & global_array, Real scale_factor) {
+    SolverVector & global_array, Real scale_factor) {
   const auto & dof_data = getDOFDataTyped<DOFDataPETSc>(dof_id);
-  auto & g = aka::as_type<SparseSolverVectorPETSc>(global_array);
+  auto & g = aka::as_type<SolverVectorPETSc>(global_array);
 
   AKANTU_DEBUG_ASSERT(dof_data.local_equation_number.size() ==
                           array_to_assemble.size() *
@@ -243,11 +242,10 @@ void DOFManagerPETSc::assembleToGlobalArray(
 
 /* -------------------------------------------------------------------------- */
 void DOFManagerPETSc::getArrayPerDOFs(const ID & dof_id,
-                                      const SparseSolverVector & global_array,
+                                      const SolverVector & global_array,
                                       Array<Real> & local) {
   const auto & dof_data = getDOFDataTyped<DOFDataPETSc>(dof_id);
-  const auto & petsc_vector =
-      aka::as_type<SparseSolverVectorPETSc>(global_array);
+  const auto & petsc_vector = aka::as_type<SolverVectorPETSc>(global_array);
 
   AKANTU_DEBUG_ASSERT(
       local.size() * local.getNbComponent() ==
@@ -287,13 +285,13 @@ void DOFManagerPETSc::assembleMatMulVectToArray(const ID & dof_id,
                                                 const Array<Real> & x,
                                                 Array<Real> & array,
                                                 Real scale_factor) {
-  DOFManager::assembleMatMulVectToArray_<SparseSolverVectorPETSc>(
+  DOFManager::assembleMatMulVectToArray_<SolverVectorPETSc>(
       dof_id, A_id, x, array, scale_factor);
 }
 
 /* -------------------------------------------------------------------------- */
-void DOFManagerPETSc::makeConsistentForPeriodicity(
-    const ID & /*dof_id*/, SparseSolverVector & /*array*/) {}
+void DOFManagerPETSc::makeConsistentForPeriodicity(const ID & /*dof_id*/,
+                                                   SolverVector & /*array*/) {}
 
 /* -------------------------------------------------------------------------- */
 NonLinearSolver &
@@ -350,25 +348,25 @@ SparseMatrixPETSc & DOFManagerPETSc::getMatrix(const ID & id) {
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVector & DOFManagerPETSc::getNewLumpedMatrix(const ID & id) {
-  return this->registerLumpedMatrix<SparseSolverVectorPETSc>(*this, id);
+SolverVector & DOFManagerPETSc::getNewLumpedMatrix(const ID & id) {
+  return this->registerLumpedMatrix<SolverVectorPETSc>(*this, id);
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVectorPETSc & DOFManagerPETSc::_getSolution() {
-  return aka::as_type<SparseSolverVectorPETSc>(*this->solution);
+SolverVectorPETSc & DOFManagerPETSc::_getSolution() {
+  return aka::as_type<SolverVectorPETSc>(*this->solution);
 }
 
-const SparseSolverVectorPETSc & DOFManagerPETSc::_getSolution() const {
-  return aka::as_type<SparseSolverVectorPETSc>(*this->solution);
+const SolverVectorPETSc & DOFManagerPETSc::_getSolution() const {
+  return aka::as_type<SolverVectorPETSc>(*this->solution);
 }
 
-SparseSolverVectorPETSc & DOFManagerPETSc::_getResidual() {
-  return aka::as_type<SparseSolverVectorPETSc>(*this->residual);
+SolverVectorPETSc & DOFManagerPETSc::_getResidual() {
+  return aka::as_type<SolverVectorPETSc>(*this->residual);
 }
 
-const SparseSolverVectorPETSc & DOFManagerPETSc::_getResidual() const {
-  return aka::as_type<SparseSolverVectorPETSc>(*this->residual);
+const SolverVectorPETSc & DOFManagerPETSc::_getResidual() const {
+  return aka::as_type<SolverVectorPETSc>(*this->residual);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -376,9 +374,8 @@ void DOFManagerPETSc::assembleLumpedMatMulVectToResidual(const ID & dof_id,
                                                          const ID & A_id,
                                                          const Array<Real> & x,
                                                          Real scale_factor) {
-  const auto & A =
-      aka::as_type<SparseSolverVectorPETSc>(this->getLumpedMatrix(A_id));
-  auto & cache = aka::as_type<SparseSolverVectorPETSc>(*this->data_cache);
+  const auto & A = aka::as_type<SolverVectorPETSc>(this->getLumpedMatrix(A_id));
+  auto & cache = aka::as_type<SolverVectorPETSc>(*this->data_cache);
 
   // int sz;
   // VecGetSize(A, &sz);
@@ -390,7 +387,7 @@ void DOFManagerPETSc::assembleLumpedMatMulVectToResidual(const ID & dof_id,
   cache.zero();
   this->assembleToGlobalArray(dof_id, x, cache, scale_factor);
 
-  auto & r = aka::as_type<SparseSolverVectorPETSc>(this->getResidual());
+  auto & r = aka::as_type<SolverVectorPETSc>(this->getResidual());
 
   // VecGetSize(r, &sz);
   // std::cout << "AAAAAA: r " << sz << std::endl;

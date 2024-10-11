@@ -27,7 +27,7 @@
 
 namespace akantu {
 #if defined(AKANTU_USE_PETSC)
-class SparseSolverVectorPETSc;
+class SolverVectorPETSc;
 #endif
 } // namespace akantu
 
@@ -59,9 +59,8 @@ private:
 
 #if defined(AKANTU_USE_PETSC)
 
-  static void solveLumped(const Array<Real> & A, SparseSolverVectorPETSc & x,
-                          const Array<Real> & b, Real alpha,
-                          const Array<bool> & blocked_dofs);
+  static void solveLumped(const SolverVectorPETSc & A, SolverVectorPETSc & x,
+                          const SolverVectorPETSc & b, Real alpha);
 #endif
 
   /* ------------------------------------------------------------------------ */

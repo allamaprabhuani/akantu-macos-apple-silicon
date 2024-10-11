@@ -270,12 +270,12 @@ void SparseSolverMumps::factorize() {
 /* -------------------------------------------------------------------------- */
 void SparseSolverMumps::solve() {
   this->master_rhs_solution.copy(
-      aka::as_type<SparseSolverVectorDefault>(dof_manager.getResidual())
+      aka::as_type<SolverVectorDefault>(dof_manager.getResidual())
           .getGlobalVector());
 
   this->solveInternal();
 
-  aka::as_type<SparseSolverVectorDefault>(dof_manager.getSolution())
+  aka::as_type<SolverVectorDefault>(dof_manager.getSolution())
       .setGlobalVector(this->master_rhs_solution);
 
   this->dof_manager.splitSolutionPerDOFs();

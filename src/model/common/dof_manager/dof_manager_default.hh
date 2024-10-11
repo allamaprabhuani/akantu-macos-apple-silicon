@@ -93,7 +93,7 @@ public:
 protected:
   void assembleToGlobalArray(const ID & dof_id,
                              const Array<Real> & array_to_assemble,
-                             SparseSolverVector & global_array,
+                             SolverVector & global_array,
                              Real scale_factor) override;
 
   template <typename T>
@@ -101,14 +101,14 @@ protected:
                              const Array<T> & array_to_assemble,
                              Array<T> & global_array, T scale_factor);
 
-  void getArrayPerDOFs(const ID & dof_id, const SparseSolverVector & global,
+  void getArrayPerDOFs(const ID & dof_id, const SolverVector & global,
                        Array<Real> & local) override;
 
   template <typename T>
   void getArrayPerDOFs(const ID & dof_id, const Array<T> & global_array,
                        Array<T> & local_array) const;
   void makeConsistentForPeriodicity(const ID & dof_id,
-                                    SparseSolverVector & array) override;
+                                    SolverVector & array) override;
 
 public:
   //   /// apply boundary conditions to jacobian matrix
@@ -170,7 +170,7 @@ public:
   SparseMatrixAIJ & getMatrix(const ID & matrix_id);
 
   /// Get an instance of a new lumped matrix
-  SparseSolverVector & getNewLumpedMatrix(const ID & matrix_id) override;
+  SolverVector & getNewLumpedMatrix(const ID & matrix_id) override;
 
   /* ------------------------------------------------------------------------ */
   /* Non Linear Solver                                                        */

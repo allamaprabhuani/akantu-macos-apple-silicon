@@ -107,14 +107,13 @@ void SparseMatrixPETSc::saveMatrix(const std::string & filename) const {
 
 /* -------------------------------------------------------------------------- */
 /// Equivalent of *gemv in blas
-void SparseMatrixPETSc::matVecMul(const SparseSolverVector & _x,
-                                  SparseSolverVector & _y, Real alpha,
-                                  Real beta) const {
-  const auto & x = aka::as_type<SparseSolverVectorPETSc>(_x);
-  auto & y = aka::as_type<SparseSolverVectorPETSc>(_y);
+void SparseMatrixPETSc::matVecMul(const SolverVector & _x, SolverVector & _y,
+                                  Real alpha, Real beta) const {
+  const auto & x = aka::as_type<SolverVectorPETSc>(_x);
+  auto & y = aka::as_type<SolverVectorPETSc>(_y);
 
   // y = alpha A x + beta y
-  SparseSolverVectorPETSc w(x, this->id + ":tmp");
+  SolverVectorPETSc w(x, this->id + ":tmp");
 
   // w = A x
   if (release == 0) {

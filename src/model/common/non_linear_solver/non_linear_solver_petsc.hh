@@ -30,7 +30,7 @@
 namespace akantu {
 class DOFManagerPETSc;
 class NonLinearSolverPETScCallback;
-class SparseSolverVectorPETSc;
+class SolverVectorPETSc;
 } // namespace akantu
 
 namespace akantu {
@@ -73,7 +73,7 @@ protected:
 
   SolverCallback * callback{nullptr};
 
-  std::unique_ptr<SparseSolverVectorPETSc> x;
+  std::unique_ptr<SolverVectorPETSc> x;
   std::unique_ptr<NonLinearSolverPETScCallback> ctx;
 
   Int n_iter{0};

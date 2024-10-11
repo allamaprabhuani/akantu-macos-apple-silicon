@@ -55,8 +55,8 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 
   solver_callback.assembleResidual();
 
-  SparseSolverVector & x =
-      aka::as_type<SparseSolverVector>(this->dof_manager.getSolution());
+  SolverVector & x =
+      aka::as_type<SolverVector>(this->dof_manager.getSolution());
   const auto & b = this->dof_manager.getResidual();
 
   x.resize();
@@ -71,14 +71,16 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 
   if (1 == 2) {
 #if defined(AKANTU_USE_PETSC)
-  } else if (aka::is_of_type<SparseSolverVectorPETSc>(x)) {
-    auto & _x = aka::as_type<SparseSolverVectorPETSc>(x);
-    // VecView(aka::as_type<SparseSolverVectorPETSc>(b).getVec(),
+  } else if (aka::is_of_type<SolverVectorPETSc>(x)) {
+    auto & _x = aka::as_type<SolverVectorPETSc>(x);
+    auto & _A = aka::as_type<SolverVectorPETSc>(A);
+    auto & _b = aka::as_type<SolverVectorPETSc>(b);
+    // VecView(aka::as_type<SolverVectorPETSc>(b).getVec(),
     //         PETSC_VIEWER_STDOUT_WORLD);
-    NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
+    NonLinearSolverLumped::solveLumped(_A, _x, _b, alpha);
 #endif
   } else {
-    auto & _x = aka::as_type<SparseSolverVectorDefault>(x);
+    auto & _x = aka::as_type<SolverVectorDefault>(x);
     NonLinearSolverLumped::solveLumped(A, _x, b, alpha, blocked_dofs);
   }
 
@@ -106,17 +108,18 @@ void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
 /* -------------------------------------------------------------------------- */
 #if defined(AKANTU_USE_PETSC)
 
-void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
-                                        SparseSolverVectorPETSc & xs,
-                                        const Array<Real> & bs, Real alpha,
-                                        const Array<bool> & blocked_dofs) {
+void NonLinearSolverLumped::solveLumped(const SolverVectorPETSc & As,
+                                        SolverVectorPETSc & xs,
+                                        const SolverVectorPETSc & bs,
+                                        Real alpha // ,
+                                        // const Array<bool> & blocked_dofs
+) {
 
   // Array<Real> _xs(As.size(), As.getNbComponent());
   // NonLinearSolverLumped::solveLumped(As, _xs, bs, alpha, blocked_dofs);
   // VecCopy(internal::make_petsc_wraped_vector(_xs), xs);
 
-  VecPointwiseDivide(xs, internal::make_petsc_wraped_vector(bs),
-                     internal::make_petsc_wraped_vector(As));
+  VecPointwiseDivide(xs, bs, As);
   VecScale(xs, alpha);
   // VecView(xs.getVec(), PETSC_VIEWER_STDOUT_WORLD);
 }

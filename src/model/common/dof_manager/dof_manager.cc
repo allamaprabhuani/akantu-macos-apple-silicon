@@ -460,9 +460,9 @@ DOFManager::registerSparseMatrix(const ID & matrix_id,
 
 /* -------------------------------------------------------------------------- */
 /// Get an instance of a new SparseMatrix
-SparseSolverVector &
+SolverVector &
 DOFManager::registerLumpedMatrix(const ID & matrix_id,
-                                 std::unique_ptr<SparseSolverVector> & matrix) {
+                                 std::unique_ptr<SolverVector> & matrix) {
   auto it = this->lumped_matrices.find(matrix_id);
   if (it != this->lumped_matrices.end()) {
     AKANTU_EXCEPTION("The lumped matrix " << matrix_id << " already exists in "
@@ -530,7 +530,7 @@ bool DOFManager::hasMatrix(const ID & id) const {
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVector & DOFManager::getLumpedMatrix(const ID & id) {
+SolverVector & DOFManager::getLumpedMatrix(const ID & id) {
   ID matrix_id = this->id + ":lumped_mtx:" + id;
   LumpedMatricesMap::const_iterator it = this->lumped_matrices.find(matrix_id);
   if (it == this->lumped_matrices.end()) {
@@ -542,7 +542,7 @@ SparseSolverVector & DOFManager::getLumpedMatrix(const ID & id) {
 }
 
 /* -------------------------------------------------------------------------- */
-const SparseSolverVector & DOFManager::getLumpedMatrix(const ID & id) const {
+const SolverVector & DOFManager::getLumpedMatrix(const ID & id) const {
   ID matrix_id = this->id + ":lumped_mtx:" + id;
   auto it = this->lumped_matrices.find(matrix_id);
   if (it == this->lumped_matrices.end()) {
@@ -1007,7 +1007,7 @@ void DOFManager::applyBoundary(const ID & matrix_id) {
 void DOFManager::assembleMatMulVectToGlobalArray(const ID & dof_id,
                                                  const ID & A_id,
                                                  const Array<Real> & x,
-                                                 SparseSolverVector & array,
+                                                 SolverVector & array,
                                                  Real scale_factor) {
   auto & A = this->getMatrix(A_id);
 

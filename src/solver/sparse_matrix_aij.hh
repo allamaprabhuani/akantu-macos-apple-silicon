@@ -89,8 +89,8 @@ public:
   void mul(Real alpha) override;
 
   /// Equivalent of *gemv in blas
-  void matVecMul(const SparseSolverVector & x, SparseSolverVector & y,
-                 Real alpha = 1., Real beta = 0.) const override;
+  void matVecMul(const SolverVector & x, SolverVector & y, Real alpha = 1.,
+                 Real beta = 0.) const override;
 
   void matVecMul(const Array<Real> & x, Array<Real> & y, Real alpha = 1.,
                  Real beta = 0.) const;

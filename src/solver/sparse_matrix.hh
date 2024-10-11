@@ -29,7 +29,7 @@
 namespace akantu {
 class DOFManager;
 class TermsToAssemble;
-class SparseSolverVector;
+class SolverVector;
 } // namespace akantu
 
 namespace akantu {
@@ -81,7 +81,7 @@ public:
   virtual void add(const SparseMatrix & B, Real alpha = 1.);
 
   /// Equivalent of *gemv in blas
-  virtual void matVecMul(const SparseSolverVector & x, SparseSolverVector & y,
+  virtual void matVecMul(const SolverVector & x, SolverVector & y,
                          Real alpha = 1., Real beta = 0.) const = 0;
 
   /// modify the matrix to "remove" the blocked dof

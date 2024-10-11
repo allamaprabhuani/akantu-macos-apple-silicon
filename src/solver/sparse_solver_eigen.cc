@@ -43,9 +43,8 @@ void SparseSolverEigen::solve() {
   const auto & Aij =
       aka::as_type<SparseMatrixAIJ>(dof_manager.getMatrix(matrix_id));
 
-  auto & b_ =
-      aka::as_type<SparseSolverVectorDefault>(this->dof_manager.getResidual())
-          .getGlobalVector();
+  auto & b_ = aka::as_type<SolverVectorDefault>(this->dof_manager.getResidual())
+                  .getGlobalVector();
   Array<Real> x_(b_.size() * b_.getNbComponent());
 
   VectorProxy<Real> x(x_.data(), x_.size() * x_.getNbComponent());
@@ -65,7 +64,7 @@ void SparseSolverEigen::solve() {
 
   x = solver.solve(b);
 
-  aka::as_type<SparseSolverVectorDefault>(this->dof_manager.getSolution())
+  aka::as_type<SolverVectorDefault>(this->dof_manager.getSolution())
       .setGlobalVector(x_);
 
   this->dof_manager.splitSolutionPerDOFs();

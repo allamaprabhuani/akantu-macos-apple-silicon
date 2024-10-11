@@ -61,7 +61,7 @@ namespace detail {
 
 namespace akantu {
 class SparseMatrixPETSc;
-class SparseSolverVectorPETSc;
+class SolverVectorPETSc;
 } // namespace akantu
 
 namespace akantu {
@@ -116,13 +116,13 @@ public:
 protected:
   void assembleToGlobalArray(const ID & dof_id,
                              const Array<Real> & array_to_assemble,
-                             SparseSolverVector & global_array,
+                             SolverVector & global_array,
                              Real scale_factor) override;
-  void getArrayPerDOFs(const ID & dof_id, const SparseSolverVector & global,
+  void getArrayPerDOFs(const ID & dof_id, const SolverVector & global,
                        Array<Real> & local) override;
 
   void makeConsistentForPeriodicity(const ID & dof_id,
-                                    SparseSolverVector & array) override;
+                                    SolverVector & array) override;
 
   std::unique_ptr<DOFData> getNewDOFData(const ID & dof_id) override;
 
@@ -162,7 +162,7 @@ public:
   SparseMatrixPETSc & getMatrix(const ID & matrix_id);
 
   /// Get an instance of a new lumped matrix
-  SparseSolverVector & getNewLumpedMatrix(const ID & matrix_id) override;
+  SolverVector & getNewLumpedMatrix(const ID & matrix_id) override;
 
   /// Get the blocked dofs array
   AKANTU_GET_MACRO(MPIComm, mpi_communicator, MPI_Comm);
@@ -170,18 +170,18 @@ public:
   AKANTU_GET_MACRO_NOT_CONST(ISLocalToGlobalMapping, is_ltog_map,
                              ISLocalToGlobalMapping &);
 
-  SparseSolverVectorPETSc & _getSolution();
-  const SparseSolverVectorPETSc & _getSolution() const;
+  SolverVectorPETSc & _getSolution();
+  const SolverVectorPETSc & _getSolution() const;
 
-  SparseSolverVectorPETSc & _getResidual();
-  const SparseSolverVectorPETSc & _getResidual() const;
+  SolverVectorPETSc & _getResidual();
+  const SolverVectorPETSc & _getResidual() const;
 
   /* ------------------------------------------------------------------------ */
   /* Class Members */
   /* ------------------------------------------------------------------------ */
 private:
   using PETScMatrixMap = std::map<ID, SparseMatrixPETSc *>;
-  using PETScLumpedMatrixMap = std::map<ID, SparseSolverVectorPETSc *>;
+  using PETScLumpedMatrixMap = std::map<ID, SolverVectorPETSc *>;
 
   /// list of matrices registered to the dof manager
   PETScMatrixMap petsc_matrices;

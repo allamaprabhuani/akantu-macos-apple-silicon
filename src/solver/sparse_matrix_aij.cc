@@ -200,13 +200,12 @@ void SparseMatrixAIJ::matVecMul(const Array<Real> & x, Array<Real> & y,
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseMatrixAIJ::matVecMul(const SparseSolverVector & _x,
-                                SparseSolverVector & _y, Real alpha,
-                                Real beta) const {
+void SparseMatrixAIJ::matVecMul(const SolverVector & _x, SolverVector & _y,
+                                Real alpha, Real beta) const {
   AKANTU_DEBUG_IN();
 
-  auto && x = aka::as_type<SparseSolverVectorArray>(_x).getVector();
-  auto && y = aka::as_type<SparseSolverVectorArray>(_y).getVector();
+  auto && x = aka::as_type<SolverVectorArray>(_x).getVector();
+  auto && y = aka::as_type<SolverVectorArray>(_y).getVector();
   this->matVecMul(x, y, alpha, beta);
 }
 

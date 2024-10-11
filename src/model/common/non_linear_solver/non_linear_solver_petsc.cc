@@ -76,7 +76,7 @@ NonLinearSolverPETSc::~NonLinearSolverPETSc() { SNESDestroy(&snes); }
 class NonLinearSolverPETScCallback {
 public:
   NonLinearSolverPETScCallback(DOFManagerPETSc & dof_manager, SNES snes,
-                               SparseSolverVectorPETSc & x)
+                               SolverVectorPETSc & x)
       : dof_manager(dof_manager), snes(snes), x_prev(x, "previous solution") {}
 
   void corrector(Vec & x) {
@@ -110,7 +110,7 @@ public:
 
   void reset() { prev_iteration = -1; }
 
-  void setInitialSolution(SparseSolverVectorPETSc & x) { VecCopy(x, x_prev); }
+  void setInitialSolution(SolverVectorPETSc & x) { VecCopy(x, x_prev); }
 
   void setCallback(SolverCallback & callback) { this->callback = &callback; }
 
@@ -120,7 +120,7 @@ private:
   SNES snes;
 
   // SolverVectorPETSc & x;
-  SparseSolverVectorPETSc x_prev;
+  SolverVectorPETSc x_prev;
   PetscInt prev_iteration{-1};
 }; // namespace akantu
 
@@ -148,12 +148,11 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
 
   callback.assembleMatrix("J");
   auto & global_x =
-      dynamic_cast<SparseSolverVectorPETSc &>(dof_manager.getSolution());
+      dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
   global_x.zero();
 
   if (not x) {
-    x = std::make_unique<SparseSolverVectorPETSc>(global_x,
-                                                  "temporary_solution");
+    x = std::make_unique<SolverVectorPETSc>(global_x, "temporary_solution");
   }
 
   *x = global_x;
@@ -168,8 +167,7 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
   ctx->setCallback(callback);
   ctx->setInitialSolution(global_x);
 
-  auto & rhs =
-      dynamic_cast<SparseSolverVectorPETSc &>(dof_manager.getResidual());
+  auto & rhs = dynamic_cast<SolverVectorPETSc &>(dof_manager.getResidual());
   auto & J = dynamic_cast<SparseMatrixPETSc &>(dof_manager.getMatrix("J"));
 
   SNESSetFunction(snes, rhs, NonLinearSolverPETSc::FormFunction, ctx.get());

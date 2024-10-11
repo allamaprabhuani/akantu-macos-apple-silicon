@@ -88,8 +88,8 @@ public:
   void mul(Real alpha) override;
 
   /// Equivalent of *gemv in blas
-  void matVecMul(const SparseSolverVector & x, SparseSolverVector & y,
-                 Real alpha = 1., Real beta = 0.) const override;
+  void matVecMul(const SolverVector & x, SolverVector & y, Real alpha = 1.,
+                 Real beta = 0.) const override;
 
   /// modify the matrix to "remove" the blocked dof
   void applyBoundary(Real block_val = 1.) override;

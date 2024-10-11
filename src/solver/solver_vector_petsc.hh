@@ -66,19 +66,18 @@ namespace internal {
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
-class SparseSolverVectorPETSc : public SparseSolverVector,
-                                public internal::PETScVector {
+class SolverVectorPETSc : public SolverVector, public internal::PETScVector {
 public:
-  SparseSolverVectorPETSc(DOFManagerPETSc & dof_manager,
-                          const ID & id = "solver_vector_petsc");
+  SolverVectorPETSc(DOFManagerPETSc & dof_manager,
+                    const ID & id = "solver_vector_petsc");
 
-  SparseSolverVectorPETSc(const SparseSolverVectorPETSc & vector,
-                          const ID & id = "solver_vector_petsc");
+  SolverVectorPETSc(const SolverVectorPETSc & vector,
+                    const ID & id = "solver_vector_petsc");
 
-  SparseSolverVectorPETSc(Vec x, DOFManagerPETSc & dof_manager,
-                          const ID & id = "solver_vector_petsc");
+  SolverVectorPETSc(Vec x, DOFManagerPETSc & dof_manager,
+                    const ID & id = "solver_vector_petsc");
 
-  ~SparseSolverVectorPETSc() override;
+  ~SolverVectorPETSc() override;
 
   // resize the vector to the size of the problem
   void resize() override;
@@ -86,9 +85,9 @@ public:
 
   operator const Array<Real> &() const override;
 
-  SparseSolverVector & operator+(const SparseSolverVector & y) override;
-  SparseSolverVector & copy(const SparseSolverVector & y) override;
-  SparseSolverVectorPETSc & operator=(const SparseSolverVectorPETSc & y);
+  SolverVector & operator+(const SolverVector & y) override;
+  SolverVector & copy(const SolverVector & y) override;
+  SolverVectorPETSc & operator=(const SolverVectorPETSc & y);
 
   /// get values using processors global indexes
   void getValues(const Array<Int> & idx, Array<Real> & values) const;
@@ -143,7 +142,7 @@ namespace internal {
       VecCreateLocalVector(g, &x);
       VecGetLocalVectorRead(g, x);
     }
-    PETScLocalVector(const SparseSolverVectorPETSc & g)
+    PETScLocalVector(const SolverVectorPETSc & g)
         : PETScLocalVector(g.getVec()) {}
     ~PETScLocalVector() override {
       VecRestoreLocalVectorRead(g, x);
@@ -160,8 +159,7 @@ namespace internal {
       VecCreateLocalVector(g, &x);
       VecGetLocalVectorRead(g, x);
     }
-    PETScLocalVector(SparseSolverVectorPETSc & g)
-        : PETScLocalVector(g.getVec()) {}
+    PETScLocalVector(SolverVectorPETSc & g) : PETScLocalVector(g.getVec()) {}
     ~PETScLocalVector() override {
       VecRestoreLocalVectorRead(g, x);
       VecDestroy(&x);
@@ -174,8 +172,8 @@ namespace internal {
   /* ------------------------------------------------------------------------ */
   // concepts
   template <typename V>
-  concept SparseSolverVectorType =
-      std::is_base_of<SparseSolverVector, std::decay_t<V>>::value;
+  concept SolverVectorType =
+      std::is_base_of<SolverVector, std::decay_t<V>>::value;
 
   template <typename V>
   concept PETScVectorType = std::is_same<Vec, std::decay_t<V>>::value;
@@ -193,13 +191,12 @@ namespace internal {
     return PETScLocalVector<read_only>(vec);
   }
 
-  template <SparseSolverVectorType V>
+  template <SolverVectorType V>
   decltype(auto) make_petsc_local_vector(V && vec) {
     constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
     return PETScLocalVector<read_only>(
-        dynamic_cast<
-            std::conditional_t<read_only, const SparseSolverVectorPETSc,
-                               SparseSolverVectorPETSc> &>(vec));
+        dynamic_cast<std::conditional_t<read_only, const SolverVectorPETSc,
+                                        SolverVectorPETSc> &>(vec));
   }
 
 } // namespace internal

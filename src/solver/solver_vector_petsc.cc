@@ -30,9 +30,9 @@
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVectorPETSc::SparseSolverVectorPETSc(DOFManagerPETSc & dof_manager,
-                                                 const ID & id)
-    : SparseSolverVector(dof_manager, id) {
+SolverVectorPETSc::SolverVectorPETSc(DOFManagerPETSc & dof_manager,
+                                     const ID & id)
+    : SolverVector(dof_manager, id) {
   auto && mpi_comm = dof_manager.getMPIComm();
   VecCreate(mpi_comm, &x);
   detail::PETScSetName(x, id);
@@ -42,10 +42,9 @@ SparseSolverVectorPETSc::SparseSolverVectorPETSc(DOFManagerPETSc & dof_manager,
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVectorPETSc::
-    SparseSolverVectorPETSc( // NOLINT(bugprone-copy-constructor-init)
-        const SparseSolverVectorPETSc & vector, const ID & id)
-    : SparseSolverVector(vector, id) {
+SolverVectorPETSc::SolverVectorPETSc( // NOLINT(bugprone-copy-constructor-init)
+    const SolverVectorPETSc & vector, const ID & id)
+    : SolverVector(vector, id) {
   if (vector.x != nullptr) {
     VecDuplicate(vector.x, &x);
     VecCopy(vector.x, x);
@@ -54,8 +53,7 @@ SparseSolverVectorPETSc::
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::printself(std::ostream & stream,
-                                        int indent) const {
+void SolverVectorPETSc::printself(std::ostream & stream, int indent) const {
   std::string space(indent, AKANTU_INDENT);
   stream << space << "SolverVectorPETSc [" << std::endl;
   stream << space << " + id: " << id << std::endl;
@@ -66,10 +64,9 @@ void SparseSolverVectorPETSc::printself(std::ostream & stream,
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVectorPETSc::SparseSolverVectorPETSc(Vec x,
-                                                 DOFManagerPETSc & dof_manager,
-                                                 const ID & id)
-    : SparseSolverVector(dof_manager, id) {
+SolverVectorPETSc::SolverVectorPETSc(Vec x, DOFManagerPETSc & dof_manager,
+                                     const ID & id)
+    : SolverVector(dof_manager, id) {
   VecDuplicate(x, &this->x);
 
   VecCopy(x, this->x);
@@ -77,14 +74,14 @@ SparseSolverVectorPETSc::SparseSolverVectorPETSc(Vec x,
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVectorPETSc::~SparseSolverVectorPETSc() {
+SolverVectorPETSc::~SolverVectorPETSc() {
   if (x != nullptr) {
     VecDestroy(&x);
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::resize() {
+void SolverVectorPETSc::resize() {
   if (x != nullptr) {
     VecDestroy(&x);
     auto && mpi_comm = aka::as_type<DOFManagerPETSc>(dof_manager).getMPIComm();
@@ -102,20 +99,20 @@ void SparseSolverVectorPETSc::resize() {
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::set(Real val) {
+void SolverVectorPETSc::set(Real val) {
   VecSet(x, val);
   applyModifications();
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::applyModifications() {
+void SolverVectorPETSc::applyModifications() {
   VecAssemblyBegin(x);
   VecAssemblyEnd(x);
   updateGhost();
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::updateGhost() {
+void SolverVectorPETSc::updateGhost() {
   Vec x_ghosted{nullptr};
   VecGhostGetLocalForm(x, &x_ghosted);
   if (x_ghosted != nullptr) {
@@ -126,8 +123,8 @@ void SparseSolverVectorPETSc::updateGhost() {
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::getValues(const Array<Int> & idx,
-                                        Array<Real> & values) const {
+void SolverVectorPETSc::getValues(const Array<Int> & idx,
+                                  Array<Real> & values) const {
   if (idx.empty()) {
     return;
   }
@@ -143,8 +140,8 @@ void SparseSolverVectorPETSc::getValues(const Array<Int> & idx,
   getValuesLocal(lidx, values);
 }
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
-                                             Array<Real> & values) const {
+void SolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
+                                       Array<Real> & values) const {
   if (idx.empty()) {
     return;
   }
@@ -177,9 +174,9 @@ void SparseSolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::addValues(const Array<Int> & gidx,
-                                        const Array<Real> & values,
-                                        Real scale_factor) {
+void SolverVectorPETSc::addValues(const Array<Int> & gidx,
+                                  const Array<Real> & values,
+                                  Real scale_factor) {
   auto to_add = values.data();
   Array<Real> scaled_array(0, values.getNbComponent());
   if (scale_factor != 1.) {
@@ -196,9 +193,9 @@ void SparseSolverVectorPETSc::addValues(const Array<Int> & gidx,
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
-                                             const Array<Real> & values,
-                                             Real scale_factor) {
+void SolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
+                                       const Array<Real> & values,
+                                       Real scale_factor) {
   Vec x_ghosted{nullptr};
   VecGhostGetLocalForm(x, &x_ghosted);
 
@@ -228,7 +225,7 @@ void SparseSolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVectorPETSc::operator const Array<Real> &() const {
+SolverVectorPETSc::operator const Array<Real> &() const {
   const_cast<Array<Real> &>(cache).resize(local_size());
 
   auto xl = internal::make_petsc_local_vector(x);
@@ -239,8 +236,7 @@ SparseSolverVectorPETSc::operator const Array<Real> &() const {
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVectorPETSc &
-SparseSolverVectorPETSc::operator=(const SparseSolverVectorPETSc & y) {
+SolverVectorPETSc & SolverVectorPETSc::operator=(const SolverVectorPETSc & y) {
   if (size() != y.size()) {
     VecDuplicate(y, &x);
   }
@@ -251,22 +247,20 @@ SparseSolverVectorPETSc::operator=(const SparseSolverVectorPETSc & y) {
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVector &
-SparseSolverVectorPETSc::copy(const SparseSolverVector & y) {
-  const auto & y_ = aka::as_type<SparseSolverVectorPETSc>(y);
+SolverVector & SolverVectorPETSc::copy(const SolverVector & y) {
+  const auto & y_ = aka::as_type<SolverVectorPETSc>(y);
   return operator=(y_);
 }
 
 /* -------------------------------------------------------------------------- */
-SparseSolverVector &
-SparseSolverVectorPETSc::operator+(const SparseSolverVector & y) {
-  const auto & y_ = aka::as_type<SparseSolverVectorPETSc>(y);
+SolverVector & SolverVectorPETSc::operator+(const SolverVector & y) {
+  const auto & y_ = aka::as_type<SolverVectorPETSc>(y);
   VecAXPY(x, 1., y_.x);
   release_ = y_.release_;
   return *this;
 }
 
-bool SparseSolverVectorPETSc::isFinite() const {
+bool SolverVectorPETSc::isFinite() const {
   Real max, min;
   VecMax(x, PETSC_NULLPTR, &max);
   VecMin(x, PETSC_NULLPTR, &min);
