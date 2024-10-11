@@ -55,7 +55,7 @@ int main(int argc, char * argv[]) {
   Array<bool> & boundary = model.getBlockedDOFs();
   Array<Real> & displacement = model.getDisplacement();
 
-  Int nb_nodes = mesh.getNbNodes();
+  // Int nb_nodes = mesh.getNbNodes();
 
   /// boundary conditions
   for (auto && [pos, boun] :

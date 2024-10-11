@@ -71,8 +71,8 @@ int main(int argc, char * argv[]) {
   /// model initialization
   model.initFull(_analysis_method = _implicit_dynamic);
   Material & mat = model.getMaterial(0);
-  mat.setParam("E", E);
-  mat.setParam("rho", rho);
+  mat.set("E", E);
+  mat.set("rho", rho);
 
   Array<Real> & force = model.getExternalForce();
   Array<Real> & displacment = model.getDisplacement();
