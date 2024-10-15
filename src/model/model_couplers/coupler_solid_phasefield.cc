@@ -83,17 +83,13 @@ FEEngine & CouplerSolidPhaseField::getFEEngineBoundary(const ID & name) {
 
 /* -------------------------------------------------------------------------- */
 void CouplerSolidPhaseField::initSolver(
-    TimeStepSolverType time_step_solver_type,
-    NonLinearSolverType non_linear_solver_type,
-    SparseSolverType sparse_solver_type) {
+    TimeStepSolverType time_step_solver_type) {
 
   auto & solid_model_solver = aka::as_type<ModelSolver>(*solid);
-  solid_model_solver.initSolver(time_step_solver_type, non_linear_solver_type,
-                                sparse_solver_type);
+  solid_model_solver.initSolver(time_step_solver_type);
 
   auto & phase_model_solver = aka::as_type<ModelSolver>(*phase);
-  phase_model_solver.initSolver(time_step_solver_type, non_linear_solver_type,
-                                sparse_solver_type);
+  phase_model_solver.initSolver(time_step_solver_type);
 }
 
 /* -------------------------------------------------------------------------- */

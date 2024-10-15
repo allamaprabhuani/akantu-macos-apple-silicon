@@ -68,7 +68,10 @@ public:
                          const std::string & material_file) {
     debug::setDebugLevel(dblError);
     getStaticParser().parse(material_file);
-    this->model->initFull(_analysis_method = method);
+    this->model->initFull(
+        _analysis_method = method,
+        _solver_options = ModelSolverOptions{.non_linear_solver_type =
+                                                 NonLinearSolverType::_auto});
     this->applyBC();
 
 #if defined(AKANTU_USE_PETSC)
@@ -184,11 +187,5 @@ protected:
   Real result_tolerance{1e-9};
   Real dofs_tolerance{1e-10};
 };
-
-// template <typename type_, typename M>
-// constexpr ElementType TestPatchTestLinear<type_, M>::type;
-
-// template <typename tuple_, typename M>
-// constexpr Int TestPatchTestLinear<tuple_, M>::dim;
 
 #endif /* AKANTU_PATCH_TEST_LINEAR_FIXTURE_HH_ */

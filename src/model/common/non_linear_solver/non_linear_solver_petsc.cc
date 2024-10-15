@@ -32,12 +32,11 @@
 namespace akantu {
 
 NonLinearSolverPETSc::NonLinearSolverPETSc(
-    DOFManagerPETSc & dof_manager,
-    const NonLinearSolverType & non_linear_solver_type,
-    const SparseSolverType & sparse_solver_type, const ID & id)
-    : NonLinearSolver(dof_manager, non_linear_solver_type, id) {
+    DOFManagerPETSc & dof_manager, const ModelSolverOptions & solver_options,
+    const ID & id)
+    : NonLinearSolver(dof_manager, solver_options, id) {
 
-  if (sparse_solver_type != SparseSolverType::_petsc)
+  if (solver_options.sparse_solver_type != SparseSolverType::_petsc)
     AKANTU_EXCEPTION(
         "petsc non linear solver works only with petsc sparse solver");
 

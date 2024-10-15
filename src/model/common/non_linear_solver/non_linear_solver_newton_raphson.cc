@@ -63,12 +63,11 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 
 NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
-    DOFManager & dof_manager,
-    const NonLinearSolverType & non_linear_solver_type,
-    const SparseSolverType & sparse_solver_type, const ID & id)
-    : NonLinearSolver(dof_manager, non_linear_solver_type, id) {
+    DOFManager & dof_manager, const ModelSolverOptions & solver_options,
+    const ID & id)
+    : NonLinearSolver(dof_manager, solver_options, id) {
 
-  switch (sparse_solver_type) {
+  switch (solver_options.sparse_solver_type) {
 #if defined(AKANTU_USE_MUMPS)
   case SparseSolverType::_mumps:
     if (aka::is_of_type<DOFManagerDefault>(dof_manager)) {
@@ -104,7 +103,8 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
     AKANTU_TO_IMPLEMENT();
     break;
   default:
-    AKANTU_EXCEPTION(sparse_solver_type << " compilation was not activated");
+    AKANTU_EXCEPTION(solver_options.sparse_solver_type
+                     << " compilation was not activated");
   }
   this->supported_type.insert(NonLinearSolverType::_newton_raphson_modified);
   this->supported_type.insert(NonLinearSolverType::_newton_raphson_contact);
@@ -130,8 +130,7 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
                       "Force reassembly of the jacobian matrix");
 }
 
-/* --------------------------------------------------------------------------
- */
+/* ------------------------------------------------------------------------ */
 NonLinearSolverNewtonRaphson::~NonLinearSolverNewtonRaphson() = default;
 
 /* ------------------------------------------------------------------------ */
@@ -235,8 +234,7 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
   }
 }
 
-/* --------------------------------------------------------------------------
- */
+/* ------------------------------------------------------------------------ */
 bool NonLinearSolverNewtonRaphson::testConvergence(
     const SolverVector & solver_vector) {
   AKANTU_DEBUG_IN();
@@ -269,7 +267,8 @@ bool NonLinearSolverNewtonRaphson::testConvergence(
   return (error < this->convergence_criteria_normalized);
 }
 
-// /* ------------------------------------------------------------------------
+/* ------------------------------------------------------------------------ */
+
 void NonLinearSolverNewtonRaphson::solve_linear(
     SolverCallback & solver_callback) {
   solver_callback.beforeSolveStep();
@@ -296,7 +295,6 @@ void NonLinearSolverNewtonRaphson::solve_linear(
   solver_callback.afterSolveStep(true);
 }
 
-/* --------------------------------------------------------------------------
- */
+/* ------------------------------------------------------------------------- */
 
 } // namespace akantu

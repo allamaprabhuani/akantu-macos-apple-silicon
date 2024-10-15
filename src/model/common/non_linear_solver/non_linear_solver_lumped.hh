@@ -19,6 +19,7 @@
  */
 
 /* -------------------------------------------------------------------------- */
+#include "model_solver.hh"
 #include "non_linear_solver.hh"
 /* -------------------------------------------------------------------------- */
 
@@ -39,8 +40,7 @@ class NonLinearSolverLumped : public NonLinearSolver {
   /* ------------------------------------------------------------------------ */
 public:
   NonLinearSolverLumped(DOFManager & dof_manager,
-                        const NonLinearSolverType & non_linear_solver_type,
-                        const SparseSolverType & sparse_solver_type,
+                        const ModelSolverOptions & solver_options,
                         const ID & id = "non_linear_solver_lumped");
   ~NonLinearSolverLumped() override;
 

@@ -31,6 +31,7 @@
 namespace akantu {
 class DOFManager;
 class SolverCallback;
+class ModelSolverOptions;
 } // namespace akantu
 
 namespace akantu {
@@ -41,7 +42,7 @@ class NonLinearSolver : public Parsable {
   /* ------------------------------------------------------------------------ */
 public:
   NonLinearSolver(DOFManager & dof_manager,
-                  const NonLinearSolverType & non_linear_solver_type,
+                  const ModelSolverOptions & solver_options,
                   const ID & id = "non_linear_solver");
   ~NonLinearSolver() override;
 

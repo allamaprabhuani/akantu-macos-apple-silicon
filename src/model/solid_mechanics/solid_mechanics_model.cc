@@ -183,9 +183,7 @@ SolidMechanicsModel::getDefaultSolverID(const AnalysisMethod & method) {
 }
 
 /* -------------------------------------------------------------------------- */
-void SolidMechanicsModel::initSolver(TimeStepSolverType time_step_solver_type,
-                                     NonLinearSolverType /*unused*/,
-                                     SparseSolverType /*unused*/) {
+void SolidMechanicsModel::initSolver(TimeStepSolverType time_step_solver_type) {
   auto & dof_manager = this->getDOFManager();
 
   /* ------------------------------------------------------------------------ */

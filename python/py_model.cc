@@ -215,9 +215,8 @@ void register_model(py::module & mod) {
       .def(
           "getNewSolver",
           [](Model & self, const std::string id,
-             const TimeStepSolverType & time,
-             const NonLinearSolverType & type) {
-            self.getNewSolver(id, time, type);
+             ModelSolverOptions & solver_options) {
+            self.getNewSolver(id, solver_options);
           },
           py::return_value_policy::reference)
       .def(

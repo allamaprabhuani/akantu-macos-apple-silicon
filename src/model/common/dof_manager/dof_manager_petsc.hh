@@ -137,8 +137,7 @@ protected:
 protected:
   NonLinearSolver &
   getNewNonLinearSolver(const ID & nls_solver_id,
-                        const NonLinearSolverType & non_linear_solver_type,
-                        const SparseSolverType & sparse_solver_type) override;
+                        const ModelSolverOptions & solver_options) override;
 
   TimeStepSolver &
   getNewTimeStepSolver(const ID & id, const TimeStepSolverType & type,

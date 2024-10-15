@@ -30,16 +30,12 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 template <class SolidMechanicsModelType>
 void CouplerSolidContactTemplate<SolidMechanicsModelType>::initSolver(
-    TimeStepSolverType time_step_solver_type,
-    NonLinearSolverType non_linear_solver_type,
-    SparseSolverType sparse_solver_type) {
+    TimeStepSolverType time_step_solver_type) {
   auto & solid_model_solver = aka::as_type<ModelSolver>(*solid);
-  solid_model_solver.initSolver(time_step_solver_type, non_linear_solver_type,
-                                sparse_solver_type);
+  solid_model_solver.initSolver(time_step_solver_type);
 
   auto & contact_model_solver = aka::as_type<ModelSolver>(*contact);
-  contact_model_solver.initSolver(time_step_solver_type, non_linear_solver_type,
-                                  sparse_solver_type);
+  contact_model_solver.initSolver(time_step_solver_type);
 }
 
 /* -------------------------------------------------------------------------- */

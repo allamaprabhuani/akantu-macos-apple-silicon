@@ -134,15 +134,15 @@ ModelSolver::initDOFManager(const ParserSection & section,
     ID solver_id = section.getParameter("name", type);
 
     auto tss_type = getOptionToType<TimeStepSolverType>(type);
-    auto tss_options = this->getDefaultSolverOptions(tss_type);
+    auto solver_options = this->getDefaultSolverOptions(tss_type);
 
     auto sub_solvers_sect =
         section.getSubSections(ParserType::_non_linear_solver);
     auto nb_non_linear_solver_section =
         section.getNbSubSections(ParserType::_non_linear_solver);
 
-    auto nls_type = tss_options.non_linear_solver_type;
-    auto ss_type = tss_options.sparse_solver_type;
+    auto nls_type = solver_options.non_linear_solver_type;
+    auto ss_type = solver_options.sparse_solver_type;
 
     ID sparse_solver =
         section.getParameter("sparse_solver_type", std::to_string(ss_type));
@@ -157,7 +157,10 @@ ModelSolver::initDOFManager(const ParserSection & section,
                        << solver_id);
     }
 
-    this->getNewSolver(solver_id, tss_type, nls_type, ss_type);
+    solver_options.non_linear_solver_type = nls_type;
+    solver_options.sparse_solver_type = ss_type;
+
+    this->getNewSolver(solver_id, solver_options);
     if (nb_non_linear_solver_section == 1) {
       const auto & nls_section = *(sub_solvers_sect.first);
       this->dof_manager->getNonLinearSolver(solver_id).parseSection(
@@ -182,14 +185,14 @@ ModelSolver::initDOFManager(const ParserSection & section,
       auto it_type = getOptionToType<IntegrationSchemeType>(dof_type_str);
 
       IntegrationScheme::SolutionType s_type = is_section.getParameter(
-          "solution_type", tss_options.solution_type[dof_id]);
+          "solution_type", solver_options.solution_type[dof_id]);
       this->setIntegrationScheme(solver_id, dof_id, it_type, s_type);
     }
 
-    for (auto & is_type : tss_options.integration_scheme_type) {
+    for (auto & is_type : solver_options.integration_scheme_type) {
       if (!this->hasIntegrationScheme(solver_id, is_type.first)) {
         this->setIntegrationScheme(solver_id, is_type.first, is_type.second,
-                                   tss_options.solution_type[is_type.first]);
+                                   solver_options.solution_type[is_type.first]);
       }
     }
   }
@@ -292,49 +295,47 @@ void ModelSolver::solveStep(const ID & solver_id) {
 
 /* -------------------------------------------------------------------------- */
 void ModelSolver::getNewSolver(const ID & solver_id,
-                               TimeStepSolverType time_step_solver_type,
-                               NonLinearSolverType non_linear_solver_type,
-                               SparseSolverType sparse_solver_type) {
+                               ModelSolverOptions solver_options) {
   if (this->default_solver_id.empty()) {
     this->default_solver_id = solver_id;
   }
 
-  if (non_linear_solver_type == NonLinearSolverType::_auto) {
-    switch (time_step_solver_type) {
+  if (solver_options.non_linear_solver_type == NonLinearSolverType::_auto) {
+    switch (solver_options.timestep_solver_type) {
     case TimeStepSolverType::_dynamic:
     case TimeStepSolverType::_static:
-      non_linear_solver_type = NonLinearSolverType::_newton_raphson;
+      solver_options.non_linear_solver_type =
+          NonLinearSolverType::_newton_raphson;
       break;
     case TimeStepSolverType::_dynamic_lumped:
-      non_linear_solver_type = NonLinearSolverType::_lumped;
+      solver_options.non_linear_solver_type = NonLinearSolverType::_lumped;
       break;
     case TimeStepSolverType::_not_defined:
-      AKANTU_EXCEPTION(time_step_solver_type
+      AKANTU_EXCEPTION(solver_options.timestep_solver_type
                        << " is not a valid time step solver type");
       break;
     }
   }
 
-  if (sparse_solver_type == SparseSolverType::_auto) {
+  if (solver_options.sparse_solver_type == SparseSolverType::_auto) {
     if (aka::is_of_type<DOFManagerDefault>(*this->dof_manager.get())) {
-      sparse_solver_type = SparseSolverType::_mumps;
+      solver_options.sparse_solver_type = SparseSolverType::_mumps;
 #if defined(AKANTU_USE_PETSC)
     } else if (aka::is_of_type<DOFManagerPETSc>(*this->dof_manager.get())) {
-      sparse_solver_type = SparseSolverType::_petsc;
+      solver_options.sparse_solver_type = SparseSolverType::_petsc;
 #endif
     } else {
       AKANTU_TO_IMPLEMENT();
     }
   }
 
-  this->initSolver(time_step_solver_type, non_linear_solver_type,
-                   sparse_solver_type);
+  this->initSolver(solver_options.timestep_solver_type);
 
-  NonLinearSolver & nls = this->dof_manager->getNewNonLinearSolver(
-      solver_id, non_linear_solver_type, sparse_solver_type);
+  NonLinearSolver & nls =
+      this->dof_manager->getNewNonLinearSolver(solver_id, solver_options);
 
-  this->dof_manager->getNewTimeStepSolver(solver_id, time_step_solver_type, nls,
-                                          *this);
+  this->dof_manager->getNewTimeStepSolver(
+      solver_id, solver_options.timestep_solver_type, nls, *this);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -401,6 +402,25 @@ ModelSolver::getDefaultSolverOptions(__attribute__((unused))
   ModelSolverOptions options;
   options.non_linear_solver_type = NonLinearSolverType::_auto;
   return options;
+}
+
+/* -------------------------------------------------------------------------- */
+void ModelSolverOptions::update(const ModelSolverOptions & other) {
+  if (this->timestep_solver_type == TimeStepSolverType::_not_defined) {
+    this->timestep_solver_type = other.timestep_solver_type;
+  }
+  if (this->non_linear_solver_type == NonLinearSolverType::_auto) {
+    this->non_linear_solver_type = other.non_linear_solver_type;
+  }
+  if (this->sparse_solver_type == SparseSolverType::_auto) {
+    this->sparse_solver_type = other.sparse_solver_type;
+  }
+  for (auto && [k, v] : other.integration_scheme_type) {
+    this->integration_scheme_type[k] = v;
+  }
+  for (auto && [k, v] : other.solution_type) {
+    this->solution_type[k] = v;
+  }
 }
 
 } // namespace akantu

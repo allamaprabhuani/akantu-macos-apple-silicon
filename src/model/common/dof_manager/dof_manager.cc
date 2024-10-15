@@ -971,6 +971,11 @@ void DOFManager::updateGlobalBlockedDofs() {
                               global_blocked_dofs_indexes.end(),
                               previous_global_blocked_dofs_indexes.begin());
 
+  if (this->global_blocked_dofs_indexes.size() == 0) {
+    global_blocked_dofs.resize(local_system_size);
+    global_blocked_dofs.set(false);
+  }
+
   if (not are_equal) {
     ++this->global_blocked_dofs_indexes_release;
   } else {

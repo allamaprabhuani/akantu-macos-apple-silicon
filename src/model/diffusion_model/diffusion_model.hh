@@ -59,9 +59,7 @@ public:
   /* ------------------------------------------------------------------------ */
 protected:
   /// allocate all vectors
-  void initSolver(TimeStepSolverType time_step_solver_type,
-                  NonLinearSolverType non_linear_solver_type,
-                  SparseSolverType sparse_solver_type) override;
+  void initSolver(TimeStepSolverType time_step_solver_type) override;
 
   void predictor() override;
   void corrector() override;

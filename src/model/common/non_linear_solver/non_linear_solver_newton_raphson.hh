@@ -39,9 +39,7 @@ class NonLinearSolverNewtonRaphson : public NonLinearSolver {
   /* ------------------------------------------------------------------------ */
 public:
   NonLinearSolverNewtonRaphson(
-      DOFManager & dof_manager,
-      const NonLinearSolverType & non_linear_solver_type,
-      const SparseSolverType & sparse_solver_type,
+      DOFManager & dof_manager, const ModelSolverOptions & solver_otpions,
       const ID & id = "non_linear_solver_newton_raphson");
   ~NonLinearSolverNewtonRaphson() override;
 
@@ -103,11 +101,9 @@ protected:
 class NonLinearSolverLinear : public NonLinearSolverNewtonRaphson {
 public:
   NonLinearSolverLinear(DOFManager & dof_manager,
-                        const NonLinearSolverType & non_linear_solver_type,
-                        const SparseSolverType & sparse_solver_type,
+                        const ModelSolverOptions & solver_options,
                         const ID & id = "non_linear_solver_linear")
-      : NonLinearSolverNewtonRaphson(dof_manager, non_linear_solver_type,
-                                     sparse_solver_type, id) {
+      : NonLinearSolverNewtonRaphson(dof_manager, solver_options, id) {
     this->linear = true;
   }
 };

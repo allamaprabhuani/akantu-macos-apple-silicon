@@ -132,7 +132,8 @@ public:
   }
 
   /// initialize a new solver if needed
-  void initNewSolver(const AnalysisMethod & method);
+  void initNewSolver(const AnalysisMethod & method,
+                     ModelSolverOptions options = ModelSolverOptions());
 
 protected:
   /// get some default values for derived classes

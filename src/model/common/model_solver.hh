@@ -66,9 +66,7 @@ protected:
   /* ------------------------------------------------------------------------ */
 public:
   /// Callback for the model to instantiate the matrices when needed
-  virtual void initSolver(TimeStepSolverType /*time_step_solver_type*/,
-                          NonLinearSolverType /*non_linear_solver_type*/,
-                          SparseSolverType /*sparse_solver_type*/) {}
+  virtual void initSolver(TimeStepSolverType /*time_step_solver_type*/) {}
 
   /// get the section in the input file (if it exsits) corresponding to this
   /// model
@@ -84,10 +82,7 @@ public:
   virtual void solveStep(SolverCallback & callback, const ID & solver_id = "");
 
   /// Initialize a time solver that can be used afterwards with its id
-  void getNewSolver(
-      const ID & solver_id, TimeStepSolverType time_step_solver_type,
-      NonLinearSolverType non_linear_solver_type = NonLinearSolverType::_auto,
-      SparseSolverType sparse_solver_type = SparseSolverType::_auto);
+  void getNewSolver(const ID & solver_id, ModelSolverOptions solver_options);
 
   /// set an integration scheme for a given dof and a given solver
   void
@@ -180,11 +175,18 @@ private:
 };
 
 struct ModelSolverOptions {
-  NonLinearSolverType non_linear_solver_type;
+  TimeStepSolverType timestep_solver_type{TimeStepSolverType::_not_defined};
+  NonLinearSolverType non_linear_solver_type{NonLinearSolverType::_auto};
   SparseSolverType sparse_solver_type{SparseSolverType::_auto};
-  std::map<ID, IntegrationSchemeType> integration_scheme_type;
-  std::map<ID, IntegrationScheme::SolutionType> solution_type;
+  std::map<ID, IntegrationSchemeType> integration_scheme_type{};
+  std::map<ID, IntegrationScheme::SolutionType> solution_type{};
+
+  void update(const ModelSolverOptions & other);
 };
+
+namespace detail {
+  const inline ModelSolverOptions _default_solver_options;
+}
 
 } // namespace akantu
 
