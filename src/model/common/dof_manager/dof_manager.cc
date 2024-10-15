@@ -185,11 +185,10 @@ void DOFManager::assembleMatMulDOFsToResidual(const ID & A_id,
 
 /* -------------------------------------------------------------------------- */
 void DOFManager::splitSolutionPerDOFs() {
-  for (auto && data : this->dofs) {
-    auto & dof_data = *data.second;
-    dof_data.solution.resize(dof_data.dof->size() *
-                             dof_data.dof->getNbComponent());
-    this->getSolutionPerDOFs(data.first, dof_data.solution);
+  for (auto && [name, dof_data] : this->dofs) {
+    dof_data->solution.resize(dof_data->dof->size() *
+                              dof_data->dof->getNbComponent());
+    this->getSolutionPerDOFs(name, dof_data->solution);
   }
 }
 
