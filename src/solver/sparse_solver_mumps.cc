@@ -273,6 +273,7 @@ void SparseSolverMumps::solve() {
       aka::as_type<SolverVectorDefault>(dof_manager.getResidual())
           .getGlobalVector());
 
+  // this->dof_manager.getMatrix(matrix_id).saveMatrix("toto.mtx");
   this->solveInternal();
 
   aka::as_type<SolverVectorDefault>(dof_manager.getSolution())
