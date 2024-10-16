@@ -232,6 +232,12 @@ void register_model(py::module & mod) {
       .def("getDOFManager", &Model::getDOFManager,
            py::return_value_policy::reference)
       .def("assembleMatrix", &Model::assembleMatrix);
+
+  py::class_<ModelSolverOptions>(mod, "ModelSolverOptions").def(py::init());
+  py::class_<ModelOptions>(mod, "ModelOptions")
+      .def(py::init<AnalysisMethod, ModelSolverOptions>(),
+           py::arg("analysis_method") = _explicit_lumped_mass,
+           py::arg("solver_options") = detail::_default_solver_options);
 }
 
 } // namespace akantu

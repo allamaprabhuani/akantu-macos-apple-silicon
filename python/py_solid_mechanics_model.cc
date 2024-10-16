@@ -53,9 +53,7 @@ namespace akantu {
 void register_solid_mechanics_model(py::module & mod) {
   register_constitutive_laws_handler<Material, Model>(mod);
 
-  py::class_<SolidMechanicsModelOptions>(mod, "SolidMechanicsModelOptions")
-      .def(py::init<AnalysisMethod>(),
-           py::arg("_analysis_method") = _explicit_lumped_mass);
+  mod.attr("SolidMechanicsModelOptions") = mod.attr("ModelOptions");
 
   py::class_<SolidMechanicsModel, ConstitutiveLawsHandler<Material, Model>>(
       mod, "SolidMechanicsModel", py::multiple_inheritance())

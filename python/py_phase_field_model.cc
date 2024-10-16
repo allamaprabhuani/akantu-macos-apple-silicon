@@ -49,8 +49,7 @@ namespace akantu {
 
 void register_phase_field_model(py::module & mod) {
 
-  py::class_<PhaseFieldModelOptions>(mod, "PhaseFieldModelOptions")
-      .def(py::init<AnalysisMethod>(), py::arg("analysis_method") = _static);
+  mod.attr("PhaseFieldModelOptions") = mod.attr("ModelOptions");
 
   py::class_<PhaseFieldModel, Model>(mod, "PhaseFieldModel",
                                      py::multiple_inheritance())
