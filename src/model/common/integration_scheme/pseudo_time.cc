@@ -42,10 +42,8 @@ void PseudoTime::corrector(const SolutionType & /*type*/, Real /*delta_t*/) {
   const auto & deltas = this->dof_manager.getSolution(this->dof_id);
   const auto & blocked_dofs = this->dof_manager.getBlockedDOFs(this->dof_id);
 
-  for (auto && tuple : zip(make_view(us), deltas, make_view(blocked_dofs))) {
-    auto & u = std::get<0>(tuple);
-    const auto & delta = std::get<1>(tuple);
-    const auto & bld = std::get<2>(tuple);
+  for (auto && [u, delta, bld] :
+       zip(make_view(us), deltas, make_view(blocked_dofs))) {
     if (not bld) {
       u += delta;
     }
