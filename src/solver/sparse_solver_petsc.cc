@@ -64,7 +64,8 @@ void SparseSolverPETSc::setOperators() {
   // For some reason (I do not understand) a second solve in the phase field
   // problem is not made correctly with this setup=>to investigate
   // => uncommenting this line breaks test_phase_solid_coupling.cc when using a
-  // sparse_petsc_solver KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+  // sparse_petsc_solver
+  // KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
   KSPSetFromOptions(ksp);
   try {
     KSPSetUp(ksp);
@@ -126,11 +127,12 @@ void SparseSolverPETSc::set(const std::string & name, std::any value) {
     SparseSolver::set(name, value);
   } else {
     try {
+      // PetscOptionsView(nullptr, PETSC_VIEWER_STDOUT_WORLD);
       std::string option = std::any_cast<const char *>(value);
       // std::cout << name << ": " << option << std::endl;
       PetscOptionsSetValue(nullptr, ("-" + name).c_str(), option.c_str());
       KSPSetFromOptions(ksp);
-      PetscOptionsClear(nullptr);
+      // PetscOptionsClear(nullptr);
     } catch (std::bad_any_cast & c) {
       std::cout << c.what() << std::endl;
       std::cout << value.type().name() << std::endl;
