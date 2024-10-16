@@ -54,13 +54,17 @@ void SparseSolverPETSc::setOperators() {
 #if PETSC_VERSION_MAJOR >= 3 && PETSC_VERSION_MINOR >= 5
   KSPSetOperators(ksp, matrix.getMat(), matrix.getMat());
 #else
-  PETSc_call(KSPSetOperators, ksp, matrix.getMat(), matrix.getMat(),
-             SAME_NONZERO_PATTERN);
+  KSPSetOperators(ksp, matrix.getMat(), matrix.getMat(), SAME_NONZERO_PATTERN);
 #endif
 
   // If this is not called the solution vector is zeroed in the call to
   // KSPSolve().
-  KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+  // @Nicolas: when this is done, the increment guess is completely wrong
+  // (as it decays fast to zero in principle)
+  // For some reason (I do not understand) a second solve in the phase field
+  // problem is not made correctly with this setup=>to investigate
+  // => uncommenting this line breaks test_phase_solid_coupling.cc when using a
+  // sparse_petsc_solver KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
   KSPSetFromOptions(ksp);
   try {
     KSPSetUp(ksp);
