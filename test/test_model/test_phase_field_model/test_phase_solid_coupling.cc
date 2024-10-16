@@ -88,8 +88,8 @@ int main(int argc, char * argv[]) {
     if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
       auto & sparse_solver =
           aka::as_type<NonLinearSolverNewtonRaphson>(solver).getSparseSolver();
-      // sparse_solver.set("pc_type", "cholesky");
-      // sparse_solver.set("ksp_rtol", "1e-30");
+      sparse_solver.set("pc_type", "cholesky");
+      sparse_solver.set("ksp_rtol", "1e-30");
     }
   }
 #endif
