@@ -55,6 +55,9 @@ TYPED_TEST(TestFEMFixture, InverseMap) {
 
       auto dis_normalized = ref_quad_coord.distance(natural_coords) / length;
       EXPECT_NEAR(0., dis_normalized, 3.5e-11);
+
+      auto contains = this->fem->contains(quad_coord, el, this->type);
+      EXPECT_EQ(contains, true);
     }
   }
 }

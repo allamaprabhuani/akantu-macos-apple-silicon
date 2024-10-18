@@ -629,12 +629,11 @@ inline void FEEngineTemplate<I, S, kind, IntegrationOrderFunctor>::inverseMap(
 template <template <ElementKind, class> class I, template <ElementKind> class S,
           ElementKind kind, class IntegrationOrderFunctor>
 inline bool FEEngineTemplate<I, S, kind, IntegrationOrderFunctor>::contains(
-    const Vector<Real> & real_coords, Int element, ElementType type,
+    const Ref<const VectorXr> real_coords, Int element, ElementType type,
     GhostType ghost_type) const {
-  auto && call = [&](auto && enum_type) {
-    constexpr ElementType type = std ::decay_t<decltype(enum_type)>::value;
-    return shape_functions.template contains<type>(real_coords, element,
-                                                   ghost_type);
+  auto && call = [&](auto type) {
+    return shape_functions.template contains<type.value>(real_coords, element,
+                                                         ghost_type);
   };
   return tuple_dispatch<ElementTypes_t<kind>>(call, type);
 }
