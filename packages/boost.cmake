@@ -22,11 +22,19 @@
 
 set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "" FORCE)
 
-package_declare(Boost EXTERNAL
-  NOT_OPTIONAL
-  DESCRIPTION "Package handling boost components"
-  EXTRA_PACKAGE_OPTIONS TARGET Boost::headers
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.30)
+  package_declare(Boost EXTERNAL
+    NOT_OPTIONAL
+    DESCRIPTION "Package handling boost components"
+    EXTRA_PACKAGE_OPTIONS TARGET Boost::boost ARGS CONFIG
   )
+else()
+  package_declare(Boost EXTERNAL
+    NOT_OPTIONAL
+    DESCRIPTION "Package handling boost components"
+    EXTRA_PACKAGE_OPTIONS TARGET Boost::headers
+  )
+endif()
 
 mask_package_options(Boost)
 mark_as_advanced(AKANTU_USE_BOOST)
