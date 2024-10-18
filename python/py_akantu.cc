@@ -145,12 +145,12 @@ PYBIND11_MODULE(py11_akantu, mod) {
         std::rethrow_exception(ptr);
       }
     } catch (akantu::debug::NLSNotConvergedException & e) {
-      akantu_exception_nls_not_converged(e.info().c_str());
+      py::set_error(akantu_exception_nls_not_converged, e.info().c_str());
     } catch (akantu::debug::Exception & e) {
       if (akantu::debug::debugger.printBacktrace()) {
         akantu::debug::printBacktrace();
       }
-      akantu_exception(e.info().c_str());
+      py::set_error(akantu_exception, e.info().c_str());
     }
   });
 

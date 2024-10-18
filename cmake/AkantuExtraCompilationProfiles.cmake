@@ -28,13 +28,20 @@ if(FORCE_COLORED_OUTPUT)
   endif()
 endif()
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -DAKANTU_NDEBUG"
+set(CMAKE_CXX_FLAGS_RELEASE
+  "-O3 -DNDEBUG -DAKANTU_NDEBUG"
   CACHE STRING "Flags used by the compiler during release builds" FORCE)
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_INIT} -g3 -ggdb3"
-    CACHE STRING "Flags used by the compiler during debug builds" FORCE)
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT} -g3 -ggdb3"
-    CACHE STRING "Flags used by the compiler during debug builds" FORCE)
+  set(CMAKE_CXX_FLAGS_RELEASE
+    "${CMAKE_CXX_FLAGS_RELEASE_INIT} -DAKANTU_NDEBUG -flarge-source-files"
+    CACHE STRING "Flags used by the compiler during Release builds" FORCE)
+  set(CMAKE_CXX_FLAGS_DEBUG
+    "${CMAKE_CXX_FLAGS_DEBUG_INIT} -g3 -ggdb3 -flarge-source-files"
+    CACHE STRING "Flags used by the compiler during Debug builds" FORCE)
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT} -g3 -ggdb3 -flarge-source-files"
+    CACHE STRING "Flags used by the compiler during RelWithDebInfo builds" FORCE)
 endif()
 
 function(declare_compilation_profile name)
@@ -92,15 +99,15 @@ if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION
   endif()
 
   declare_compilation_profile(SANITIZE
-    COMPILER "-g -ggdb3 -O2 -fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer${_blacklist}")
+    COMPILER "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer${_blacklist}")
 
   declare_compilation_profile(SANITIZEDEBUG
-    COMPILER "-g -ggdb3 -DNDEBUG -DAKANTU_NDEBUG -fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer${_blacklist}")
+    COMPILER "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer${_blacklist}")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   declare_compilation_profile(SANITIZEMEMORY
-    COMPILER "-g -ggdb3 -O2 -fPIE -fsanitize=memory -fsanitize-memory-track-origins -fsanitize-recover=all -fno-omit-frame-pointer -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/cmake/sanitize-blacklist.txt"
+    COMPILER "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fPIE -fsanitize=memory -fsanitize-memory-track-origins -fsanitize-recover=all -fno-omit-frame-pointer -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/cmake/sanitize-blacklist.txt"
     DOC "\"sanitize memory\"")
 endif()
 
@@ -119,3 +126,12 @@ mark_as_advanced(AKANTU_SPLIT_DWARF)
 if (CCACHE_EXECUTABLE AND AKANTU_USE_CCACHE)
   set(AKANTU_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}")
 endif()
+
+include(ProcessorCount)
+ProcessorCount(N)
+
+set_property(GLOBAL PROPERTY JOB_POOLS
+  akantu_compile=${N}
+  akantu_link=1
+  akantu_link_test=${N}
+  akantu_compile_heavy=2)
