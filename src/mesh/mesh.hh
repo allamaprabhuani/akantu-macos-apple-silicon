@@ -675,7 +675,7 @@ inline constexpr auto Mesh::getNbNodesPerElement(ElementType type) -> Int {
         constexpr ElementType type = aka::decay_v<decltype(enum_type)>;
         return ElementClass<type>::getNbNodesPerElement();
       },
-      type, [](auto && /*type*/) { return 0; });
+      [](auto && /*type*/) { return 0; }, type);
 }
 
 /* -------------------------------------------------------------------------- */
