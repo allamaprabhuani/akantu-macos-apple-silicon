@@ -103,7 +103,7 @@ public:
     prev_iteration = iteration;
 
     auto & dx = dof_manager._getSolution();
-    VecWAXPY(dx, -1., x_prev, x);
+    VecWAXPY(dx, -1., x_prev, x); // w = alpha x + y.
     VecView(aka::as_type<SolverVectorPETSc>(dx), PETSC_VIEWER_STDOUT_WORLD);
     VecView(x, PETSC_VIEWER_STDOUT_WORLD);
 
@@ -149,10 +149,15 @@ private:
 }; // namespace akantu
 
 /* -------------------------------------------------------------------------- */
-PetscErrorCode NonLinearSolverPETSc::FormFunction(SNES /*snes*/, Vec x,
-                                                  Vec /*f*/, void * ctx) {
+PetscErrorCode NonLinearSolverPETSc::FormFunction(SNES /*snes*/, Vec x, Vec f,
+                                                  void * ctx) {
+  VecView(f, PETSC_VIEWER_STDOUT_WORLD);
+
   auto * _this = reinterpret_cast<NonLinearSolverPETScCallback *>(ctx);
   _this->assembleResidual(x);
+
+  VecView(f, PETSC_VIEWER_STDOUT_WORLD);
+
   return 0;
 }
 
