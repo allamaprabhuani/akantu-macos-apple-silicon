@@ -61,12 +61,12 @@ TimeStepSolverDefault::getIntegrationSchemeInternal(
   if (this->is_mass_lumped) {
     switch (type) {
     case IntegrationSchemeType::_forward_euler: {
-      integration_scheme = std::make_unique<ForwardEuler>(_dof_manager, dof_id);
+      integration_scheme = std::make_unique<ForwardEuler>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_central_difference: {
       integration_scheme =
-          std::make_unique<CentralDifference>(_dof_manager, dof_id);
+          std::make_unique<CentralDifference>(dof_manager, dof_id);
       break;
     }
     default:
@@ -76,49 +76,48 @@ TimeStepSolverDefault::getIntegrationSchemeInternal(
   } else {
     switch (type) {
     case IntegrationSchemeType::_pseudo_time: {
-      integration_scheme = std::make_unique<PseudoTime>(_dof_manager, dof_id);
+      integration_scheme = std::make_unique<PseudoTime>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_forward_euler: {
-      integration_scheme = std::make_unique<ForwardEuler>(_dof_manager, dof_id);
+      integration_scheme = std::make_unique<ForwardEuler>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_trapezoidal_rule_1: {
       integration_scheme =
-          std::make_unique<TrapezoidalRule1>(_dof_manager, dof_id);
+          std::make_unique<TrapezoidalRule1>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_backward_euler: {
-      integration_scheme =
-          std::make_unique<BackwardEuler>(_dof_manager, dof_id);
+      integration_scheme = std::make_unique<BackwardEuler>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_central_difference: {
       integration_scheme =
-          std::make_unique<CentralDifference>(_dof_manager, dof_id);
+          std::make_unique<CentralDifference>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_fox_goodwin: {
-      integration_scheme = std::make_unique<FoxGoodwin>(_dof_manager, dof_id);
+      integration_scheme = std::make_unique<FoxGoodwin>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_trapezoidal_rule_2: {
       integration_scheme =
-          std::make_unique<TrapezoidalRule2>(_dof_manager, dof_id);
+          std::make_unique<TrapezoidalRule2>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_linear_acceleration: {
       integration_scheme =
-          std::make_unique<LinearAceleration>(_dof_manager, dof_id);
+          std::make_unique<LinearAceleration>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_generalized_trapezoidal: {
       integration_scheme =
-          std::make_unique<GeneralizedTrapezoidal>(_dof_manager, dof_id);
+          std::make_unique<GeneralizedTrapezoidal>(dof_manager, dof_id);
       break;
     }
     case IntegrationSchemeType::_newmark_beta:
-      integration_scheme = std::make_unique<NewmarkBeta>(_dof_manager, dof_id);
+      integration_scheme = std::make_unique<NewmarkBeta>(dof_manager, dof_id);
       break;
     }
   }
@@ -172,8 +171,8 @@ void TimeStepSolverDefault::predictor() {
   TimeStepSolver::predictor();
 
   for (auto && [dof_id, integration_scheme] : this->integration_schemes) {
-    if (this->_dof_manager.hasPreviousDOFs(dof_id)) {
-      this->_dof_manager.savePreviousDOFs(dof_id);
+    if (this->dof_manager.hasPreviousDOFs(dof_id)) {
+      this->dof_manager.savePreviousDOFs(dof_id);
     }
 
     /// integrator predictor
@@ -190,22 +189,22 @@ void TimeStepSolverDefault::corrector() {
     integration_scheme->corrector(solution_type, this->time_step);
 
     /// computing the increment of dof if needed
-    if (this->_dof_manager.hasDOFsIncrement(dof_id)) {
-      if (not this->_dof_manager.hasPreviousDOFs(dof_id)) {
+    if (this->dof_manager.hasDOFsIncrement(dof_id)) {
+      if (not this->dof_manager.hasPreviousDOFs(dof_id)) {
         AKANTU_DEBUG_WARNING("In order to compute the increment of "
                              << dof_id << " a 'previous' has to be registered");
         continue;
       }
 
-      auto & increment = this->_dof_manager.getDOFsIncrement(dof_id);
-      auto & previous = this->_dof_manager.getPreviousDOFs(dof_id);
+      auto & increment = this->dof_manager.getDOFsIncrement(dof_id);
+      auto & previous = this->dof_manager.getPreviousDOFs(dof_id);
 
-      auto dof_array_comp = this->_dof_manager.getDOFs(dof_id).getNbComponent();
+      auto dof_array_comp = this->dof_manager.getDOFs(dof_id).getNbComponent();
 
       if (solution_type == IntegrationScheme::_displacement) {
-        increment.copy(this->_dof_manager.getSolution(dof_id), true);
+        increment.copy(this->dof_manager.getSolution(dof_id), true);
       } else {
-        increment.copy(this->_dof_manager.getDOFs(dof_id));
+        increment.copy(this->dof_manager.getDOFs(dof_id));
 
         for (auto && data : zip(make_view(increment, dof_array_comp),
                                 make_view(previous, dof_array_comp))) {
@@ -235,7 +234,7 @@ void TimeStepSolverDefault::assembleMatrix(const ID & matrix_id) {
     integration_scheme.assembleJacobian(solution_type, this->time_step);
   });
 
-  this->_dof_manager.applyBoundary("J");
+  this->dof_manager.applyBoundary("J");
 
   AKANTU_DEBUG_OUT();
 }

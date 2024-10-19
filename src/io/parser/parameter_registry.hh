@@ -74,6 +74,7 @@ public:
   void setAccessType(ParameterAccessType ptype);
 
   /* ------------------------------------------------------------------------ */
+  virtual std::string to_string() = 0;
   virtual void set(std::any value) = 0;
   virtual void setAuto(const ParserParameter & param);
   template <typename T> T & get();
@@ -117,6 +118,7 @@ public:
                  ParameterAccessType param_type, T & param);
 
   /* ------------------------------------------------------------------------ */
+  std::string to_string() override;
   void set(std::any value) override;
   void setAuto(const ParserParameter & value) override;
   T & getTyped();

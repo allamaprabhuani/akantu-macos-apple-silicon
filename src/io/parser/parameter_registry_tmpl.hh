@@ -153,6 +153,15 @@ template <typename T> inline void ParameterTyped<T>::set(std::any value) {
 }
 
 /* -------------------------------------------------------------------------- */
+template <typename T> inline std::string ParameterTyped<T>::to_string() {
+  if constexpr (std::is_same_v<std::string, T>)
+    return param;
+  else {
+    return std::to_string(param);
+  }
+}
+/* -------------------------------------------------------------------------- */
+
 template <typename T>
 inline void ParameterTyped<T>::setAuto(const ParserParameter & value) {
   Parameter::setAuto(value);
@@ -189,6 +198,12 @@ public:
   ParameterTyped(const std::string & name, const std::string & description,
                  ParameterAccessType param_type, Eigen::Matrix<T, m, n> & param)
       : Parameter(name, description, param_type), param(param) {}
+
+  std::string to_string() override {
+    std::stringstream sstr;
+    sstr << param;
+    return sstr.str();
+  }
 
   void set(std::any value) {
     param = std::any_cast<Eigen::Matrix<T, m, n>>(value);
@@ -243,15 +258,20 @@ private:
 };
 
 /* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
 template <typename T> class ParameterTyped<std::vector<T>> : public Parameter {
 public:
   ParameterTyped(const std::string & name, const std::string & description,
                  ParameterAccessType param_type, std::vector<T> & param)
       : Parameter(name, description, param_type), param(param) {}
 
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
+
+  std::string to_string() override {
+    std::stringstream sstr;
+    sstr << param;
+    return sstr.str();
+  }
+
   void set(std::any value) { param = value; }
   void setAuto(const ParserParameter & value) override {
     Parameter::setAuto(value);
@@ -291,8 +311,17 @@ public:
                  ParameterAccessType param_type, std::set<T> & param)
       : Parameter(name, description, param_type), param(param) {}
 
-  /* ------------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------------ */
+  std::string to_string() override {
+    std::stringstream sstr;
+    sstr << "set[";
+    for (auto && el : param) {
+      sstr << el << ",";
+    }
+    sstr << "]";
+    return sstr.str();
+  }
+
   void set(std::any value) { param = std::any_cast<std::set<T>>(value); }
   void setAuto(const ParserParameter & value) {
     Parameter::setAuto(value);
@@ -322,14 +351,16 @@ private:
   std::set<T> & param;
 };
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <>
 inline void ParameterTyped<bool>::printself(std::ostream & stream) const {
   Parameter::printself(stream);
   stream << std::boolalpha << param << "\n";
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename T>
 void ParameterRegistry::registerParam(const std::string & name, T & variable,
                                       ParameterAccessType type,
@@ -344,7 +375,8 @@ void ParameterRegistry::registerParam(const std::string & name, T & variable,
   params[name] = std::move(param);
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename T>
 void ParameterRegistry::registerParam(const std::string & name, T & variable,
                                       const T & default_value,
@@ -354,7 +386,8 @@ void ParameterRegistry::registerParam(const std::string & name, T & variable,
   registerParam(name, variable, type, description);
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename T> T & ParameterRegistry::get_(const std::string & name) {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -375,7 +408,8 @@ template <typename T> T & ParameterRegistry::get_(const std::string & name) {
   return param.get<T>();
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 const Parameter & ParameterRegistry::get(const std::string & name) const {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -396,7 +430,8 @@ const Parameter & ParameterRegistry::get(const std::string & name) const {
   return param;
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 Parameter & ParameterRegistry::get(const std::string & name) {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -417,7 +452,8 @@ Parameter & ParameterRegistry::get(const std::string & name) {
   return param;
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 namespace details {
   template <class T, class R, class Enable = void> struct CastHelper {
     static R convert(const T & /*unused*/) { throw std::bad_cast(); }

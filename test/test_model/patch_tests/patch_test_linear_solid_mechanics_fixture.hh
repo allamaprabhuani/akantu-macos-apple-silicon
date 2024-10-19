@@ -148,21 +148,34 @@ struct invalid_plan_stress<std::tuple<type, bool_c, DM>>
 using true_false =
     std::tuple<aka::bool_constant<true>, aka::bool_constant<false>>;
 
-using dof_managers = std::tuple<
+template <NonLinearSolverType _nls_type, SparseSolverType _ss_type>
+struct TestSolverOptions {
+  static constexpr NonLinearSolverType nls_type = _nls_type;
+  static constexpr SparseSolverType ss_type = _ss_type;
+};
+
+using solver_options = std::tuple<
+    std::tuple<DOFManagerDefault, TestSolverOptions<NonLinearSolverType::_auto,
+                                                    SparseSolverType::_eigen>>
 #ifdef AKANTU_USE_MUMPS
-    DOFManagerDefault
-#endif
-#if defined(AKANTU_USE_MUMPS) and defined(AKANTU_USE_PETSC)
     ,
+    std::tuple<DOFManagerDefault, TestSolverOptions<NonLinearSolverType::_auto,
+                                                    SparseSolverType::_mumps>>
 #endif
 #ifdef AKANTU_USE_PETSC
-    DOFManagerPETSc
+    ,
+    std::tuple<DOFManagerPETSc, TestSolverOptions<NonLinearSolverType::_auto,
+                                                  SparseSolverType::_petsc>>,
+    std::tuple<DOFManagerPETSc,
+               TestSolverOptions<NonLinearSolverType::_petsc_snes,
+                                 SparseSolverType::_petsc>>
 #endif
     >;
 template <typename T> using valid_types = aka::negation<invalid_plan_stress<T>>;
 
-using model_types = gtest_list_t<tuple_filter_t<
-    valid_types, cross_product_t<TestElementTypes, true_false, dof_managers>>>;
+using model_types = gtest_list_t<
+    tuple_filter_t<valid_types, cross_product_t<TestElementTypes, true_false,
+                                                solver_options>>>;
 
 TYPED_TEST_SUITE(TestPatchTestSMMLinear, model_types, );
 

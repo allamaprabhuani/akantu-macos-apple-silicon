@@ -78,13 +78,6 @@ ModelSolver::initDOFManager(const std::shared_ptr<DOFManager> & dof_manager) {
   // default without external solver activated at compilation same as mumps that
   // is the historical solver but with only the lumped solver
   ID solver_type = "default";
-
-#if defined(AKANTU_USE_MUMPS)
-  solver_type = "default";
-#elif defined(AKANTU_USE_PETSC)
-  solver_type = "petsc";
-#endif
-
   auto && [section, is_empty] = this->getParserSection();
 
   if (not is_empty) {

@@ -297,6 +297,9 @@ void DOFManagerPETSc::makeConsistentForPeriodicity(const ID & /*dof_id*/,
 NonLinearSolver & DOFManagerPETSc::getNewNonLinearSolver(
     const ID & id, const ModelSolverOptions & solver_options) {
   switch (solver_options.non_linear_solver_type) {
+  case NonLinearSolverType::_petsc_snes:
+    return this->registerNonLinearSolver<NonLinearSolverPETSc>(*this, id,
+                                                               solver_options);
   case NonLinearSolverType::_newton_raphson:
     /* FALLTHRU */
     /* [[fallthrough]]; un-comment when compiler will get it */

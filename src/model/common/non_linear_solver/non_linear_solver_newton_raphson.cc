@@ -75,7 +75,8 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
           aka::as_type<DOFManagerDefault>(dof_manager), "J",
           id + ":sparse_solver");
     } else {
-      AKANTU_EXCEPTION("Can only use MUMPS solver with DOFManageDefault");
+      AKANTU_EXCEPTION(
+          "Cannot use MUMPS sparse solver without a DOFManagerDefault");
     }
     break;
 #endif
@@ -85,7 +86,8 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
           aka::as_type<DOFManagerDefault>(dof_manager), "J",
           id + ":sparse_solver");
     } else {
-      AKANTU_EXCEPTION("Can only use EIGEN solver with DOFManageDefault");
+      AKANTU_EXCEPTION(
+          "Cannot use EIGEN sparse solver without a DOFManagerDefault");
     }
     break;
 #if defined(AKANTU_USE_PETSC)
@@ -95,7 +97,8 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
           aka::as_type<DOFManagerPETSc>(dof_manager), "J",
           id + ":sparse_solver");
     } else {
-      AKANTU_EXCEPTION("Can only use PETSc solver with DOFManagePETSc");
+      AKANTU_EXCEPTION(
+          "Cannot use PETSC sparse solver without a DOFManagerPETSc");
     }
     break;
 #endif
@@ -181,9 +184,8 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
             NonLinearSolverType::_newton_raphson_contact) {
       solver_callback.assembleMatrix("J");
     }
-
+    this->dof_manager.getMatrix("J").saveMatrix("J_computed_by_default.mtx");
     this->sparse_solver->solve();
-
     solver_callback.corrector();
 
     // EventManager::sendEvent(NonLinearSolver::AfterSparseSolve(method));

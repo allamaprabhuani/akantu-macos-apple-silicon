@@ -76,6 +76,11 @@ protected:
   std::unique_ptr<NonLinearSolverPETScCallback> ctx;
 
   Int n_iter{0};
+  Int max_iterations;
+  /// Type of convergence criteria
+  SolveConvergenceCriteria convergence_criteria_type;
+  /// convergence threshold
+  Real convergence_criteria;
 };
 
 namespace debug {

@@ -37,11 +37,16 @@
 
 using namespace akantu;
 
-template <typename element_type_, typename Model_, typename DOFManager_>
+template <typename element_type_, typename Model_, typename ModelOptions>
 class TestPatchTestLinear : public ::testing::Test {
 public:
   static constexpr ElementType type = element_type_::value;
   static constexpr Int dim = ElementClass<type>::getSpatialDimension();
+
+  using dof_manager_type = std::tuple_element_t<0, ModelOptions>;
+  using solver_options = std::tuple_element_t<1, ModelOptions>;
+  static constexpr NonLinearSolverType nls_type = solver_options::nls_type;
+  static constexpr SparseSolverType ss_type = solver_options::ss_type;
 
   void SetUp() override {
     mesh = std::make_unique<Mesh>(dim);
@@ -53,7 +58,7 @@ public:
         std::make_unique<Model_>(*mesh, _all_dimensions, std::to_string(type));
 
 #if defined(AKANTU_USE_PETSC)
-    if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
+    if constexpr (std::is_same_v<dof_manager_type, DOFManagerPETSc>) {
       model->initDOFManager("petsc");
     }
 #endif
@@ -68,14 +73,15 @@ public:
                          const std::string & material_file) {
     debug::setDebugLevel(dblError);
     getStaticParser().parse(material_file);
+
     this->model->initFull(
         _analysis_method = method,
-        _solver_options = ModelSolverOptions{.non_linear_solver_type =
-                                                 NonLinearSolverType::_auto});
+        _solver_options = ModelSolverOptions{.non_linear_solver_type = nls_type,
+                                             .sparse_solver_type = ss_type});
     this->applyBC();
 
 #if defined(AKANTU_USE_PETSC)
-    if constexpr (std::is_same_v<DOFManager_, DOFManagerPETSc>) {
+    if constexpr (std::is_same_v<dof_manager_type, DOFManagerPETSc>) {
       auto & solver = model->getNonLinearSolver();
 
       if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
