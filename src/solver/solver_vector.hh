@@ -60,6 +60,7 @@ public:
   Int release() const { return release_; }
 
   virtual void printself(std::ostream & stream, int indent = 0) const = 0;
+  virtual void print() { this->printself(std::cout); }
 
   virtual bool isFinite() const = 0;
 

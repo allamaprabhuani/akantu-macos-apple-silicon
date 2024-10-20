@@ -280,5 +280,6 @@ void SparseMatrixPETSc::addValues(const Vector<Int> & rows,
 }
 
 /* -------------------------------------------------------------------------- */
+void PetscPrint(Mat x) { MatView(x, PETSC_VIEWER_STDOUT_WORLD); }
 
 } // namespace akantu

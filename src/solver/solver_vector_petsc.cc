@@ -259,12 +259,14 @@ SolverVector & SolverVectorPETSc::operator+(const SolverVector & y) {
   release_ = y_.release_;
   return *this;
 }
-
+/* -------------------------------------------------------------------------- */
 bool SolverVectorPETSc::isFinite() const {
   Real max, min;
   VecMax(x, PETSC_NULLPTR, &max);
   VecMin(x, PETSC_NULLPTR, &min);
   return std::isfinite(min) and std::isfinite(max);
 }
+/* -------------------------------------------------------------------------- */
+void PetscPrint(Vec x) { VecView(x, PETSC_VIEWER_STDOUT_WORLD); }
 
 } // namespace akantu

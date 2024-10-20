@@ -201,6 +201,8 @@ namespace internal {
 
 } // namespace internal
 
+void PetscPrint(Vec x);
+
 } // namespace akantu
 
 #endif /* AKANTU_SOLVER_VECTOR_PETSC_HH_ */

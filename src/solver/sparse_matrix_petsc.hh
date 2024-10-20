@@ -143,6 +143,8 @@ protected:
   Int release{0};
 };
 
+void PetscPrint(Mat x);
+
 } // namespace akantu
 
 #endif /* AKANTU_PETSC_MATRIX_HH_ */
