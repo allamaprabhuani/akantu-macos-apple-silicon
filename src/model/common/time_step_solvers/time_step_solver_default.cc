@@ -206,9 +206,9 @@ void TimeStepSolverDefault::corrector() {
       } else {
         increment.copy(this->dof_manager.getDOFs(dof_id));
 
-        for (auto && data : zip(make_view(increment, dof_array_comp),
-                                make_view(previous, dof_array_comp))) {
-          std::get<0>(data) -= std::get<1>(data);
+        for (auto && [inc, prev] : zip(make_view(increment, dof_array_comp),
+                                       make_view(previous, dof_array_comp))) {
+          inc -= prev;
         }
       }
     }
