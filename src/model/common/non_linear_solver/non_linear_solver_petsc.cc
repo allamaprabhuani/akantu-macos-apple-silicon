@@ -84,79 +84,79 @@ NonLinearSolverPETSc::NonLinearSolverPETSc(
 NonLinearSolverPETSc::~NonLinearSolverPETSc() { SNESDestroy(&snes); }
 
 /* -------------------------------------------------------------------------- */
-class NonLinearSolverPETScCallback {
-public:
-  NonLinearSolverPETScCallback(DOFManagerPETSc & dof_manager, SNES snes,
-                               SolverVectorPETSc & x)
-      : dof_manager(dof_manager), snes(snes), x_prev(x, "previous solution") {}
 
-  void corrector(Vec & x) {
-    PetscInt iteration;
-    SNESGetIterationNumber(snes, &iteration);
+void NonLinearSolverPETSc::saveSolution() { AKANTU_TO_IMPLEMENT(); }
 
-    VecView(x, PETSC_VIEWER_STDOUT_WORLD);
+/* -------------------------------------------------------------------------- */
 
-    if (prev_iteration == iteration) {
-      return;
-    }
+void NonLinearSolverPETSc::restoreSolution() { AKANTU_TO_IMPLEMENT(); }
 
-    prev_iteration = iteration;
+/* -------------------------------------------------------------------------- */
 
-    auto & dx = dof_manager._getSolution();
-    VecWAXPY(dx, -1., x_prev, x); // w = alpha x + y.
-    VecView(aka::as_type<SolverVectorPETSc>(dx), PETSC_VIEWER_STDOUT_WORLD);
-    VecView(x, PETSC_VIEWER_STDOUT_WORLD);
+void NonLinearSolverPETSc::corrector(Vec & x) {
+  PetscInt iteration;
+  SNESGetIterationNumber(snes, &iteration);
 
-    dof_manager.splitSolutionPerDOFs();
-
-    callback->corrector();
-
-    VecCopy(x, x_prev);
+  if (prev_iteration == iteration) {
+    return;
   }
 
-  void assembleResidual(Vec x) {
-    corrector(x);
-    callback->assembleResidual();
-    VecView(x, PETSC_VIEWER_STDOUT_WORLD);
+  prev_iteration = iteration;
 
-    VecView(aka::as_type<SolverVectorPETSc>(this->dof_manager.getSolution()),
-            PETSC_VIEWER_STDOUT_WORLD);
-    VecView(aka::as_type<SolverVectorPETSc>(this->dof_manager.getResidual()),
-            PETSC_VIEWER_STDOUT_WORLD);
+  auto & dx = aka::as_type<DOFManagerPETSc>(dof_manager)._getSolution();
+  VecWAXPY(dx, -1., *solution_prev, x); // w = alpha x + y.
+
+  auto & solution =
+      dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
+
+  VecCopy(solution, *solution_prev);
+  VecCopy(dx, solution);
+  dof_manager.splitSolutionPerDOFs();
+  callback->corrector();
+  VecCopy(*solution_prev, solution);
+}
+
+void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
+  //  saveSolution();
+  corrector(x);
+  auto & residual =
+      dynamic_cast<SolverVectorPETSc &>(dof_manager.getResidual());
+
+  VecCopy(residual, *residual_prev);
+  callback->assembleResidual();
+  if (residual.getVec() != f) {
+    VecCopy(residual, f);
+    VecCopy(*residual_prev, residual);
   }
+  std::cout << "x= ";
+  PetscPrint(x);
+  std::cout << " f = ";
+  PetscPrint(f);
+  std::cout << std::endl;
 
-  void assembleJacobian(Vec x) {
-    // corrector(x);
-    callback->assembleMatrix("J");
-    MatView(aka::as_type<SparseMatrixPETSc>(this->dof_manager.getMatrix("J")),
-            PETSC_VIEWER_STDOUT_WORLD);
-  }
+  //  restoreSolution();
+}
 
-  void reset() { prev_iteration = -1; }
+void NonLinearSolverPETSc::assembleJacobian(Vec x) {
+  corrector(x);
+  callback->assembleMatrix("J");
+}
 
-  void setInitialSolution(SolverVectorPETSc & x) { VecCopy(x, x_prev); }
+// void NonLinearSolverPETSc::reset() { prev_iteration = -1; }
 
-  void setCallback(SolverCallback & callback) { this->callback = &callback; }
+// void NonLinearSolverPETSc::setInitialSolution(SolverVectorPETSc & x) {
+//   VecCopy(x, x_prev);
+// }
 
-private:
-  SolverCallback * callback;
-  DOFManagerPETSc & dof_manager;
-  SNES snes;
-
-  // SolverVectorPETSc & x;
-  SolverVectorPETSc x_prev;
-  PetscInt prev_iteration{-1};
-}; // namespace akantu
+// void NonLinearSolverPETSc::setCallback(SolverCallback & callback) {
+//   this->callback = &callback;
+// }
 
 /* -------------------------------------------------------------------------- */
 PetscErrorCode NonLinearSolverPETSc::FormFunction(SNES /*snes*/, Vec x, Vec f,
                                                   void * ctx) {
-  VecView(f, PETSC_VIEWER_STDOUT_WORLD);
-
-  auto * _this = reinterpret_cast<NonLinearSolverPETScCallback *>(ctx);
-  _this->assembleResidual(x);
-
-  VecView(f, PETSC_VIEWER_STDOUT_WORLD);
+  auto * _this = reinterpret_cast<NonLinearSolverPETSc *>(ctx);
+  _this->assembleResidual(x, f);
 
   return 0;
 }
@@ -165,7 +165,7 @@ PetscErrorCode NonLinearSolverPETSc::FormFunction(SNES /*snes*/, Vec x, Vec f,
 PetscErrorCode NonLinearSolverPETSc::FormJacobian(SNES /*snes*/, Vec x,
                                                   Mat /*J*/, Mat /*P*/,
                                                   void * ctx) {
-  auto * _this = reinterpret_cast<NonLinearSolverPETScCallback *>(ctx);
+  auto * _this = reinterpret_cast<NonLinearSolverPETSc *>(ctx);
   _this->assembleJacobian(x);
   return 0;
 }
@@ -182,39 +182,33 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
 
   if (not x) {
     x = std::make_unique<SolverVectorPETSc>(global_x, "temporary_solution");
+    solution_prev =
+        std::make_unique<SolverVectorPETSc>(global_x, "previous_solution");
+    residual_prev =
+        std::make_unique<SolverVectorPETSc>(global_x, "previous_residual");
   }
 
   *x = global_x;
 
-  if (not ctx) {
-    ctx = std::make_unique<NonLinearSolverPETScCallback>(
-        dynamic_cast<DOFManagerPETSc &>(dof_manager), snes, *x);
-  } else {
-    ctx->reset();
-  }
+  // this->reset();
+  prev_iteration = -1;
 
-  ctx->setCallback(callback);
-  ctx->setInitialSolution(global_x);
+  // this->setCallback(callback);
+  this->callback = &callback;
+
+  // this->setInitialSolution(global_x);
+  VecCopy(*x, *solution_prev);
 
   auto & rhs = aka::as_type<SolverVectorPETSc>(dof_manager.getResidual());
   auto & J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
 
-  SNESSetFunction(snes, rhs, NonLinearSolverPETSc::FormFunction, ctx.get());
-  SNESSetJacobian(snes, J, J, NonLinearSolverPETSc::FormJacobian, ctx.get());
+  SNESSetFunction(snes, rhs, NonLinearSolverPETSc::FormFunction, this);
+  SNESSetJacobian(snes, J, J, NonLinearSolverPETSc::FormJacobian, this);
 
   rhs.zero();
 
   callback.predictor();
   //  callback.assembleResidual();
-
-  VecView(aka::as_type<SolverVectorPETSc>(this->dof_manager.getSolution()),
-          PETSC_VIEWER_STDOUT_WORLD);
-  VecView(aka::as_type<SolverVectorPETSc>(this->dof_manager.getResidual()),
-          PETSC_VIEWER_STDOUT_WORLD);
-
-  auto & e = aka::as_type<SolverVectorPETSc>(*x);
-  VecView(*x, PETSC_VIEWER_STDOUT_WORLD);
-
   SNESView(snes, PETSC_VIEWER_STDOUT_WORLD);
 
   SNESSolve(snes, nullptr, *x);
@@ -222,8 +216,6 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
   SNESGetIterationNumber(snes, &n_iter);
 
   VecAXPY(global_x, -1.0, *x);
-  VecView(*x, PETSC_VIEWER_STDOUT_WORLD);
-  VecView(global_x, PETSC_VIEWER_STDOUT_WORLD);
   dof_manager.splitSolutionPerDOFs();
   callback.corrector();
 
