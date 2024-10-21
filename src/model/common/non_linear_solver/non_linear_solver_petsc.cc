@@ -97,17 +97,22 @@ void NonLinearSolverPETSc::corrector(Vec & x) {
   PetscInt iteration;
   SNESGetIterationNumber(snes, &iteration);
 
-  if (prev_iteration == iteration) {
-    return;
-  }
+  // if (prev_iteration == iteration) {
+  //   return;
+  // }
 
   prev_iteration = iteration;
 
-  auto & dx = aka::as_type<DOFManagerPETSc>(dof_manager)._getSolution();
+  SolverVectorPETSc dx(*this->x, "dx");
   VecWAXPY(dx, -1., *solution_prev, x); // w = alpha x + y.
 
-  auto & solution =
-      dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
+  std::cout << "x= ";
+  PetscPrint(x);
+  std::cout << std::endl;
+  std::cout << "solution_prev= " << *solution_prev << std::endl;
+  std::cout << "dx= " << dx << std::endl;
+
+  auto & solution = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
 
   VecCopy(solution, *solution_prev);
   VecCopy(dx, solution);
@@ -122,7 +127,9 @@ void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
   auto & residual =
       dynamic_cast<SolverVectorPETSc &>(dof_manager.getResidual());
 
-  VecCopy(residual, *residual_prev);
+  if (residual.getVec() != f) {
+    VecCopy(residual, *residual_prev);
+  }
   callback->assembleResidual();
   if (residual.getVec() != f) {
     VecCopy(residual, f);
@@ -138,8 +145,9 @@ void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
 }
 
 void NonLinearSolverPETSc::assembleJacobian(Vec x) {
-  corrector(x);
+  // corrector(x);
   callback->assembleMatrix("J");
+  PetscPrint(aka::as_type<SparseMatrixPETSc>(this->dof_manager.getMatrix("J")));
 }
 
 // void NonLinearSolverPETSc::reset() { prev_iteration = -1; }
@@ -162,11 +170,22 @@ PetscErrorCode NonLinearSolverPETSc::FormFunction(SNES /*snes*/, Vec x, Vec f,
 }
 
 /* -------------------------------------------------------------------------- */
-PetscErrorCode NonLinearSolverPETSc::FormJacobian(SNES /*snes*/, Vec x,
-                                                  Mat /*J*/, Mat /*P*/,
-                                                  void * ctx) {
+PetscErrorCode NonLinearSolverPETSc::FormJacobian(SNES /*snes*/, Vec x, Mat J,
+                                                  Mat P, void * ctx) {
+  std::cout << "J= ";
+  PetscPrint(J);
+  std::cout << std::endl;
+  std::cout << "P= ";
+  PetscPrint(P);
+  std::cout << std::endl;
   auto * _this = reinterpret_cast<NonLinearSolverPETSc *>(ctx);
   _this->assembleJacobian(x);
+  std::cout << "Jafter= ";
+  PetscPrint(J);
+  std::cout << std::endl;
+  std::cout << "Pafter= ";
+  PetscPrint(P);
+  std::cout << std::endl;
   return 0;
 }
 
