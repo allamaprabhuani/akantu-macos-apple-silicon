@@ -19,22 +19,19 @@
 #
 #===============================================================================
 
-
-set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "" FORCE)
-
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.30)
-  package_declare(Boost EXTERNAL
-    NOT_OPTIONAL
-    DESCRIPTION "Package handling boost components"
-    EXTRA_PACKAGE_OPTIONS TARGET Boost::boost ARGS CONFIG
-  )
+  cmake_policy(SET CMP0167 NEW)
+  set(Boost_NO_BOOST_CMAKE OFF CACHE BOOL "" FORCE)
 else()
-  package_declare(Boost EXTERNAL
-    NOT_OPTIONAL
-    DESCRIPTION "Package handling boost components"
-    EXTRA_PACKAGE_OPTIONS TARGET Boost::headers
-  )
+  set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "" FORCE)
 endif()
+
+package_declare(Boost EXTERNAL
+  NOT_OPTIONAL
+  DESCRIPTION "Package handling boost components"
+  EXTRA_PACKAGE_OPTIONS TARGET Boost::headers
+)
+
 
 mask_package_options(Boost)
 mark_as_advanced(AKANTU_USE_BOOST)

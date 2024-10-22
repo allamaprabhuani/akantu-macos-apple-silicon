@@ -39,6 +39,10 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 cmake_policy(SET CMP0074 NEW)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.30)
+  # FindBOOST deprecated to old due to manylinux build
+  cmake_policy(SET CMP0167 OLD)
+endif()
 
 set(AKANTU_COPYRIGHT "2010-2021, EPFL (Ecole Polytechnique Fédérale de Lausanne) Laboratory (LSMS - Laboratoire de Simulation en Mécanique des Solides)")
 set(AKANTU_MAINTAINER "Nicolas Richart")
