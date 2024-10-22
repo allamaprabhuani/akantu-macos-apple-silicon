@@ -39,9 +39,8 @@ SparseMatrixPETSc::SparseMatrixPETSc(DOFManagerPETSc & dof_manager,
   MatCreate(mpi_comm, &mat);
   detail::PETScSetName(mat, id);
 
-  resize();
-
   MatSetFromOptions(mat);
+  resize();
 
   MatSetUp(mat);
 
