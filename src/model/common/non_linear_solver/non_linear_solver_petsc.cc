@@ -103,22 +103,28 @@ void NonLinearSolverPETSc::corrector(Vec & x) {
 
   prev_iteration = iteration;
 
-  SolverVectorPETSc dx(*this->x, "dx");
-  VecWAXPY(dx, -1., *solution_prev, x); // w = alpha x + y.
+  // SolverVectorPETSc dx(*this->x, "dx");
+  // VecWAXPY(dx, -1., *solution_prev, x); // w = alpha x + y.
 
-  std::cout << "x= ";
-  PetscPrint(x);
-  std::cout << std::endl;
-  std::cout << "solution_prev= " << *solution_prev << std::endl;
-  std::cout << "dx= " << dx << std::endl;
+  // std::cout << "x= ";
+  // PetscPrint(x);
+  // std::cout << std::endl;
+  // std::cout << "solution_prev= " << *solution_prev << std::endl;
+  // std::cout << "dx= " << dx << std::endl;
 
   auto & solution = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
 
-  VecCopy(solution, *solution_prev);
-  VecCopy(dx, solution);
+  // VecCopy(solution, *solution_prev);
+  // VecCopy(dx, solution);
+  if (x != solution.getVec())
+    VecCopy(x, solution);
+
   dof_manager.splitSolutionPerDOFs();
+  auto & model_x = this->dof_manager.getDOFs("displacement");
+
+  callback->restoreLastConvergedStep();
   callback->corrector();
-  VecCopy(*solution_prev, solution);
+  //  VecCopy(*solution_prev, solution);
 }
 
 void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
@@ -127,13 +133,24 @@ void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
   auto & residual =
       dynamic_cast<SolverVectorPETSc &>(dof_manager.getResidual());
 
-  if (residual.getVec() != f) {
-    VecCopy(residual, *residual_prev);
-  }
+  // if (residual.getVec() != f) {
+  //   VecCopy(residual, *residual_prev);
+  // }
   callback->assembleResidual();
+
+  const auto & blocked_dofs = this->dof_manager.getGlobalBlockedDOFsIndexes();
+
+  std::vector<Real> zeros_to_set(blocked_dofs.size());
+
+  VecSetValuesLocal(residual, blocked_dofs.size(), blocked_dofs.data(),
+                    zeros_to_set.data(), INSERT_VALUES);
+
+  // for PETSc F is -akantu::residual
+  VecScale(residual, -1);
+
   if (residual.getVec() != f) {
     VecCopy(residual, f);
-    VecCopy(*residual_prev, residual);
+    //    VecCopy(*residual_prev, residual);
   }
   std::cout << "x= ";
   PetscPrint(x);
@@ -234,8 +251,9 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
   SNESGetConvergedReason(snes, &reason);
   SNESGetIterationNumber(snes, &n_iter);
 
-  VecAXPY(global_x, -1.0, *x);
+  auto & model_x = this->dof_manager.getDOFs("displacement");
   dof_manager.splitSolutionPerDOFs();
+  callback.restoreLastConvergedStep();
   callback.corrector();
 
   bool converged = reason >= 0;
