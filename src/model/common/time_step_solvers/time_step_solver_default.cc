@@ -290,11 +290,17 @@ void TimeStepSolverDefault::beforeSolveStep() {
 }
 
 /* -------------------------------------------------------------------------- */
+void TimeStepSolverDefault::restoreLastConvergedStep() {
+  for_each_integrator([&](auto && /*unused*/, auto && integration_scheme) {
+    integration_scheme.restore();
+  });
+}
+/* -------------------------------------------------------------------------- */
+
 void TimeStepSolverDefault::afterSolveStep(bool converged) {
+
   if (not converged) {
-    for_each_integrator([&](auto && /*unused*/, auto && integration_scheme) {
-      integration_scheme.restore();
-    });
+    restoreLastConvergedStep();
   }
 
   TimeStepSolver::afterSolveStep(converged);

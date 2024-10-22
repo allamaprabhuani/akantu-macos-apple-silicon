@@ -92,6 +92,7 @@ public:
   /* ------------------------------------------------------------------------ */
   virtual void beforeSolveStep() {}
   virtual void afterSolveStep(bool /*converged*/ = true) {}
+  virtual void restoreLastConvergedStep() {}
 
   [[nodiscard]] DOFManager & getSCDOFManager() { return *sc_dof_manager; }
 
