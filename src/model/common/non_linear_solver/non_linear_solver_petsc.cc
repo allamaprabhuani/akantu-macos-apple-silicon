@@ -40,19 +40,8 @@ NonLinearSolverPETSc::NonLinearSolverPETSc(
     AKANTU_EXCEPTION(
         "petsc non linear solver works only with petsc sparse solver");
 
-  // std::unordered_map<NonLinearSolverType, SNESType>
-  //     petsc_non_linear_solver_types{
-  //         {NonLinearSolverType::_newton_raphson, SNESNEWTONLS},
-  //         {NonLinearSolverType::_linear, SNESKSPONLY},
-  //         {NonLinearSolverType::_gmres, SNESNGMRES},
-  //         {NonLinearSolverType::_bfgs, SNESQN},
-  //         {NonLinearSolverType::_cg, SNESNCG}};
-
   this->has_internal_set_param = true;
 
-  // for (const auto & pair : petsc_non_linear_solver_types) {
-  //   supported_type.insert(pair.first);
-  // }
   supported_type.insert(NonLinearSolverType::_petsc_snes);
 
   this->checkIfTypeIsSupported();
@@ -61,12 +50,7 @@ NonLinearSolverPETSc::NonLinearSolverPETSc(
 
   SNESCreate(mpi_comm, &snes);
 
-  // auto it = petsc_non_linear_solver_types.find(non_linear_solver_type);
-  // if (it != petsc_non_linear_solver_types.end()) {
-  //   SNESSetType(snes, it->second);
-  // }
   SNESSetType(snes, SNESNEWTONLS);
-
   SNESSetFromOptions(snes);
 
   this->registerParam("max_iterations", max_iterations, 10, _pat_parsmod,
@@ -93,55 +77,28 @@ void NonLinearSolverPETSc::restoreSolution() { AKANTU_TO_IMPLEMENT(); }
 
 /* -------------------------------------------------------------------------- */
 
-void NonLinearSolverPETSc::corrector(Vec & x) {
-  PetscInt iteration;
-  SNESGetIterationNumber(snes, &iteration);
-
-  // if (prev_iteration == iteration) {
-  //   return;
-  // }
-
-  prev_iteration = iteration;
-
-  // SolverVectorPETSc dx(*this->x, "dx");
-  // VecWAXPY(dx, -1., *solution_prev, x); // w = alpha x + y.
-
-  // std::cout << "x= ";
-  // PetscPrint(x);
-  // std::cout << std::endl;
-  // std::cout << "solution_prev= " << *solution_prev << std::endl;
-  // std::cout << "dx= " << dx << std::endl;
+void NonLinearSolverPETSc::corrector(Vec x) {
 
   auto & solution = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
-
-  // VecCopy(solution, *solution_prev);
-  // VecCopy(dx, solution);
   if (x != solution.getVec())
     VecCopy(x, solution);
 
   dof_manager.splitSolutionPerDOFs();
-  auto & model_x = this->dof_manager.getDOFs("displacement");
-
   callback->restoreLastConvergedStep();
   callback->corrector();
-  //  VecCopy(*solution_prev, solution);
 }
 
+/* -------------------------------------------------------------------------- */
+
 void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
-  //  saveSolution();
   corrector(x);
   auto & residual =
       dynamic_cast<SolverVectorPETSc &>(dof_manager.getResidual());
 
-  // if (residual.getVec() != f) {
-  //   VecCopy(residual, *residual_prev);
-  // }
   callback->assembleResidual();
 
   const auto & blocked_dofs = this->dof_manager.getGlobalBlockedDOFsIndexes();
-
   std::vector<Real> zeros_to_set(blocked_dofs.size());
-
   VecSetValuesLocal(residual, blocked_dofs.size(), blocked_dofs.data(),
                     zeros_to_set.data(), INSERT_VALUES);
 
@@ -150,59 +107,32 @@ void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
 
   if (residual.getVec() != f) {
     VecCopy(residual, f);
-    //    VecCopy(*residual_prev, residual);
   }
-  std::cout << "x= ";
-  PetscPrint(x);
-  std::cout << " f = ";
-  PetscPrint(f);
-  std::cout << std::endl;
-
-  //  restoreSolution();
 }
-
-void NonLinearSolverPETSc::assembleJacobian(Vec x) {
-  // corrector(x);
-  callback->assembleMatrix("J");
-  PetscPrint(aka::as_type<SparseMatrixPETSc>(this->dof_manager.getMatrix("J")));
-}
-
-// void NonLinearSolverPETSc::reset() { prev_iteration = -1; }
-
-// void NonLinearSolverPETSc::setInitialSolution(SolverVectorPETSc & x) {
-//   VecCopy(x, x_prev);
-// }
-
-// void NonLinearSolverPETSc::setCallback(SolverCallback & callback) {
-//   this->callback = &callback;
-// }
 
 /* -------------------------------------------------------------------------- */
+
+void NonLinearSolverPETSc::assembleJacobian(Vec x, Mat J) {
+  corrector(x);
+  callback->assembleMatrix("J");
+  auto & _J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
+  if (_J.getMat() != J) {
+    MatCopy(_J, J, SAME_NONZERO_PATTERN);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+
 PetscErrorCode NonLinearSolverPETSc::FormFunction(SNES /*snes*/, Vec x, Vec f,
                                                   void * ctx) {
-  auto * _this = reinterpret_cast<NonLinearSolverPETSc *>(ctx);
-  _this->assembleResidual(x, f);
-
+  reinterpret_cast<NonLinearSolverPETSc *>(ctx)->assembleResidual(x, f);
   return 0;
 }
 
 /* -------------------------------------------------------------------------- */
 PetscErrorCode NonLinearSolverPETSc::FormJacobian(SNES /*snes*/, Vec x, Mat J,
-                                                  Mat P, void * ctx) {
-  std::cout << "J= ";
-  PetscPrint(J);
-  std::cout << std::endl;
-  std::cout << "P= ";
-  PetscPrint(P);
-  std::cout << std::endl;
-  auto * _this = reinterpret_cast<NonLinearSolverPETSc *>(ctx);
-  _this->assembleJacobian(x);
-  std::cout << "Jafter= ";
-  PetscPrint(J);
-  std::cout << std::endl;
-  std::cout << "Pafter= ";
-  PetscPrint(P);
-  std::cout << std::endl;
+                                                  Mat /*P*/, void * ctx) {
+  reinterpret_cast<NonLinearSolverPETSc *>(ctx)->assembleJacobian(x, J);
   return 0;
 }
 
@@ -212,46 +142,28 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
   this->dof_manager.updateGlobalBlockedDofs();
 
   callback.assembleMatrix("J");
-  auto & global_x =
-      dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
-  global_x.zero();
+  auto & x = dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
+  x.zero();
 
-  if (not x) {
-    x = std::make_unique<SolverVectorPETSc>(global_x, "temporary_solution");
-    solution_prev =
-        std::make_unique<SolverVectorPETSc>(global_x, "previous_solution");
-    residual_prev =
-        std::make_unique<SolverVectorPETSc>(global_x, "previous_residual");
-  }
-
-  *x = global_x;
-
-  // this->reset();
-  prev_iteration = -1;
-
-  // this->setCallback(callback);
   this->callback = &callback;
 
-  // this->setInitialSolution(global_x);
-  VecCopy(*x, *solution_prev);
-
   auto & rhs = aka::as_type<SolverVectorPETSc>(dof_manager.getResidual());
+  rhs.zero();
+
   auto & J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
 
   SNESSetFunction(snes, rhs, NonLinearSolverPETSc::FormFunction, this);
   SNESSetJacobian(snes, J, J, NonLinearSolverPETSc::FormJacobian, this);
 
-  rhs.zero();
-
   callback.predictor();
-  //  callback.assembleResidual();
-  SNESView(snes, PETSC_VIEWER_STDOUT_WORLD);
 
-  SNESSolve(snes, nullptr, *x);
+  // SNESView(snes, PETSC_VIEWER_STDOUT_WORLD);
+  SNESSolve(snes, nullptr, x);
   SNESGetConvergedReason(snes, &reason);
   SNESGetIterationNumber(snes, &n_iter);
 
-  auto & model_x = this->dof_manager.getDOFs("displacement");
+  // access the model solution counter part: only for debug
+  // auto & model_x = this->dof_manager.getDOFs("displacement");
   dof_manager.splitSolutionPerDOFs();
   callback.restoreLastConvergedStep();
   callback.corrector();

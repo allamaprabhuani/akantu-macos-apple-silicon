@@ -64,9 +64,9 @@ protected:
   static PetscErrorCode FormJacobian(SNES snes, Vec dx, Mat J, Mat P,
                                      void * ctx);
 
-  void corrector(Vec & x);
+  void corrector(Vec x);
   void assembleResidual(Vec x, Vec f);
-  void assembleJacobian(Vec x);
+  void assembleJacobian(Vec x, Mat J);
   void updateInternalParameters() override;
 
   void saveSolution();
@@ -79,8 +79,6 @@ protected:
   SolverCallback * callback{nullptr};
 
   std::unique_ptr<SolverVectorPETSc> x;
-  std::unique_ptr<SolverVectorPETSc> solution_prev;
-  std::unique_ptr<SolverVectorPETSc> residual_prev;
 
   Int n_iter{0};
   Int max_iterations;
@@ -88,8 +86,6 @@ protected:
   SolveConvergenceCriteria convergence_criteria_type;
   /// convergence threshold
   Real convergence_criteria;
-  // save previous iteration
-  PetscInt prev_iteration{-1};
 };
 
 namespace debug {
