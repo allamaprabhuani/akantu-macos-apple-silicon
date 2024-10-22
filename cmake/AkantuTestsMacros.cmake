@@ -448,6 +448,9 @@ function(register_test test_name)
               ${PROJECT_BINARY_DIR}/src
               ${_register_test_INCLUDE_DIRECTORIES})
 
+    set_property(TARGET ${test_name} PROPERTY JOB_POOL_COMPILE akantu_compile_test)
+    set_property(TARGET ${test_name} PROPERTY JOB_POOL_LINK akantu_link_test)
+
     if(NOT _register_test_HEADER_ONLY)
       target_link_libraries(${test_name} PRIVATE akantu ${_register_test_LINK_LIBRARIES})
     else()
