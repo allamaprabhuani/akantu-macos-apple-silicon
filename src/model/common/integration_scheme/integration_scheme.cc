@@ -59,9 +59,7 @@ std::istream & operator>>(std::istream & stream,
 
 /* -------------------------------------------------------------------------- */
 void IntegrationScheme::store() {
-  for (auto data : enumerate(u_store)) {
-    auto o = std::get<0>(data);
-    auto & u_store = std::get<1>(data);
+  for (auto && [o, u_store] : enumerate(u_store)) {
     auto & u_o = dof_manager.getDOFsDerivatives(dof_id, o);
     if (not u_store) {
       u_store = std::make_unique<Array<Real>>(
@@ -74,7 +72,7 @@ void IntegrationScheme::store() {
 
 /* -------------------------------------------------------------------------- */
 void IntegrationScheme::restore() {
-  for (auto o : arange(order)) {
+  for (auto o : arange(order + 1)) {
     auto & u_o = dof_manager.getDOFsDerivatives(dof_id, o);
     u_o.copy(*u_store[o]);
   }
