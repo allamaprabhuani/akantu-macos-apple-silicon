@@ -24,7 +24,7 @@ package_declare(implicit META
   DESCRIPTION "Add support for implicit time scheme")
 
 
-set(AKANTU_IMPLICIT_SOLVER "Mumps"
+set(AKANTU_IMPLICIT_SOLVER "Mumps+PETSc"
   CACHE STRING "Solver activated in Akantu")
 
 set_property(CACHE AKANTU_IMPLICIT_SOLVER PROPERTY STRINGS
