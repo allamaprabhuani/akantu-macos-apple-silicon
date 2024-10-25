@@ -82,6 +82,8 @@ private:
 
   // energy split
   std::shared_ptr<EnergySplit> energy_split{nullptr};
+
+  bool non_linear;
 };
 
 } // namespace akantu

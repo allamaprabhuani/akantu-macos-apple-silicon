@@ -13,6 +13,8 @@ PhaseFieldLinear<dim>::PhaseFieldLinear(PhaseFieldModel & model, const ID & id)
                 _pat_parsable | _pat_readable, "Irreversibility tolerance");
   registerParam("recovery_tol", tol_rec, Real(1e-2),
                 _pat_parsable | _pat_readable, "Recovery tolerance");
+  registerParam("non_linear", non_linear, true, _pat_parsable | _pat_readable,
+                "Non linear assembly");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -96,18 +98,24 @@ void PhaseFieldLinear<dim>::computeDrivingForce(ElementType el_type,
     auto & g_c_quad = std::get<7>(tuple);
     auto & dam_prev_quad = std::get<8>(tuple);
 
-    computeDamageEnergyDensityOnQuad(phi_quad, dam_energy_density_quad);
-    Real penalization_ir =
-        this->gamma * std::min(Real(0.), dam_on_quad - dam_prev_quad);
-    Real penalization_rec = this->rho_rec * std::min(Real(0.), dam_on_quad);
+    if (non_linear) {
+      computeDamageEnergyDensityOnQuad(phi_quad, dam_energy_density_quad);
+      Real penalization_ir =
+          this->gamma * std::min(Real(0.), dam_on_quad - dam_prev_quad);
+      Real penalization_rec = this->rho_rec * std::min(Real(0.), dam_on_quad);
 
-    driving_force_quad = dam_on_quad * dam_energy_density_quad - 2 * phi_quad +
-                         3 * g_c_quad / (8 * this->l0) + penalization_ir +
-                         penalization_rec;
-    driving_energy_quad = damage_energy_quad * gradd_quad;
+      driving_force_quad = dam_on_quad * dam_energy_density_quad -
+                           2 * phi_quad + 3 * g_c_quad / (8 * this->l0) +
+                           penalization_ir + penalization_rec;
+      driving_energy_quad = damage_energy_quad * gradd_quad;
 
-    dam_energy_density_quad += this->gamma * (dam_on_quad < dam_prev_quad);
-    dam_energy_density_quad += this->rho_rec * (dam_on_quad < 0);
+      dam_energy_density_quad += this->gamma * (dam_on_quad < dam_prev_quad);
+      dam_energy_density_quad += this->rho_rec * (dam_on_quad < 0);
+    } else {
+      computeDamageEnergyDensityOnQuad(phi_quad, dam_energy_density_quad);
+      driving_force_quad = -2 * phi_quad + 3 * g_c_quad / (8 * this->l0);
+      driving_energy_quad = 0 * gradd_quad;
+    }
   }
 }
 
