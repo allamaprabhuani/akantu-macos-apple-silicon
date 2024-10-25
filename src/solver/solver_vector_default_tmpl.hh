@@ -51,8 +51,7 @@ SolverVectorArrayTmpl<Array_>::operator+(const SolverVector & y) {
 
 /* -------------------------------------------------------------------------- */
 template <class Array_>
-SolverVector &
-SolverVectorArrayTmpl<Array_>::copy(const SolverVector & y) {
+SolverVector & SolverVectorArrayTmpl<Array_>::copy(const SolverVector & y) {
   const auto & y_ = aka::as_type<SolverVectorArray>(y);
   this->vector.copy(y_.getVector());
 

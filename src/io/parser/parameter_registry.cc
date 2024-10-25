@@ -133,4 +133,23 @@ void ParameterRegistry::setParameterAccessType(const std::string & name,
   param.setAccessType(ptype);
 }
 
+/* -------------------------------------------------------------------------- */
+void ParameterRegistry::set(const std::string & name, std::any value) {
+  auto it = params.find(name);
+  if (it == params.end()) {
+    if (consisder_sub) {
+      for (auto && [_, registry] : sub_registries) {
+        registry.get().set(name, value);
+      }
+    } else {
+      AKANTU_CUSTOM_EXCEPTION(debug::ParameterUnexistingException(name, *this));
+    }
+  } else {
+    Parameter & param = *(it->second);
+    param.set(value);
+  }
+  updateInternalParameters();
+}
+/* -------------------------------------------------------------------------- */
+
 } // namespace akantu

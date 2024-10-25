@@ -49,7 +49,11 @@ DOFManager::DOFManager(Mesh & mesh, const ID & id)
 }
 
 /* -------------------------------------------------------------------------- */
-DOFManager::~DOFManager() = default;
+DOFManager::~DOFManager() {
+  if (this->mesh) {
+    this->mesh->unregisterEventHandler(*this);
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 std::vector<ID> DOFManager::getDOFIDs() const {
@@ -181,11 +185,10 @@ void DOFManager::assembleMatMulDOFsToResidual(const ID & A_id,
 
 /* -------------------------------------------------------------------------- */
 void DOFManager::splitSolutionPerDOFs() {
-  for (auto && data : this->dofs) {
-    auto & dof_data = *data.second;
-    dof_data.solution.resize(dof_data.dof->size() *
-                             dof_data.dof->getNbComponent());
-    this->getSolutionPerDOFs(data.first, dof_data.solution);
+  for (auto && [name, dof_data] : this->dofs) {
+    dof_data->solution.resize(dof_data->dof->size() *
+                              dof_data->dof->getNbComponent());
+    this->getSolutionPerDOFs(name, dof_data->solution);
   }
 }
 
@@ -330,7 +333,7 @@ DOFManager::registerDOFsInternal(const ID & dof_id, Array<Real> & dofs_array) {
 
       AKANTU_DEBUG_ASSERT(
           dofs_array.size() == node_group.size(),
-          "The array of dof is too shot to be associated to nodes.");
+          "The array of dof is too short to be associated to nodes.");
 
       std::tie(nb_local_dofs, nb_pure_local) =
           countDOFsForNodes(dof_data, node_group.size(),
@@ -348,10 +351,6 @@ DOFManager::registerDOFsInternal(const ID & dof_id, Array<Real> & dofs_array) {
     AKANTU_EXCEPTION("This type of dofs is not handled yet.");
   }
   }
-
-  dof_data.local_nb_dofs = nb_local_dofs;
-  dof_data.pure_local_nb_dofs = nb_pure_local;
-  dof_data.ghosts_nb_dofs = nb_local_dofs - nb_pure_local;
 
   this->pure_local_system_size += nb_pure_local;
   this->local_system_size += nb_local_dofs;
@@ -717,7 +716,6 @@ void DOFManager::onMeshIsDistributed(const MeshIsDistributedEvent & /*event*/) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
 class GlobalDOFInfoDataAccessor : public DataAccessor<Idx> {
 public:
   GlobalDOFInfoDataAccessor(DOFManager::DOFData & dof_data,
@@ -940,39 +938,53 @@ void DOFManager::onElementsChanged(const Array<Element> &,
 
 /* -------------------------------------------------------------------------- */
 void DOFManager::updateGlobalBlockedDofs() {
-  this->previous_global_blocked_dofs.copy(this->global_blocked_dofs);
-  this->global_blocked_dofs.reserve(this->local_system_size, 0);
-  this->previous_global_blocked_dofs_release =
-      this->global_blocked_dofs_release;
+  this->previous_global_blocked_dofs_indexes.copy(
+      this->global_blocked_dofs_indexes);
+  this->global_blocked_dofs_indexes.reserve(this->local_system_size, 0);
+  this->previous_global_blocked_dofs_indexes_release =
+      this->global_blocked_dofs_indexes_release;
 
-  for (auto & pair : dofs) {
-    if (not this->hasBlockedDOFs(pair.first)) {
+  for (auto && [dof_id, dof_data] : dofs) {
+    if (not this->hasBlockedDOFs(dof_id)) {
       continue;
     }
 
-    DOFData & dof_data = *pair.second;
-    for (auto && data : zip(dof_data.getLocalEquationsNumbers(),
-                            make_view(*dof_data.blocked_dofs))) {
-      const auto & dof = std::get<0>(data);
-      const auto & is_blocked = std::get<1>(data);
+    for (auto && [dof, is_blocked] : zip(dof_data->getLocalEquationsNumbers(),
+                                         make_view(*dof_data->blocked_dofs))) {
       if (is_blocked) {
-        this->global_blocked_dofs.push_back(dof);
+        this->global_blocked_dofs_indexes.push_back(dof);
       }
     }
   }
 
-  std::sort(this->global_blocked_dofs.begin(), this->global_blocked_dofs.end());
-  auto last = std::unique(this->global_blocked_dofs.begin(),
-                          this->global_blocked_dofs.end());
-  this->global_blocked_dofs.resize(last - this->global_blocked_dofs.begin());
+  std::sort(this->global_blocked_dofs_indexes.begin(),
+            this->global_blocked_dofs_indexes.end());
+  auto last = std::unique(this->global_blocked_dofs_indexes.begin(),
+                          this->global_blocked_dofs_indexes.end());
+  this->global_blocked_dofs_indexes.resize(
+      last - this->global_blocked_dofs_indexes.begin());
 
-  auto are_equal =
-      global_blocked_dofs.size() == previous_global_blocked_dofs.size() and
-      std::equal(global_blocked_dofs.begin(), global_blocked_dofs.end(),
-                 previous_global_blocked_dofs.begin());
+  auto are_equal = global_blocked_dofs_indexes.size() ==
+                       previous_global_blocked_dofs_indexes.size() and
+                   std::equal(global_blocked_dofs_indexes.begin(),
+                              global_blocked_dofs_indexes.end(),
+                              previous_global_blocked_dofs_indexes.begin());
+
+  if (this->global_blocked_dofs_indexes.size() == 0) {
+    global_blocked_dofs.resize(local_system_size);
+    global_blocked_dofs.set(false);
+  }
 
   if (not are_equal) {
-    ++this->global_blocked_dofs_release;
+    ++this->global_blocked_dofs_indexes_release;
+  } else {
+    return;
+  }
+
+  global_blocked_dofs.resize(local_system_size);
+  global_blocked_dofs.set(false);
+  for (const auto & dof : global_blocked_dofs_indexes) {
+    global_blocked_dofs[dof] = true;
   }
 }
 
@@ -985,14 +997,14 @@ void DOFManager::applyBoundary(const ID & matrix_id) {
       J.applyBoundary();
     }
 
-    previous_global_blocked_dofs.copy(global_blocked_dofs);
+    previous_global_blocked_dofs_indexes.copy(global_blocked_dofs_indexes);
   } else {
     J.applyBoundary();
   }
 
   this->jacobian_release = J.getRelease();
-  this->previous_global_blocked_dofs_release =
-      this->global_blocked_dofs_release;
+  this->previous_global_blocked_dofs_indexes_release =
+      this->global_blocked_dofs_indexes_release;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1017,5 +1029,6 @@ void DOFManager::assembleMatMulVectToResidual(const ID & dof_id,
                                               Real scale_factor) {
   assembleMatMulVectToGlobalArray(dof_id, A_id, x, *residual, scale_factor);
 }
+/* -------------------------------------------------------------------------- */
 
 } // namespace akantu

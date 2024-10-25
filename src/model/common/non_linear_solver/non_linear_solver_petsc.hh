@@ -20,6 +20,7 @@
 
 /* -------------------------------------------------------------------------- */
 #include "non_linear_solver.hh"
+#include "solver_vector_petsc.hh"
 /* -------------------------------------------------------------------------- */
 #include <petscsnes.h>
 /* -------------------------------------------------------------------------- */
@@ -29,7 +30,6 @@
 
 namespace akantu {
 class DOFManagerPETSc;
-class NonLinearSolverPETScCallback;
 class SolverVectorPETSc;
 } // namespace akantu
 
@@ -41,7 +41,7 @@ class NonLinearSolverPETSc : public NonLinearSolver {
   /* ------------------------------------------------------------------------ */
 public:
   NonLinearSolverPETSc(DOFManagerPETSc & dof_manager,
-                       const NonLinearSolverType & non_linear_solver_type,
+                       const ModelSolverOptions & solver_options,
                        const ID & id = "non_linear_solver_petsc");
 
   ~NonLinearSolverPETSc() override;
@@ -64,9 +64,13 @@ protected:
   static PetscErrorCode FormJacobian(SNES snes, Vec dx, Mat J, Mat P,
                                      void * ctx);
 
-  void set_param(const ID & param, const std::string & value) override;
+  void corrector(Vec x);
+  void assembleResidual(Vec x, Vec f);
+  void assembleJacobian(Vec x, Mat J);
+  void updateInternalParameters() override;
 
-  DOFManagerPETSc & dof_manager;
+  void saveSolution();
+  void restoreSolution();
 
   /// PETSc non linear solver
   SNES snes;
@@ -75,9 +79,13 @@ protected:
   SolverCallback * callback{nullptr};
 
   std::unique_ptr<SolverVectorPETSc> x;
-  std::unique_ptr<NonLinearSolverPETScCallback> ctx;
 
   Int n_iter{0};
+  Int max_iterations;
+  /// Type of convergence criteria
+  SolveConvergenceCriteria convergence_criteria_type;
+  /// convergence threshold
+  Real convergence_criteria;
 };
 
 namespace debug {

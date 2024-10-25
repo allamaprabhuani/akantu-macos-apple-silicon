@@ -137,7 +137,7 @@ void StructuralMechanicsModel::setTimeStep(Real time_step,
 /* Initialisation                                                             */
 /* -------------------------------------------------------------------------- */
 void StructuralMechanicsModel::initSolver(
-    TimeStepSolverType time_step_solver_type, NonLinearSolverType /*unused*/) {
+    TimeStepSolverType time_step_solver_type) {
   AKANTU_DEBUG_IN();
 
   this->allocNodalField(displacement_rotation, nb_degree_of_freedom,

@@ -19,20 +19,28 @@
  */
 
 /* -------------------------------------------------------------------------- */
+#include "dof_manager_default.hh"
+#if defined(AKANTU_USE_PETSC)
+#include "dof_manager_petsc.hh"
+#endif
 #include "patch_test_linear_fixture.hh"
 #include "solid_mechanics_model.hh"
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 
 #ifndef AKANTU_PATCH_TEST_LINEAR_SOLID_MECHANICS_FIXTURE_HH_
 #define AKANTU_PATCH_TEST_LINEAR_SOLID_MECHANICS_FIXTURE_HH_
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename tuple_>
 class TestPatchTestSMMLinear
     : public TestPatchTestLinear<std::tuple_element_t<0, tuple_>,
-                                 SolidMechanicsModel> {
+                                 SolidMechanicsModel,
+                                 std::tuple_element_t<2, tuple_>> {
   using parent =
-      TestPatchTestLinear<std::tuple_element_t<0, tuple_>, SolidMechanicsModel>;
+      TestPatchTestLinear<std::tuple_element_t<0, tuple_>, SolidMechanicsModel,
+                          std::tuple_element_t<2, tuple_>>;
 
 public:
   static constexpr bool plane_strain = std::tuple_element_t<1, tuple_>::value;
@@ -73,9 +81,10 @@ public:
           std::max(force_norm_inf, f.template lpNorm<Eigen::Infinity>());
     }
 
+    constexpr Real force_tol = 1e-8;
     EXPECT_NEAR(0,
                 total_force.template lpNorm<Eigen::Infinity>() / force_norm_inf,
-                1e-9);
+                force_tol);
 
     for (auto && tuple : zip(make_view(internal_forces, dim),
                              make_view(external_forces, dim))) {
@@ -83,7 +92,7 @@ public:
       auto && f_ext = std::get<1>(tuple);
       auto f = f_int + f_ext;
       EXPECT_NEAR(0, f.template lpNorm<Eigen::Infinity>() / force_norm_inf,
-                  1e-9);
+                  force_tol);
     }
   }
 
@@ -130,8 +139,8 @@ template <typename tuple_>
 constexpr bool TestPatchTestSMMLinear<tuple_>::plane_strain;
 
 template <typename T> struct invalid_plan_stress : std::true_type {};
-template <typename type, typename bool_c>
-struct invalid_plan_stress<std::tuple<type, bool_c>>
+template <typename type, typename bool_c, typename DM>
+struct invalid_plan_stress<std::tuple<type, bool_c, DM>>
     : aka::bool_constant<ElementClass<type::value>::getSpatialDimension() !=
                              2 and
                          not bool_c::value> {};
@@ -139,10 +148,34 @@ struct invalid_plan_stress<std::tuple<type, bool_c>>
 using true_false =
     std::tuple<aka::bool_constant<true>, aka::bool_constant<false>>;
 
+template <NonLinearSolverType _nls_type, SparseSolverType _ss_type>
+struct TestSolverOptions {
+  static constexpr NonLinearSolverType nls_type = _nls_type;
+  static constexpr SparseSolverType ss_type = _ss_type;
+};
+
+using solver_options = std::tuple<
+    std::tuple<DOFManagerDefault, TestSolverOptions<NonLinearSolverType::_auto,
+                                                    SparseSolverType::_eigen>>
+#ifdef AKANTU_USE_MUMPS
+    ,
+    std::tuple<DOFManagerDefault, TestSolverOptions<NonLinearSolverType::_auto,
+                                                    SparseSolverType::_mumps>>
+#endif
+#ifdef AKANTU_USE_PETSC
+    ,
+    std::tuple<DOFManagerPETSc, TestSolverOptions<NonLinearSolverType::_auto,
+                                                  SparseSolverType::_petsc>>,
+    std::tuple<DOFManagerPETSc,
+               TestSolverOptions<NonLinearSolverType::_petsc_snes,
+                                 SparseSolverType::_petsc>>
+#endif
+    >;
 template <typename T> using valid_types = aka::negation<invalid_plan_stress<T>>;
 
 using model_types = gtest_list_t<
-    tuple_filter_t<valid_types, cross_product_t<TestElementTypes, true_false>>>;
+    tuple_filter_t<valid_types, cross_product_t<TestElementTypes, true_false,
+                                                solver_options>>>;
 
 TYPED_TEST_SUITE(TestPatchTestSMMLinear, model_types, );
 

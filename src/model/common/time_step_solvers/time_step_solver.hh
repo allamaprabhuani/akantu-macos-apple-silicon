@@ -132,7 +132,7 @@ protected:
   ID id;
 
   /// Underlying dof manager containing the dof to treat
-  DOFManager & _dof_manager;
+  DOFManager & dof_manager;
 
   /// Type of solver
   TimeStepSolverType type;

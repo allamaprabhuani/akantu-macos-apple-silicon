@@ -21,6 +21,7 @@
 /* -------------------------------------------------------------------------- */
 #include "aka_factory.hh"
 #include "mesh.hh"
+#include "model_solver.hh"
 /* -------------------------------------------------------------------------- */
 #include <map>
 #include <set>
@@ -253,8 +254,8 @@ public:
 
   /// defines if the boundary changed
   bool hasBlockedDOFsChanged() const {
-    return this->global_blocked_dofs_release !=
-           this->previous_global_blocked_dofs_release;
+    return this->global_blocked_dofs_indexes_release !=
+           this->previous_global_blocked_dofs_indexes_release;
   }
 
   /// Global number of dofs
@@ -316,10 +317,13 @@ public:
   inline Array<Real> & getSolution(const ID & dofs_id);
 
   /// Get the blocked dofs array
-  AKANTU_GET_MACRO_AUTO(GlobalBlockedDOFs, global_blocked_dofs);
+  AKANTU_GET_MACRO_AUTO(GlobalBlockedDOFsIndexes, global_blocked_dofs_indexes);
   /// Get the blocked dofs array
-  AKANTU_GET_MACRO_AUTO(PreviousGlobalBlockedDOFs,
-                        previous_global_blocked_dofs);
+  AKANTU_GET_MACRO_AUTO(PreviousGlobalBlockedDOFsIndexes,
+                        previous_global_blocked_dofs_indexes);
+
+  /// Get the blocked dofs array
+  AKANTU_GET_MACRO_AUTO(GlobalBlockedDOFs, global_blocked_dofs);
 
   /* ------------------------------------------------------------------------ */
   /* Matrices accessors                                                       */
@@ -362,11 +366,12 @@ protected:
                          std::unique_ptr<TimeStepSolver> & time_step_solver);
 
   template <class NLSType, class DMType>
-  NonLinearSolver & registerNonLinearSolver(DMType & dm, const ID & id,
-                                            const NonLinearSolverType & type) {
+  NonLinearSolver &
+  registerNonLinearSolver(DMType & dm, const ID & id,
+                          const ModelSolverOptions & solver_options) {
     ID non_linear_solver_id = this->id + ":nls:" + id;
     std::unique_ptr<NonLinearSolver> nls =
-        std::make_unique<NLSType>(dm, type, non_linear_solver_id);
+        std::make_unique<NLSType>(dm, solver_options, non_linear_solver_id);
     return this->registerNonLinearSolver(non_linear_solver_id, nls);
   }
 
@@ -442,9 +447,9 @@ public:
   /* Non linear system solver                                                 */
   /* ------------------------------------------------------------------------ */
   /// Get instance of a non linear solver
-  virtual NonLinearSolver & getNewNonLinearSolver(
-      const ID & nls_solver_id,
-      const NonLinearSolverType & _non_linear_solver_type) = 0;
+  virtual NonLinearSolver &
+  getNewNonLinearSolver(const ID & nls_solver_id,
+                        const ModelSolverOptions & solver_options) = 0;
 
   /// get instance of a non linear solver
   virtual NonLinearSolver & getNonLinearSolver(const ID & nls_solver_id);
@@ -586,13 +591,13 @@ protected:
 
     /* ---------------------------------------------------------------------- */
     /// number of dofs to consider locally for this dof id
-    Int local_nb_dofs{0};
+    // Int local_nb_dofs{0};
 
     /// Number of purely local dofs
-    Int pure_local_nb_dofs{0};
+    // Int pure_local_nb_dofs{0};
 
     /// number of ghost dofs
-    Int ghosts_nb_dofs{0};
+    // Int ghosts_nb_dofs{0};
 
     /// local numbering equation numbers
     Array<Idx> local_equation_number;
@@ -682,15 +687,18 @@ protected:
 
   /// blocked degree of freedom in the system equation corresponding to the
   /// different dofs
-  Array<Int> global_blocked_dofs;
+  Array<Idx> global_blocked_dofs_indexes;
 
-  Int global_blocked_dofs_release{0};
+  Int global_blocked_dofs_indexes_release{0};
 
   /// blocked degree of freedom in the system equation corresponding to the
   /// different dofs
-  Array<Int> previous_global_blocked_dofs;
+  Array<Idx> previous_global_blocked_dofs_indexes;
 
-  Int previous_global_blocked_dofs_release{0};
+  Int previous_global_blocked_dofs_indexes_release{0};
+
+  /// Array containing the true or false if the node is in global_blocked_dofs
+  Array<bool> global_blocked_dofs;
 
 private:
   /// This is for unit testing

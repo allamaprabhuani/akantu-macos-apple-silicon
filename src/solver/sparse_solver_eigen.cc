@@ -6,9 +6,9 @@
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
-SparseSolverEigen::SparseSolverEigen(DOFManagerDefault & dof_manager,
+SparseSolverEigen::SparseSolverEigen(DOFManager & dof_manager,
                                      const ID & matrix_id, const ID & id)
-    : SparseSolver(dof_manager, matrix_id, id), dof_manager(dof_manager) {
+    : SparseSolver(dof_manager, matrix_id, id) {
   AKANTU_DEBUG_ASSERT(communicator.getNbProc() == 1,
                       "This solver does not work in parallel");
 }
@@ -68,6 +68,11 @@ void SparseSolverEigen::solve() {
       .setGlobalVector(x_);
 
   this->dof_manager.splitSolutionPerDOFs();
+}
+
+/* -------------------------------------------------------------------------- */
+DOFManagerDefault & SparseSolverEigen::getDOFManager() {
+  return aka::as_type<DOFManagerDefault &>(this->dof_manager);
 }
 
 } // namespace akantu

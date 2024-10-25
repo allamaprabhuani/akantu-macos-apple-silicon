@@ -47,11 +47,11 @@ void FriendMaterial<MaterialLinearIsotropicHardening<3>>::testComputeStress() {
   Real bulk_modulus_K = E / 3. / (1 - 2. * nu);
   Real shear_modulus_mu = 0.5 * E / (1 + nu);
 
-  setParam("E", E);
-  setParam("nu", nu);
-  setParam("rho", rho);
-  setParam("sigma_y", sigma_0);
-  setParam("h", h);
+  set("E", E);
+  set("nu", nu);
+  set("rho", rho);
+  set("sigma_y", sigma_0);
+  set("h", h);
 
   auto rotation_matrix = getRandomRotation();
 

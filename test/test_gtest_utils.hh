@@ -126,6 +126,29 @@ struct cross_product<std::tuple<T1, T1s...>, std::tuple<T2s...>> {
       typename cross_product<std::tuple<T1s...>, std::tuple<T2s...>>::type>;
 };
 
+template <typename T> struct __unpack {
+  using type = int;
+};
+template <typename T1, typename... Ts>
+struct __unpack<std::tuple<T1, std::tuple<Ts...>>> {
+  using type = std::tuple<T1, Ts...>;
+};
+
+template <typename T> struct _unpack {};
+template <typename... Ts> struct _unpack<std::tuple<Ts...>> {
+  using type = typename std::tuple<typename __unpack<Ts>::type...>;
+};
+
+template <typename... T1s, typename... T2s, typename... T3s>
+struct cross_product<std::tuple<T1s...>, std::tuple<T2s...>,
+                     std::tuple<T3s...>> {
+
+  using type1 =
+      typename cross_product<std::tuple<T2s...>, std::tuple<T3s...>>::type;
+  using type2 = typename cross_product<std::tuple<T1s...>, type1>::type;
+  using type = typename _unpack<type2>::type;
+};
+
 template <typename... T>
 using cross_product_t = typename cross_product<T...>::type;
 /* -------------------------------------------------------------------------- */
@@ -170,14 +193,14 @@ template <size_t degree> class Polynomial {
 public:
   Polynomial() = default;
 
-  Polynomial(std::initializer_list<double> &&init) {
-    for (auto &&pair : akantu::zip(init, constants))
+  Polynomial(std::initializer_list<double> && init) {
+    for (auto && pair : akantu::zip(init, constants))
       std::get<1>(pair) = std::get<0>(pair);
   }
 
   double operator()(double x) {
     double res = 0.;
-    for (auto &&vals : akantu::enumerate(constants)) {
+    for (auto && vals : akantu::enumerate(constants)) {
       double a;
       int k;
       std::tie(k, a) = vals;
@@ -217,7 +240,7 @@ protected:
 };
 
 template <size_t degree>
-std::ostream &operator<<(std::ostream &stream, const Polynomial<degree> &p) {
+std::ostream & operator<<(std::ostream & stream, const Polynomial<degree> & p) {
   for (size_t d = 0; d < degree + 1; ++d) {
     if (d != 0)
       stream << " + ";

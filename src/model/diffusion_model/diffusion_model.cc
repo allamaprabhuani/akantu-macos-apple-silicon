@@ -125,8 +125,7 @@ void DiffusionModel::predictor() { ++diffusion_release; }
 void DiffusionModel::corrector() { ++diffusion_release; }
 
 /* -------------------------------------------------------------------------- */
-void DiffusionModel::initSolver(TimeStepSolverType time_step_solver_type,
-                                NonLinearSolverType /*unused*/) {
+void DiffusionModel::initSolver(TimeStepSolverType time_step_solver_type) {
   DOFManager & dof_manager = this->getDOFManager();
 
   this->allocNodalField(this->diffusion, 1, dof_name);

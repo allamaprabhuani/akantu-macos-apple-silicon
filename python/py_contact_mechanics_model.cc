@@ -102,9 +102,7 @@ void register_contact_mechanics_model(py::module & mod) {
              std::shared_ptr<AllSurfaceSelector>>(mod, "AllSurfaceSelector")
       .def(py::init<Mesh &>(), py::arg("mesh"));
 
-  py::class_<ContactMechanicsModelOptions>(mod, "ContactMechanicsModelOptions")
-      .def(py::init<AnalysisMethod>(),
-           py::arg("analysis_method") = _explicit_contact);
+  mod.attr("ContactMechanicsModelOptions") = mod.attr("ModelOptions");
 
   /* ------------------------------------------------------------------------ */
   py::class_<ContactElementsView>(mod, "ContactElementsView")

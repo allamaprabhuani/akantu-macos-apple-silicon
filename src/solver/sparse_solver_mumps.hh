@@ -48,8 +48,17 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
+  /// solve using residual and solution from the dof_manager
+  void solve() override;
+
+  DOFManagerDefault & getDOFManager();
+
+private:
   /// build the profile and do the analysis part
   void initialize() override;
+
+  // /// solve the system
+  // virtual void solve(Array<Real> & x, const Array<Real> & b);
 
   /// analysis (symbolic facto + permutations)
   void analysis() override;
@@ -57,13 +66,6 @@ public:
   /// factorize the matrix
   void factorize() override;
 
-  /// solve the system
-  virtual void solve(Array<Real> & x, const Array<Real> & b);
-
-  /// solve using residual and solution from the dof_manager
-  void solve() override;
-
-private:
   /// print the error if any happened in mumps
   void printError();
 
@@ -100,8 +102,8 @@ private:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  /// DOFManager used by the Mumps implementation of the SparseSolver
-  DOFManagerDefault & dof_manager;
+  // /// DOFManager used by the Mumps implementation of the SparseSolver
+  // DOFManagerDefault & dof_manager;
 
   /// Full right hand side on the master processors and solution after solve
   Array<Real> master_rhs_solution;

@@ -46,12 +46,12 @@ namespace internal {
 
     Int size() const {
       PetscInt n;
-      PETSc_call(VecGetSize, x, &n);
+      VecGetSize(x, &n);
       return n;
     }
     Int local_size() const {
       PetscInt n;
-      PETSc_call(VecGetLocalSize, x, &n);
+      VecGetLocalSize(x, &n);
       return n;
     }
 
@@ -116,8 +116,6 @@ protected:
   void updateGhost();
 
 protected:
-  DOFManagerPETSc & dof_manager;
-
   // used for the conversion operator
   Array<Real> cache;
 };
@@ -128,11 +126,10 @@ namespace internal {
   template <class Array> class PETScWrapedVector : public PETScVector {
   public:
     PETScWrapedVector(Array && array) : array(array) {
-      PETSc_call(VecCreateSeqWithArray, PETSC_COMM_SELF, 1, array.size(),
-                 array.data(), &x);
+      VecCreateSeqWithArray(PETSC_COMM_SELF, 1, array.size(), array.data(), &x);
     }
 
-    ~PETScWrapedVector() override { PETSc_call(VecDestroy, &x); }
+    ~PETScWrapedVector() override { VecDestroy(&x); }
 
   private:
     Array array;
@@ -142,13 +139,14 @@ namespace internal {
   template <bool read_only> class PETScLocalVector : public PETScVector {
   public:
     PETScLocalVector(const Vec & g) : g(g) {
-      PETSc_call(VecGetLocalVectorRead, g, x);
+      VecCreateLocalVector(g, &x);
+      VecGetLocalVectorRead(g, x);
     }
     PETScLocalVector(const SolverVectorPETSc & g)
         : PETScLocalVector(g.getVec()) {}
     ~PETScLocalVector() override {
-      PETSc_call(VecRestoreLocalVectorRead, g, x);
-      PETSc_call(VecDestroy, &x);
+      VecRestoreLocalVectorRead(g, x);
+      VecDestroy(&x);
     }
 
   private:
@@ -158,12 +156,13 @@ namespace internal {
   template <> class PETScLocalVector<false> : public PETScVector {
   public:
     PETScLocalVector(Vec & g) : g(g) {
-      PETSc_call(VecGetLocalVectorRead, g, x);
+      VecCreateLocalVector(g, &x);
+      VecGetLocalVectorRead(g, x);
     }
     PETScLocalVector(SolverVectorPETSc & g) : PETScLocalVector(g.getVec()) {}
     ~PETScLocalVector() override {
-      PETSc_call(VecRestoreLocalVectorRead, g, x);
-      PETSc_call(VecDestroy, &x);
+      VecRestoreLocalVectorRead(g, x);
+      VecDestroy(&x);
     }
 
   private:
@@ -171,21 +170,28 @@ namespace internal {
   };
 
   /* ------------------------------------------------------------------------ */
+  // concepts
+  template <typename V>
+  concept SolverVectorType =
+      std::is_base_of<SolverVector, std::decay_t<V>>::value;
+
+  template <typename V>
+  concept PETScVectorType = std::is_same<Vec, std::decay_t<V>>::value;
+
+  /* ------------------------------------------------------------------------ */
+
   template <class Array>
   decltype(auto) make_petsc_wraped_vector(Array && array) {
     return PETScWrapedVector<Array>(std::forward<Array>(array));
   }
 
-  template <
-      typename V,
-      std::enable_if_t<std::is_same<Vec, std::decay_t<V>>::value> * = nullptr>
+  template <PETScVectorType V>
   decltype(auto) make_petsc_local_vector(V && vec) {
     constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
     return PETScLocalVector<read_only>(vec);
   }
 
-  template <typename V, std::enable_if_t<std::is_base_of<
-                            SolverVector, std::decay_t<V>>::value> * = nullptr>
+  template <SolverVectorType V>
   decltype(auto) make_petsc_local_vector(V && vec) {
     constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
     return PETScLocalVector<read_only>(
@@ -194,6 +200,8 @@ namespace internal {
   }
 
 } // namespace internal
+
+void PetscPrint(Vec x);
 
 } // namespace akantu
 

@@ -80,6 +80,7 @@ public:
 
   void beforeSolveStep() override;
   void afterSolveStep(bool converged = true) override;
+  void restoreLastConvergedStep() override;
 
   /// implementation of the generic TimeStepSolver::solveStep()
   void solveStep(SolverCallback & solver_callback) override;

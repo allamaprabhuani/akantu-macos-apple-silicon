@@ -113,7 +113,11 @@ void register_parser(py::module & mod) {
 
   py::class_<Parsable, ParameterRegistry>(mod, "Parsable",
                                           py::multiple_inheritance())
-      .def(py::init<const ParserType &, const ID &>());
+      .def(py::init<const ParserType &, const ID &>())
+      .def("set", [](Parsable & self, std::string param, std::string value) {
+        std::any val = value.c_str();
+        self.set(param, val);
+      });
 
   mod.def(
       "parseInput",

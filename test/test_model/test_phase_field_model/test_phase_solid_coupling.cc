@@ -24,8 +24,13 @@
 #include "material_phasefield.hh"
 #include "material_phasefield_anisotropic.hh"
 #include "non_linear_solver.hh"
+#include "non_linear_solver_newton_raphson.hh"
 #include "phase_field_model.hh"
 #include "solid_mechanics_model.hh"
+#include "sparse_solver.hh"
+#if defined(AKANTU_USE_PETSC)
+#include "dof_manager_petsc.hh"
+#endif
 /* -------------------------------------------------------------------------- */
 #include <fstream>
 #include <iostream>
@@ -56,18 +61,41 @@ int main(int argc, char * argv[]) {
   mesh.read("test_one_element.msh");
 
   SolidMechanicsModel model(mesh);
+  auto & dof_manager = model.getDOFManager();
   model.initFull(_analysis_method = _static);
 
-  auto & solver = model.getNonLinearSolver("static");
-  solver.set("max_iterations", 100);
-  solver.set("threshold", 1e-9);
-  solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+#if defined(AKANTU_USE_PETSC)
+  if (aka::is_of_type<DOFManagerPETSc>(dof_manager)) {
+    auto & solver = model.getNonLinearSolver();
+
+    if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+      auto & sparse_solver =
+          aka::as_type<NonLinearSolverNewtonRaphson>(solver).getSparseSolver();
+      sparse_solver.set("pc_type", "cholesky");
+      sparse_solver.set("ksp_rtol", "1e-30");
+    }
+  }
+#endif
 
   PhaseFieldModel phase(mesh);
   auto && selector = std::make_shared<MeshDataPhaseFieldSelector<std::string>>(
       "physical_names", phase);
   phase.setPhaseFieldSelector(selector);
   phase.initFull(_analysis_method = _static);
+  auto & dof_manager_phase_field = phase.getDOFManager();
+
+#if defined(AKANTU_USE_PETSC)
+  if (aka::is_of_type<DOFManagerPETSc>(dof_manager_phase_field)) {
+    auto & solver = phase.getNonLinearSolver();
+
+    if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+      auto & sparse_solver =
+          aka::as_type<NonLinearSolverNewtonRaphson>(solver).getSparseSolver();
+      sparse_solver.set("pc_type", "cholesky");
+      sparse_solver.set("ksp_rtol", "1e-30");
+    }
+  }
+#endif
 
   model.setBaseName("phase_solid");
   model.addDumpField("stress");

@@ -23,6 +23,7 @@
 /* -------------------------------------------------------------------------- */
 #include "non_linear_solver.hh"
 /* -------------------------------------------------------------------------- */
+constexpr Real ekin_tol = 1e-13;
 
 using namespace akantu;
 
@@ -45,7 +46,7 @@ TYPED_TEST(TestPatchTestSMMLinear, Implicit) {
   }
 
   auto ekin = this->model->getEnergy("kinetic");
-  EXPECT_NEAR(0, ekin, 1e-16);
+  EXPECT_NEAR(0, ekin, ekin_tol);
 
   this->checkAll();
 
@@ -117,7 +118,7 @@ TYPED_TEST(TestPatchTestSMMLinear, ImplicitFiniteDeformation) {
   }
 
   auto ekin = this->model->getEnergy("kinetic");
-  EXPECT_NEAR(0, ekin, 1e-16);
+  EXPECT_NEAR(0, ekin, ekin_tol);
 
   this->checkAll();
 

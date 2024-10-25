@@ -139,6 +139,11 @@ register_gtest_sources(
   PACKAGE core
   )
 
+register_gtest_sources(
+  SOURCES test_variational_operators.cc
+  PACKAGE core
+  )
+  
 register_gtest_test(test_fe_engine
   FILES_TO_COPY ${_meshes} ${_csvs}
   )

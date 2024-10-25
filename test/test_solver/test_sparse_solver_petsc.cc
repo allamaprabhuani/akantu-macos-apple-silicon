@@ -20,13 +20,14 @@
 
 /* -------------------------------------------------------------------------- */
 #include "aka_common.hh"
+#include "dof_manager_petsc.hh"
 #include "dof_synchronizer.hh"
 #include "element_synchronizer.hh"
 #include "mesh.hh"
 #include "mesh_accessor.hh"
 #include "mesh_partition_scotch.hh"
 #include "sparse_matrix_aij.hh"
-#include "sparse_solver_mumps.hh"
+#include "sparse_solver_petsc.hh"
 #include "terms_to_assemble.hh"
 /* -------------------------------------------------------------------------- */
 #include <iostream>
@@ -66,7 +67,7 @@ int main(int argc, char * argv[]) {
   }
   Int nb_nodes = mesh.getNbNodes();
 
-  DOFManagerDefault dof_manager(mesh, "test_dof_manager");
+  DOFManagerPETSc dof_manager(mesh, "test_dof_manager");
 
   Array<Real> x(nb_nodes);
   x.set(-1);
@@ -98,7 +99,7 @@ int main(int argc, char * argv[]) {
     b(n) = 1.;
   }
 
-  SparseSolverMumps solver(dof_manager, "A");
+  SparseSolverPETSc solver(dof_manager, "A");
   dof_manager.assembleToResidual("x", b);
 
   solver.solve();
@@ -120,16 +121,17 @@ int main(int argc, char * argv[]) {
   };
 
   if (psize > 1) {
-    auto & sync =
-        dynamic_cast<DOFManagerDefault &>(dof_manager).getSynchronizer();
+    throw std::runtime_error("need to fix synchronizer for petsc case");
+    // auto & sync =
+    //     dynamic_cast<DOFManagerPETSc &>(dof_manager).getSynchronizer();
 
-    if (prank == 0) {
-      Array<Real> x_gathered(dof_manager.getSystemSize());
-      sync.gather(y, x_gathered);
-      check(x_gathered);
-    } else {
-      sync.gather(x);
-    }
+    // if (prank == 0) {
+    //   Array<Real> x_gathered(dof_manager.getSystemSize());
+    //   sync.gather(y, x_gathered);
+    //   check(x_gathered);
+    // } else {
+    //   sync.gather(x);
+    // }
   } else {
     check(y);
   }

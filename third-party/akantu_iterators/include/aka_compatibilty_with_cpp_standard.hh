@@ -34,6 +34,7 @@
 #include "aka_static_if.hh"
 #endif
 /* -------------------------------------------------------------------------- */
+#include <algorithm>
 #include <iterator>
 #include <tuple>
 #include <type_traits>

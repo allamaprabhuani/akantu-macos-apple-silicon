@@ -25,6 +25,7 @@
 #include <model.hh>
 #include <non_linear_solver.hh>
 #include <sparse_matrix_aij.hh>
+#include <sparse_solver.hh>
 #include <terms_to_assemble.hh>
 /* -------------------------------------------------------------------------- */
 #include <pybind11/operators.h>
@@ -83,6 +84,8 @@ void register_solvers(py::module & mod) {
           "Transform this into a vector, Is not copied.")
       .def("isDistributed",
            [](const SolverVector & self) { return self.isDistributed(); });
+
+  py::class_<SparseSolver, Parsable>(mod, "Solver");
 
   py::class_<TermsToAssemble::TermToAssemble>(mod, "TermToAssemble")
       .def(py::init<Int, Int>())

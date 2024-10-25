@@ -21,6 +21,10 @@
 /* -------------------------------------------------------------------------- */
 #include "communicator.hh"
 #include "mesh_utils.hh"
+#include "non_linear_solver_newton_raphson.hh"
+#if defined(AKANTU_USE_PETSC)
+#include "sparse_solver_petsc.hh"
+#endif
 #include "solid_mechanics_model.hh"
 #include "test_gtest_utils.hh"
 /* -------------------------------------------------------------------------- */
@@ -62,6 +66,19 @@ public:
   void initModel(const ID & input, const AnalysisMethod & analysis_method) {
     getStaticParser().parse(input);
     this->model->initFull(_analysis_method = analysis_method);
+
+#if defined(AKANTU_USE_PETSC)
+    auto & solver = this->model->getNonLinearSolver();
+    if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+      auto & sparse_solver =
+          aka::as_type<NonLinearSolverNewtonRaphson>(solver).getSparseSolver();
+
+      if (aka::is_of_type<SparseSolverPETSc>(sparse_solver)) {
+        sparse_solver.set("pc_type", "cholesky");
+        sparse_solver.set("ksp_rtol", "1e-30");
+      }
+    }
+#endif
 
     if (analysis_method != _static) {
       auto time_step = this->model->getStableTimeStep() / 10.;

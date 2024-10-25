@@ -68,8 +68,7 @@ protected:
   void initFullImpl(const ModelOptions & options) override;
 
   /// allocate all vectors
-  void initSolver(TimeStepSolverType /*unused*/,
-                  NonLinearSolverType /*unused*/) override;
+  void initSolver(TimeStepSolverType /*unused*/) override;
 
   /// initialize all internal arrays for resolutions
   void initResolutions();

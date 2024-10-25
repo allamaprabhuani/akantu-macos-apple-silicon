@@ -26,7 +26,7 @@
 #include "mesh_accessor.hh"
 #include "mesh_partition_scotch.hh"
 #include "sparse_matrix_aij.hh"
-#include "sparse_solver_mumps.hh"
+#include "sparse_solver_eigen.hh"
 #include "terms_to_assemble.hh"
 /* -------------------------------------------------------------------------- */
 #include <iostream>
@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
     b(n) = 1.;
   }
 
-  SparseSolverMumps solver(dof_manager, "A");
+  SparseSolverEigen solver(dof_manager, "A");
   dof_manager.assembleToResidual("x", b);
 
   solver.solve();

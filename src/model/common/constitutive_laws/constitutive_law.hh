@@ -278,7 +278,9 @@ public:
                          const RemovedElementsEvent & event) override;
 
 public:
-  template <typename T> inline void setParam(const ID & param, T value);
+  template <typename T>
+  [[deprecated("deprecate function use set() instead")]] inline void
+  setParam(const ID & param, T value);
   [[nodiscard]] inline const Parameter & getParam(const ID & param) const;
 
   template <typename T>

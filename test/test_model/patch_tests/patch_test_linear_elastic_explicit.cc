@@ -20,7 +20,8 @@
 
 /* -------------------------------------------------------------------------- */
 #include "patch_test_linear_solid_mechanics_fixture.hh"
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 
 TYPED_TEST(TestPatchTestSMMLinear, Explicit) {
   std::string filename = "material_check_stress_plane_stress.dat";

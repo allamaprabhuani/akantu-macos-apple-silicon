@@ -82,8 +82,9 @@ void register_solid_mechanics_model_cohesive(py::module & mod) {
 
   py::class_<SolidMechanicsModelCohesiveOptions, SolidMechanicsModelOptions>(
       mod, "SolidMechanicsModelCohesiveOptions")
-      .def(py::init<AnalysisMethod, bool>(),
+      .def(py::init<AnalysisMethod, ModelSolverOptions, bool>(),
            py::arg("analysis_method") = _explicit_lumped_mass,
+           py::arg("solver_options") = detail::_default_solver_options,
            py::arg("is_extrinsic") = false);
 
   py::class_<SolidMechanicsModelCohesive, SolidMechanicsModel>(

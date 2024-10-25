@@ -47,8 +47,8 @@ using mat_types =
 template <> void FriendMaterial<MaterialElastic<1>>::setParams() {
   Real E = 3.;
   Real rho = 2;
-  setParam("E", E);
-  setParam("rho", rho);
+  set("E", E);
+  set("rho", rho);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -96,9 +96,9 @@ template <> void FriendMaterial<MaterialElastic<2>>::setParams() {
   Real E = 1.;
   Real nu = .3;
   Real rho = 2;
-  setParam("E", E);
-  setParam("nu", nu);
-  setParam("rho", rho);
+  set("E", E);
+  set("nu", nu);
+  set("rho", rho);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -207,9 +207,9 @@ template <> void FriendMaterial<MaterialElastic<3>>::setParams() {
   Real E = 1.;
   Real nu = .3;
   Real rho = 2;
-  setParam("E", E);
-  setParam("nu", nu);
-  setParam("rho", rho);
+  set("E", E);
+  set("nu", nu);
+  set("rho", rho);
 }
 
 /* -------------------------------------------------------------------------- */

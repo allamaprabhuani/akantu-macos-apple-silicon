@@ -38,7 +38,8 @@ SolverVectorDistributed::SolverVectorDistributed(
 
 /* -------------------------------------------------------------------------- */
 Array<Real> & SolverVectorDistributed::getGlobalVector() {
-  auto & synchronizer = dof_manager.getSynchronizer();
+  auto & synchronizer =
+      dynamic_cast<DOFManagerDefault &>(dof_manager).getSynchronizer();
 
   if (not this->global_vector) {
     this->global_vector =
@@ -57,7 +58,8 @@ Array<Real> & SolverVectorDistributed::getGlobalVector() {
 
 /* -------------------------------------------------------------------------- */
 void SolverVectorDistributed::setGlobalVector(const Array<Real> & solution) {
-  auto & synchronizer = dof_manager.getSynchronizer();
+  auto & synchronizer =
+      dynamic_cast<DOFManagerDefault &>(dof_manager).getSynchronizer();
   if (synchronizer.getCommunicator().whoAmI() == 0) {
     synchronizer.scatter(this->vector, solution);
   } else {
@@ -67,7 +69,8 @@ void SolverVectorDistributed::setGlobalVector(const Array<Real> & solution) {
 
 /* -------------------------------------------------------------------------- */
 bool SolverVectorDistributed::isFinite() const {
-  auto & synchronizer = dof_manager.getSynchronizer();
+  auto & synchronizer =
+      dynamic_cast<DOFManagerDefault &>(dof_manager).getSynchronizer();
   bool is_finite = this->vector.isFinite();
   synchronizer.getCommunicator().allReduce(is_finite,
                                            SynchronizerOperation::_land);

@@ -161,10 +161,8 @@ enum DOFSupportType { _dst_nodal, _dst_generic };
   (newton_raphson)                                                     \
   (newton_raphson_modified)                                            \
   (lumped)                                                             \
-  (gmres)                                                              \
-  (bfgs)                                                               \
-  (cg)                                                                 \
   (newton_raphson_contact)                                             \
+  (petsc_snes)                                                         \
   (auto)
 // clang-format on
 AKANTU_CLASS_ENUM_DECLARE(NonLinearSolverType, AKANTU_NON_LINEAR_SOLVER_TYPES)
@@ -179,13 +177,33 @@ enum class NonLinearSolverType {
   _newton_raphson,          ///< Regular Newton-Raphson
   _newton_raphson_modified, ///< Newton-Raphson with initial tangent
   _lumped,                  ///< Case of lumped mass or equivalent matrix
-  _gmres,
-  _bfgs,
-  _cg,
-  _newton_raphson_contact, ///< Regular Newton-Raphson modified
-                           /// for contact problem
+  _newton_raphson_contact,  ///< Regular Newton-Raphson modified
+                            /// for contact problem
+  _petsc_snes,              /// < PETSc SNES solver
   _auto, ///< This will take a default value that make sense in case of
          ///  model::getNewSolver
+};
+#endif
+
+#if !defined(DOXYGEN)
+// clang-format off
+#define AKANTU_SPARSE_SOLVER_TYPES                                     \
+  (mumps)                                                              \
+  (eigen)                                                              \
+  (petsc)                                                              \
+  (auto)
+// clang-format on
+AKANTU_CLASS_ENUM_DECLARE(SparseSolverType, AKANTU_SPARSE_SOLVER_TYPES)
+AKANTU_CLASS_ENUM_OUTPUT_STREAM(SparseSolverType, AKANTU_SPARSE_SOLVER_TYPES)
+AKANTU_CLASS_ENUM_INPUT_STREAM(SparseSolverType, AKANTU_SPARSE_SOLVER_TYPES)
+#else
+/// Type of non linear resolution available in akantu
+enum class SparseSolverType {
+  _mumps, ///< mumps solver
+  _eigen, ///< Eigen solver
+  _petsc, ///< PETSc solver
+  _auto,  ///< This will take a default value that make sense in case of
+          ///  model::getNewSolver
 };
 #endif
 

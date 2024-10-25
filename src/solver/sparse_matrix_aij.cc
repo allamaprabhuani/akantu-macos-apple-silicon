@@ -52,12 +52,10 @@ void SparseMatrixAIJ::applyBoundary(Real block_val) {
   AKANTU_DEBUG_IN();
 
   const auto & blocked_dofs = this->dof_manager.getGlobalBlockedDOFs();
-  auto begin = blocked_dofs.begin();
-  auto end = blocked_dofs.end();
 
   auto is_blocked = [&](auto && i) -> bool {
     auto il = this->dof_manager.globalToLocalEquationNumber(i);
-    return std::binary_search(begin, end, il);
+    return blocked_dofs[il];
   };
 
   for (auto && ij_a : zip(irn, jcn, a)) {

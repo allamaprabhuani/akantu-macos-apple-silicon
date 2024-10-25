@@ -1,5 +1,6 @@
 permissive_parser = true
 
+model solid_mechanics_model [
 material elastic [
 	 name = steel
 	 rho = 7800   # density
@@ -7,4 +8,5 @@ material elastic [
 	 nu  = 0.3    # poisson's ratio
    Plane_Stress = false # plane strain
    finite_deformation = false
+]
 ]

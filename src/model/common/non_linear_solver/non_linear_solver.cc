@@ -27,12 +27,12 @@
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
-NonLinearSolver::NonLinearSolver(
-    DOFManager & dof_manager,
-    const NonLinearSolverType & non_linear_solver_type, const ID & id)
+NonLinearSolver::NonLinearSolver(DOFManager & dof_manager,
+                                 const ModelSolverOptions & solver_options,
+                                 const ID & id)
     : Parsable(ParserType::_non_linear_solver, id), id(id),
-      _dof_manager(dof_manager),
-      non_linear_solver_type(non_linear_solver_type) {
+      dof_manager(dof_manager),
+      non_linear_solver_type(solver_options.non_linear_solver_type) {
 
   this->registerParam("type", this->non_linear_solver_type, _pat_parsable,
                       "Non linear solver type");
@@ -57,9 +57,9 @@ void NonLinearSolver::checkIfTypeIsSupported() {
 void NonLinearSolver::assembleResidual(SolverCallback & solver_callback) {
   if (solver_callback.canSplitResidual() and
       non_linear_solver_type == NonLinearSolverType::_linear) {
-    this->_dof_manager.zeroResidual();
+    this->dof_manager.zeroResidual();
     solver_callback.assembleResidual("external");
-    this->_dof_manager.assembleMatMulDOFsToResidual("K", -1.);
+    this->dof_manager.assembleMatMulDOFsToResidual("K", -1.);
     solver_callback.assembleResidual("inertial");
   } else {
     solver_callback.assembleResidual();

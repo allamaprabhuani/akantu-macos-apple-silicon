@@ -1,5 +1,5 @@
 /**
- * Copyright (©) 2010-2023 EPFL (Ecole Polytechnique Fédérale de Lausanne)
+ * Copyright (©) 2014-2023 EPFL (Ecole Polytechnique Fédérale de Lausanne)
  * Laboratory (LSMS - Laboratoire de Simulation en Mécanique des Solides)
  *
  * This file is part of Akantu
@@ -19,49 +19,55 @@
  */
 
 /* -------------------------------------------------------------------------- */
-#include "non_linear_solver.hh"
+#include "sparse_solver.hh"
+/* -------------------------------------------------------------------------- */
+#include <petscksp.h>
 /* -------------------------------------------------------------------------- */
 
-#ifndef AKANTU_NON_LINEAR_SOLVER_LINEAR_HH_
-#define AKANTU_NON_LINEAR_SOLVER_LINEAR_HH_
+#ifndef AKANTU_SOLVER_PETSC_HH_
+#define AKANTU_SOLVER_PETSC_HH_
 
 namespace akantu {
-class DOFManagerDefault;
-class SparseSolver;
+class SparseMatrixPETSc;
+class DOFManagerPETSc;
 } // namespace akantu
 
 namespace akantu {
 
-class NonLinearSolverLinear : public NonLinearSolver {
+class SparseSolverPETSc : public SparseSolver {
+
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  NonLinearSolverLinear(DOFManagerDefault & dof_manager,
-                        const NonLinearSolverType & non_linear_solver_type,
-                        const ID & id = "non_linear_solver_linear");
-  ~NonLinearSolverLinear() override;
+  SparseSolverPETSc(DOFManager & dof_manager, const ID & matrix_id,
+                    const ID & id = "solver_petsc");
+
+  ~SparseSolverPETSc() override;
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  /// Function that solve the non linear system described by the dof manager and
-  /// the solver callback functions
-  void solve(SolverCallback & solver_callback) override;
+  DOFManagerPETSc & getDOFManager();
+  /// create the solver context and set the matrices
+  virtual void setOperators();
+  void solve() override;
 
-  AKANTU_GET_MACRO_NOT_CONST(Solver, *solver, SparseSolver &);
-  AKANTU_GET_MACRO(Solver, *solver, const SparseSolver &);
-  /* ------------------------------------------------------------------------ */
-  /* Class Members                                                            */
-  /* ------------------------------------------------------------------------ */
-protected:
-  DOFManagerDefault & dof_manager;
+  void set(const std::string & name, std::any value);
+  void parseSection(const ParserSection & section) override;
+  void updateInternalParameters() override;
 
-  /// Sparse solver used for the linear solves
-  std::unique_ptr<SparseSolver> solver;
+  void initialize() override;
+
+private:
+  /// PETSc linear solver
+  KSP ksp;
+
+  /// options to pass to petsc
+  std::string petsc_options;
 };
 
 } // namespace akantu
 
-#endif /* AKANTU_NON_LINEAR_SOLVER_LINEAR_HH_ */
+#endif /* AKANTU_SOLVER_PETSC_HH_ */

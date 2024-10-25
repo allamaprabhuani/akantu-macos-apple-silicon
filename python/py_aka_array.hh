@@ -77,7 +77,8 @@ namespace detail {
 
     void resize(Int new_size) final {
       if (new_size != this->size()) {
-        AKANTU_EXCEPTION("cannot resize a temporary array");
+        AKANTU_EXCEPTION("cannot resize a temporary array "
+                         << new_size << " != " << this->size());
       }
     }
 

@@ -97,6 +97,12 @@ inline void ParameterTyped<RandomInternalField<Real>>::setAuto(
 }
 
 /* -------------------------------------------------------------------------- */
+template <>
+inline void ParameterTyped<RandomInternalField<Real>>::set(std::any value) {
+  auto r = std::any_cast<RandomParameter<Real>>(value);
+  param.setRandomDistribution(r);
+}
+/* -------------------------------------------------------------------------- */
 
 } // namespace akantu
 

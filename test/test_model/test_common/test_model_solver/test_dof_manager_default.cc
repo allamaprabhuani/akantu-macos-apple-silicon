@@ -34,12 +34,12 @@ using namespace akantu;
 class MySolverCallback : public SolverCallback {
 public:
   MySolverCallback(Real F, DOFManagerDefault & dof_manager, Int nb_dofs = 3)
-      : dof_manager(dof_manager), dispacement(nb_dofs, 1, "disp"),
+      : dof_manager(dof_manager), displacement(nb_dofs, 1, "disp"),
         blocked(nb_dofs, 1), forces(nb_dofs, 1), nb_dofs(nb_dofs) {
-    dof_manager.registerDOFs("disp", dispacement, _dst_generic);
+    dof_manager.registerDOFs("disp", displacement, _dst_generic);
     dof_manager.registerBlockedDOFs("disp", blocked);
 
-    dispacement.set(0.);
+    displacement.set(0.);
     forces.set(0.);
     blocked.set(false);
 
@@ -81,7 +81,7 @@ public:
   void corrector() override {}
 
   DOFManagerDefault & dof_manager;
-  Array<Real> dispacement;
+  Array<Real> displacement;
   Array<bool> blocked;
   Array<Real> forces;
 
@@ -94,8 +94,9 @@ int main(int argc, char * argv[]) {
   DOFManagerDefault dof_manager("test_dof_manager");
   MySolverCallback callback(10., dof_manager, 11);
 
-  NonLinearSolver & nls =
-      dof_manager.getNewNonLinearSolver("my_nls", NonLinearSolverType::_linear);
+  NonLinearSolver & nls = dof_manager.getNewNonLinearSolver(
+      "my_nls", {.non_linear_solver_type = NonLinearSolverType::_linear,
+                 .sparse_solver_type = SparseSolverType::_mumps});
   TimeStepSolver & tss = dof_manager.getNewTimeStepSolver(
       "my_tss", TimeStepSolverType::_static, nls, callback);
   tss.setIntegrationScheme("disp", IntegrationSchemeType::_pseudo_time);
@@ -103,18 +104,14 @@ int main(int argc, char * argv[]) {
 
   dof_manager.getMatrix("K").saveMatrix("K_dof_manager_default.mtx");
 
-  auto disp_it = callback.dispacement.begin();
-  auto force_it = callback.forces.begin();
-  auto blocked_it = callback.blocked.begin();
   std::cout << std::setw(8) << "disp"
             << " " << std::setw(8) << "force"
             << " " << std::setw(8) << "blocked" << std::endl;
 
-  for (; disp_it != callback.dispacement.end();
-       ++disp_it, ++force_it, ++blocked_it) {
-    std::cout << std::setw(8) << *disp_it << " " << std::setw(8) << *force_it
-              << " " << std::setw(8) << std::boolalpha << *blocked_it
-              << std::endl;
+  for (auto && [disp, force, blocked] :
+       zip(callback.displacement, callback.forces, callback.blocked)) {
+    std::cout << std::setw(8) << disp << " " << std::setw(8) << force << " "
+              << std::setw(8) << std::boolalpha << blocked << std::endl;
   }
 
   finalize();

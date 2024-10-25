@@ -22,6 +22,8 @@
 #include "aka_common.hh"
 #include "parser.hh"
 /* -------------------------------------------------------------------------- */
+#include <any>
+/* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_PARAMETER_REGISTRY_HH_
 #define AKANTU_PARAMETER_REGISTRY_HH_
@@ -72,7 +74,8 @@ public:
   void setAccessType(ParameterAccessType ptype);
 
   /* ------------------------------------------------------------------------ */
-  template <typename T, typename V> void set(const V & value);
+  virtual std::string to_string() = 0;
+  virtual void set(std::any value) = 0;
   virtual void setAuto(const ParserParameter & param);
   template <typename T> T & get();
   template <typename T> const T & get() const;
@@ -115,7 +118,8 @@ public:
                  ParameterAccessType param_type, T & param);
 
   /* ------------------------------------------------------------------------ */
-  template <typename V> void setTyped(const V & value);
+  std::string to_string() override;
+  void set(std::any value) override;
   void setAuto(const ParserParameter & value) override;
   T & getTyped();
   const T & getTyped() const;
@@ -159,12 +163,12 @@ protected:
 
   /* ------------------------------------------------------------------------ */
 public:
-  /// Set value to a parameter (with possible different type)
-  template <typename T, typename V>
-  void setMixed(const std::string & name, const V & value);
+  /// function called to update the internal parameters when the
+  /// modifiable parameters are modified
+  virtual void updateInternalParameters() {}
 
   /// Set value to a parameter
-  template <typename T> void set(const std::string & name, const T & value);
+  virtual void set(const std::string & name, std::any value);
 
   /// Get value of a parameter
   inline const Parameter & get(const std::string & name) const;
@@ -178,6 +182,13 @@ public:
       params.push_back(pair.first);
     }
     return params;
+  }
+
+  bool hasParameter(const std::string & name) {
+    auto it = params.find(name);
+    if (it != params.end())
+      return true;
+    return false;
   }
 
   std::vector<ID> listSubRegisteries() const {

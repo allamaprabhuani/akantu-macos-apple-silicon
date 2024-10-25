@@ -395,15 +395,12 @@ void ShapeLagrange<kind>::computeBtD(const Array<Real> & Ds, Array<Real> & BtDs,
                            nb_nodes_per_element);
   }
 
-  for (auto && values :
+  for (auto && [B, D, Bt_D] :
        zip(view,
            make_view(Ds, Ds.getNbComponent() / spatial_dimension,
                      spatial_dimension),
            make_view(BtDs, BtDs.getNbComponent() / nb_nodes_per_element,
                      nb_nodes_per_element))) {
-    const auto & B = std::get<0>(values);
-    const auto & D = std::get<1>(values);
-    auto & Bt_D = std::get<2>(values);
     // transposed due to the storage layout of B
     Bt_D.noalias() = D * B;
   }

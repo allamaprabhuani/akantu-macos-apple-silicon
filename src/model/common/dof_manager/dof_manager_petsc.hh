@@ -27,7 +27,7 @@
 #ifndef AKANTU_DOF_MANAGER_PETSC_HH_
 #define AKANTU_DOF_MANAGER_PETSC_HH_
 
-#define PETSc_call(func, ...)                                                  \
+#define _PETSc_call(func, ...)                                                 \
   do {                                                                         \
     auto ierr = func(__VA_ARGS__);                                             \
     if (PetscUnlikely(ierr != 0)) {                                            \
@@ -38,11 +38,23 @@
     }                                                                          \
   } while (false)
 
+inline PetscErrorCode petscErrorHandler(MPI_Comm /* comm */, int line,
+                                        const char * fun, const char * file,
+                                        PetscErrorCode n, PetscErrorType p,
+                                        const char * mess, void * /* ctx */) {
+  if (PetscUnlikely(n != 0)) {
+    const char * desc;
+    PetscErrorMessage(n, &desc, nullptr);
+    AKANTU_EXCEPTION(file << ":" << line << ": Error(" << p
+                          << ") in PETSc call to \'" << fun << "\': " << mess);
+  }
+  return n;
+}
+
 namespace akantu {
 namespace detail {
   template <typename T> void PETScSetName(T t, const ID & id) {
-    PETSc_call(PetscObjectSetName, reinterpret_cast<PetscObject>(t),
-               id.c_str());
+    PetscObjectSetName(reinterpret_cast<PetscObject>(t), id.c_str());
   }
 } // namespace detail
 } // namespace akantu
@@ -56,7 +68,7 @@ namespace akantu {
 
 class DOFManagerPETSc : public DOFManager {
   /* ------------------------------------------------------------------------ */
-  /* Constructors/Destructors                                                 */
+  /* Constructors/Destructors */
   /* ------------------------------------------------------------------------ */
 public:
   DOFManagerPETSc(const ID & id = "dof_manager_petsc");
@@ -78,35 +90,25 @@ protected:
     }
   };
 
+  void updateLocalEquationNumber(const ID & dof_id);
+
   /* ------------------------------------------------------------------------ */
-  /* Methods                                                                  */
+  /* Methods */
   /* ------------------------------------------------------------------------ */
 public:
-  void assembleToLumpedMatrix(const ID & /*dof_id*/,
-                              Array<Real> & /*array_to_assemble*/,
-                              const ID & /*lumped_mtx*/,
-                              Real /*scale_factor*/ = 1.) override {
-    AKANTU_TO_IMPLEMENT();
-  }
-
   void assembleElementalMatricesToMatrix(
-      const ID & /*matrix_id*/, const ID & /*dof_id*/,
-      const Array<Real> & /*elementary_mat*/, ElementType /*type*/,
-      GhostType /*ghost_type*/,
-      const MatrixType & /*elemental_matrix_type*/,
-      const Array<Idx> & /*filter_elements*/) override;
+      const ID & matrix_id, const ID & dof_id,
+      const Array<Real> & elementary_mat, ElementType type,
+      GhostType ghost_type, const MatrixType & elemental_matrix_type,
+      const Array<Idx> & filter_elements) override;
 
-  void assembleMatMulVectToArray(const ID & /*dof_id*/, const ID & /*A_id*/,
-                                 const Array<Real> & /*x*/,
-                                 Array<Real> & /*array*/,
-                                 Real /*scale_factor*/ = 1.) override;
+  void assembleMatMulVectToArray(const ID & dof_id, const ID & A_id,
+                                 const Array<Real> & x, Array<Real> & array,
+                                 Real scale_factor = 1.) override;
 
-  void assembleLumpedMatMulVectToResidual(const ID & /*dof_id*/,
-                                          const ID & /*A_id*/,
-                                          const Array<Real> & /*x*/,
-                                          Real /*scale_factor*/ = 1) override {
-    AKANTU_TO_IMPLEMENT();
-  }
+  void assembleLumpedMatMulVectToResidual(const ID & dof_id, const ID & A_id,
+                                          const Array<Real> & x,
+                                          Real scale_factor = 1) override;
 
   void assemblePreassembledMatrix(const ID & matrix_id,
                                   const TermsToAssemble & /*terms*/) override;
@@ -127,17 +129,15 @@ protected:
   std::tuple<Int, Int, Int>
   registerDOFsInternal(const ID & dof_id, Array<Real> & dofs_array) override;
 
-  void updateDOFsData(DOFDataPETSc & dof_data, Int nb_new_local_dofs,
-                      Int nb_new_pure_local, Int nb_node,
-                      const std::function<Idx(Idx)> & getNode);
+  std::pair<Int, Int> updateNodalDOFs(const ID & dof_id,
+                                      const Array<Idx> & nodes_list) override;
+
+  void setISLocalToGlobalMapping();
 
 protected:
-  void getLumpedMatrixPerDOFs(const ID & /*dof_id*/, const ID & /*lumped_mtx*/,
-                              Array<Real> & /*lumped*/) override {}
-
-  NonLinearSolver & getNewNonLinearSolver(
-      const ID & nls_solver_id,
-      const NonLinearSolverType & non_linear_solver_type) override;
+  NonLinearSolver &
+  getNewNonLinearSolver(const ID & nls_solver_id,
+                        const ModelSolverOptions & solver_options) override;
 
   TimeStepSolver &
   getNewTimeStepSolver(const ID & id, const TimeStepSolverType & type,
@@ -145,7 +145,7 @@ protected:
                        SolverCallback & solver_callback) override;
 
   /* ------------------------------------------------------------------------ */
-  /* Accessors                                                                */
+  /* Accessors */
   /* ------------------------------------------------------------------------ */
 public:
   /// Get an instance of a new SparseMatrix
@@ -164,20 +164,19 @@ public:
   SolverVector & getNewLumpedMatrix(const ID & matrix_id) override;
 
   /// Get the blocked dofs array
-  //  AKANTU_GET_MACRO(BlockedDOFs, blocked_dofs, const Array<bool> &);
   AKANTU_GET_MACRO(MPIComm, mpi_communicator, MPI_Comm);
 
   AKANTU_GET_MACRO_NOT_CONST(ISLocalToGlobalMapping, is_ltog_map,
                              ISLocalToGlobalMapping &);
 
-  SolverVectorPETSc & getSolution();
-  const SolverVectorPETSc & getSolution() const;
+  SolverVectorPETSc & _getSolution();
+  const SolverVectorPETSc & _getSolution() const;
 
-  SolverVectorPETSc & getResidual();
-  const SolverVectorPETSc & getResidual() const;
+  SolverVectorPETSc & _getResidual();
+  const SolverVectorPETSc & _getResidual() const;
 
   /* ------------------------------------------------------------------------ */
-  /* Class Members                                                            */
+  /* Class Members */
   /* ------------------------------------------------------------------------ */
 private:
   using PETScMatrixMap = std::map<ID, SparseMatrixPETSc *>;

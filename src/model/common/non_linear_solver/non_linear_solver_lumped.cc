@@ -24,16 +24,18 @@
 #include "dof_manager_default.hh"
 #include "solver_callback.hh"
 #include "solver_vector_default.hh"
+#if defined(AKANTU_USE_PETSC)
+#include "solver_vector_petsc.hh"
+#endif
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 NonLinearSolverLumped::NonLinearSolverLumped(
-    DOFManagerDefault & dof_manager,
-    const NonLinearSolverType & non_linear_solver_type, const ID & id)
-    : NonLinearSolver(dof_manager, non_linear_solver_type, id),
-      dof_manager(dof_manager) {
+    DOFManager & dof_manager, const ModelSolverOptions & solver_options,
+    const ID & id)
+    : NonLinearSolver(dof_manager, solver_options, id) {
   this->supported_type.insert(NonLinearSolverType::_lumped);
   this->checkIfTypeIsSupported();
 
@@ -52,19 +54,34 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 
   solver_callback.assembleResidual();
 
-  auto & x = aka::as_type<SolverVectorDefault>(this->dof_manager.getSolution());
+  SolverVector & x =
+      aka::as_type<SolverVector>(this->dof_manager.getSolution());
   const auto & b = this->dof_manager.getResidual();
 
   x.resize();
 
-  const auto & blocked_dofs = this->dof_manager.getBlockedDOFs();
+  // const auto & blocked_dofs = this->dof_manager.getGlobalBlockedDOFs();
   const auto & A = this->dof_manager.getLumpedMatrix("M");
 
   // alpha is the conversion factor from from force/mass to acceleration needed
   // in model coupled with atomistic \todo find a way to define alpha per dof
   // type
   x.zero();
-  NonLinearSolverLumped::solveLumped(A, x, b, alpha, blocked_dofs);
+
+  if (1 == 2) {
+#if defined(AKANTU_USE_PETSC)
+  } else if (aka::is_of_type<SolverVectorPETSc>(x)) {
+    auto & _x = aka::as_type<SolverVectorPETSc>(x);
+    auto & _A = aka::as_type<SolverVectorPETSc>(A);
+    auto & _b = aka::as_type<SolverVectorPETSc>(b);
+    // VecView(aka::as_type<SolverVectorPETSc>(b).getVec(),
+    //         PETSC_VIEWER_STDOUT_WORLD);
+    NonLinearSolverLumped::solveLumped(_A, _x, _b, alpha);
+#endif
+  } else {
+    auto & _x = aka::as_type<SolverVectorDefault>(x);
+    NonLinearSolverLumped::solveLumped(A, _x, b, alpha);
+  }
 
   this->dof_manager.splitSolutionPerDOFs();
 
@@ -75,17 +92,32 @@ void NonLinearSolverLumped::solve(SolverCallback & solver_callback) {
 /* -------------------------------------------------------------------------- */
 void NonLinearSolverLumped::solveLumped(const Array<Real> & As,
                                         Array<Real> & xs,
-                                        const Array<Real> & bs, Real alpha,
-                                        const Array<bool> & blocked_dofs) {
-  for (auto && [A, x, b, blocked] :
-       zip(make_view(As), make_view(xs), make_view(bs),
-           make_view(blocked_dofs))) {
-    if (not blocked) {
-      x = alpha * (b / A);
-    }
+                                        const Array<Real> & bs, Real alpha) {
+
+  for (auto && [A, x, b] : zip(make_view(As), make_view(xs), make_view(bs))) {
+    x = alpha * (b / A);
   }
 }
 
+/* -------------------------------------------------------------------------- */
+#if defined(AKANTU_USE_PETSC)
+
+void NonLinearSolverLumped::solveLumped(const SolverVectorPETSc & As,
+                                        SolverVectorPETSc & xs,
+                                        const SolverVectorPETSc & bs,
+                                        Real alpha // ,
+                                        // const Array<bool> & blocked_dofs
+) {
+
+  // Array<Real> _xs(As.size(), As.getNbComponent());
+  // NonLinearSolverLumped::solveLumped(As, _xs, bs, alpha, blocked_dofs);
+  // VecCopy(internal::make_petsc_wraped_vector(_xs), xs);
+
+  VecPointwiseDivide(xs, bs, As);
+  VecScale(xs, alpha);
+  // VecView(xs.getVec(), PETSC_VIEWER_STDOUT_WORLD);
+}
+#endif
 /* -------------------------------------------------------------------------- */
 
 } // namespace akantu

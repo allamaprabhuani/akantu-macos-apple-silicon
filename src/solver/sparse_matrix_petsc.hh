@@ -136,15 +136,14 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // DOFManagerPETSc that contains the numbering for petsc
-  DOFManagerPETSc & dof_manager;
-
   /// store the PETSc matrix
   Mat mat;
 
   /// matrix release
   Int release{0};
 };
+
+void PetscPrint(Mat x);
 
 } // namespace akantu
 

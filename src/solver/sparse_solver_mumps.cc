@@ -53,8 +53,7 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 SparseSolverMumps::SparseSolverMumps(DOFManagerDefault & dof_manager,
                                      const ID & matrix_id, const ID & id)
-    : SparseSolver(dof_manager, matrix_id, id), dof_manager(dof_manager),
-      master_rhs_solution(0, 1) {
+    : SparseSolver(dof_manager, matrix_id, id), master_rhs_solution(0, 1) {
   AKANTU_DEBUG_IN();
 
   this->prank = communicator.whoAmI();
@@ -139,7 +138,7 @@ void SparseSolverMumps::setOutputLevel() {
 
 /* -------------------------------------------------------------------------- */
 void SparseSolverMumps::initMumpsData() {
-  auto & A = dof_manager.getMatrix(matrix_id);
+  auto & A = this->getDOFManager().getMatrix(matrix_id);
 
   // Default Scaling
   icntl(8) = 77;
@@ -250,7 +249,7 @@ void SparseSolverMumps::analysis() {
 void SparseSolverMumps::factorize() {
   AKANTU_DEBUG_IN();
 
-  auto & A = dof_manager.getMatrix(matrix_id);
+  auto & A = this->getDOFManager().getMatrix(matrix_id);
 
   if (parallel_method == _fully_distributed) {
     this->mumps_data.a_loc = A.a.data();
@@ -269,34 +268,15 @@ void SparseSolverMumps::factorize() {
 }
 
 /* -------------------------------------------------------------------------- */
-void SparseSolverMumps::solve(Array<Real> & x, const Array<Real> & b) {
-  auto & synch = this->dof_manager.getSynchronizer();
-
-  if (this->prank == 0) {
-    this->master_rhs_solution.resize(this->dof_manager.getSystemSize());
-    synch.gather(b, this->master_rhs_solution);
-  } else {
-    synch.gather(b);
-  }
-
-  this->solveInternal();
-
-  if (this->prank == 0) {
-    synch.scatter(x, this->master_rhs_solution);
-  } else {
-    synch.scatter(x);
-  }
-}
-
-/* -------------------------------------------------------------------------- */
 void SparseSolverMumps::solve() {
   this->master_rhs_solution.copy(
-      aka::as_type<SolverVectorDefault>(this->dof_manager.getResidual())
+      aka::as_type<SolverVectorDefault>(dof_manager.getResidual())
           .getGlobalVector());
 
+  // this->dof_manager.getMatrix(matrix_id).saveMatrix("toto.mtx");
   this->solveInternal();
 
-  aka::as_type<SolverVectorDefault>(this->dof_manager.getSolution())
+  aka::as_type<SolverVectorDefault>(dof_manager.getSolution())
       .setGlobalVector(this->master_rhs_solution);
 
   this->dof_manager.splitSolutionPerDOFs();
@@ -308,7 +288,7 @@ void SparseSolverMumps::solveInternal() {
 
   this->checkInitialized();
 
-  const auto & A = dof_manager.getMatrix(matrix_id);
+  const auto & A = this->getDOFManager().getMatrix(matrix_id);
 
   this->setOutputLevel();
 
@@ -381,6 +361,11 @@ void SparseSolverMumps::printError() {
                          "user guide INFO(1) = "
                          << _info_v[1]);
   }
+}
+/* -------------------------------------------------------------------------- */
+
+DOFManagerDefault & SparseSolverMumps::getDOFManager() {
+  return aka::as_type<DOFManagerDefault &>(this->dof_manager);
 }
 
 } // namespace akantu

@@ -39,8 +39,7 @@ class NonLinearSolverNewtonRaphson : public NonLinearSolver {
   /* ------------------------------------------------------------------------ */
 public:
   NonLinearSolverNewtonRaphson(
-      DOFManagerDefault & dof_manager,
-      const NonLinearSolverType & non_linear_solver_type,
+      DOFManager & dof_manager, const ModelSolverOptions & solver_otpions,
       const ID & id = "non_linear_solver_newton_raphson");
   ~NonLinearSolverNewtonRaphson() override;
 
@@ -52,10 +51,13 @@ public:
   /// the solver callback functions
   void solve(SolverCallback & solver_callback) override;
 
-  AKANTU_GET_MACRO_NOT_CONST(Solver, *solver, SparseSolver &);
-  AKANTU_GET_MACRO(Solver, *solver, const SparseSolver &);
+  AKANTU_GET_MACRO_NOT_CONST(SparseSolver, *sparse_solver, SparseSolver &);
+  AKANTU_GET_MACRO(SparseSolver, *sparse_solver, const SparseSolver &);
 
 protected:
+  //! function to call when a single sparse solve is demanded (1 iteration)
+  void solve_linear(SolverCallback & solver_callback);
+
   /// test the convergence compare norm of array to convergence_criteria
   bool testConvergence(const SolverVector & solver_vector);
 
@@ -63,10 +65,8 @@ protected:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  DOFManagerDefault & dof_manager;
-
   /// Sparse solver used for the linear solves
-  std::unique_ptr<SparseSolver> solver;
+  std::unique_ptr<SparseSolver> sparse_solver;
 
   /// Type of convergence criteria
   SolveConvergenceCriteria convergence_criteria_type;
@@ -91,6 +91,21 @@ private:
 
   /// Force a re-computation of the jacobian matrix
   bool force_linear_recompute{true};
+
+protected:
+  /// flag do decide if one iteration only to be done
+  bool linear{false};
+};
+/* -------------------------------------------------------------------------- */
+
+class NonLinearSolverLinear : public NonLinearSolverNewtonRaphson {
+public:
+  NonLinearSolverLinear(DOFManager & dof_manager,
+                        const ModelSolverOptions & solver_options,
+                        const ID & id = "non_linear_solver_linear")
+      : NonLinearSolverNewtonRaphson(dof_manager, solver_options, id) {
+    this->linear = true;
+  }
 };
 
 } // namespace akantu

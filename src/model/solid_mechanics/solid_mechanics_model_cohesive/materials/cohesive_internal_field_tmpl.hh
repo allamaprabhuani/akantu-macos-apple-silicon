@@ -99,11 +99,28 @@ inline void ParameterTyped<FacetRandomInternalField<Real>>::setAuto(
 }
 
 /* -------------------------------------------------------------------------- */
+
+template <>
+inline void
+ParameterTyped<FacetRandomInternalField<Real>>::set(std::any value) {
+  auto r = std::any_cast<RandomParameter<Real>>(value);
+  param.setRandomDistribution(r);
+}
+
+/* -------------------------------------------------------------------------- */
 template <>
 inline void ParameterTyped<CohesiveRandomInternalField<Real>>::setAuto(
     const ParserParameter & in_param) {
   Parameter::setAuto(in_param);
   RandomParameter<Real> r = in_param;
+  param.setRandomDistribution(r);
+}
+
+/* -------------------------------------------------------------------------- */
+template <>
+inline void
+ParameterTyped<CohesiveRandomInternalField<Real>>::set(std::any value) {
+  auto r = std::any_cast<RandomParameter<Real>>(value);
   param.setRandomDistribution(r);
 }
 

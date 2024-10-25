@@ -47,7 +47,7 @@ void Model::initFullImpl(const ModelOptions & options) {
 
   method = options.analysis_method;
   if (!this->hasDefaultSolver()) {
-    this->initNewSolver(this->method);
+    this->initNewSolver(this->method, options.solver_options);
   }
 
   initModel();
@@ -56,14 +56,20 @@ void Model::initFullImpl(const ModelOptions & options) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Model::initNewSolver(const AnalysisMethod & method) {
+void Model::initNewSolver(const AnalysisMethod & method,
+                          ModelSolverOptions solver_options) {
   ID solver_name;
   TimeStepSolverType tss_type;
   std::tie(solver_name, tss_type) = this->getDefaultSolverID(method);
+  if (solver_options.timestep_solver_type == TimeStepSolverType::_not_defined) {
+    solver_options.timestep_solver_type = tss_type;
+  }
 
   if (not this->hasSolver(solver_name)) {
-    ModelSolverOptions options = this->getDefaultSolverOptions(tss_type);
-    this->getNewSolver(solver_name, tss_type, options.non_linear_solver_type);
+    ModelSolverOptions options =
+        this->getDefaultSolverOptions(solver_options.timestep_solver_type);
+    solver_options.update(options);
+    this->getNewSolver(solver_name, solver_options);
 
     for (auto && is_type : options.integration_scheme_type) {
       if (!this->hasIntegrationScheme(solver_name, is_type.first)) {

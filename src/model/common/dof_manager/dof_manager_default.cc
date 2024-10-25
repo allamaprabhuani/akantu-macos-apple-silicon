@@ -194,25 +194,24 @@ SparseMatrixAIJ & DOFManagerDefault::getMatrix(const ID & id) {
 }
 
 /* -------------------------------------------------------------------------- */
-NonLinearSolver &
-DOFManagerDefault::getNewNonLinearSolver(const ID & id,
-                                         const NonLinearSolverType & type) {
-  switch (type) {
+NonLinearSolver & DOFManagerDefault::getNewNonLinearSolver(
+    const ID & id, const ModelSolverOptions & solver_options) {
+  switch (solver_options.non_linear_solver_type) {
   case NonLinearSolverType::_newton_raphson:
     /* FALLTHRU */
     /* [[fallthrough]]; un-comment when compiler will get it */
   case NonLinearSolverType::_newton_raphson_contact:
   case NonLinearSolverType::_newton_raphson_modified: {
     return this->registerNonLinearSolver<NonLinearSolverNewtonRaphson>(
-        *this, id, type);
+        *this, id, solver_options);
   }
   case NonLinearSolverType::_linear: {
     return this->registerNonLinearSolver<NonLinearSolverLinear>(*this, id,
-                                                                type);
+                                                                solver_options);
   }
   case NonLinearSolverType::_lumped: {
     return this->registerNonLinearSolver<NonLinearSolverLumped>(*this, id,
-                                                                type);
+                                                                solver_options);
   }
   default:
     AKANTU_EXCEPTION("The asked type of non linear solver is not supported by "
@@ -423,39 +422,15 @@ void DOFManagerDefault::onNodesAdded(const Array<Idx> & nodes_list,
 void DOFManagerDefault::resizeGlobalArrays() {
   DOFManager::resizeGlobalArrays();
 
-  this->global_blocked_dofs.resize(this->local_system_size, 1);
-  this->previous_global_blocked_dofs.resize(this->local_system_size, 1);
+  // this->global_blocked_dofs_indexes.resize(this->local_system_size, 1);
+  // this->previous_global_blocked_dofs_indexes.resize(this->local_system_size,
+  // 1);
 
   matrix_profiled_dofs.clear();
 }
 
 /* -------------------------------------------------------------------------- */
-void DOFManagerDefault::updateGlobalBlockedDofs() {
-  DOFManager::updateGlobalBlockedDofs();
 
-  if (this->global_blocked_dofs_release ==
-      this->previous_global_blocked_dofs_release) {
-    return;
-  }
-
-  global_blocked_dofs_uint.resize(local_system_size);
-  global_blocked_dofs_uint.set(false);
-  for (const auto & dof : global_blocked_dofs) {
-    global_blocked_dofs_uint[dof] = true;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-Array<bool> & DOFManagerDefault::getBlockedDOFs() {
-  return global_blocked_dofs_uint;
-}
-
-/* -------------------------------------------------------------------------- */
-const Array<bool> & DOFManagerDefault::getBlockedDOFs() const {
-  return global_blocked_dofs_uint;
-}
-
-/* -------------------------------------------------------------------------- */
 static bool dof_manager_is_registered =
     DOFManagerFactory::getInstance().registerAllocator(
         "default",

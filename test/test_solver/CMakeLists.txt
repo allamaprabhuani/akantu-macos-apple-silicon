@@ -50,6 +50,18 @@ register_test(test_sparse_solver_mumps
   PARALLEL
   )
 
+register_test(test_sparse_solver_eigen
+  SOURCES test_sparse_solver_eigen.cc
+  PACKAGE mumps
+  PARALLEL
+  )
+
+register_test(test_sparse_solver_petsc
+  SOURCES test_sparse_solver_petsc.cc
+  PACKAGE petsc
+  PARALLEL
+  )
+  
 # register_test(test_petsc_matrix_profile
 #   SOURCES test_petsc_matrix_profile.cc
 #   DEPENDS test_matrix_mesh

@@ -72,7 +72,7 @@ void IntegrationScheme::store() {
 
 /* -------------------------------------------------------------------------- */
 void IntegrationScheme::restore() {
-  for (auto o : arange(order)) {
+  for (auto o : arange(order + 1)) {
     auto & u_o = dof_manager.getDOFsDerivatives(dof_id, o);
     u_o.copy(*u_store[o]);
   }

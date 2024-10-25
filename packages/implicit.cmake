@@ -24,7 +24,7 @@ package_declare(implicit META
   DESCRIPTION "Add support for implicit time scheme")
 
 
-set(AKANTU_IMPLICIT_SOLVER "Mumps"
+set(AKANTU_IMPLICIT_SOLVER "Mumps+PETSc"
   CACHE STRING "Solver activated in Akantu")
 
 set_property(CACHE AKANTU_IMPLICIT_SOLVER PROPERTY STRINGS
@@ -32,6 +32,11 @@ set_property(CACHE AKANTU_IMPLICIT_SOLVER PROPERTY STRINGS
   Mumps
   PETSc
   Mumps+PETSc
+)
+
+package_declare_sources(implicit
+  model/common/non_linear_solver/non_linear_solver_newton_raphson.cc
+  model/common/non_linear_solver/non_linear_solver_newton_raphson.hh
 )
 
 package_is_activated(parallel _is_parallel)

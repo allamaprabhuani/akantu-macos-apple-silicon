@@ -19,7 +19,11 @@
  */
 
 #include "non_linear_solver.hh"
+#include "non_linear_solver_newton_raphson.hh"
 #include <solid_mechanics_model.hh>
+#if defined(AKANTU_USE_PETSC)
+#include "sparse_solver_petsc.hh"
+#endif
 
 using namespace akantu;
 
@@ -53,11 +57,23 @@ int main(int argc, char * argv[]) {
   model.addDumpField("stress");
   model.addDumpField("grad_u");
 
-  // model.dump();
+  model.dump();
   auto & solver = model.getNonLinearSolver("static");
   solver.set("max_iterations", 1);
   solver.set("threshold", 1e-8);
   solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+
+#if defined(AKANTU_USE_PETSC)
+  if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+    auto & sparse_solver =
+        aka::as_type<NonLinearSolverNewtonRaphson>(solver).getSparseSolver();
+
+    if (aka::is_of_type<SparseSolverPETSc>(sparse_solver)) {
+      sparse_solver.set("pc_type", "cholesky");
+      sparse_solver.set("ksp_rtol", "1e-30");
+    }
+  }
+#endif
 
   model.solveStep();
   // model.dump();

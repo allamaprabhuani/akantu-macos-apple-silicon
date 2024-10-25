@@ -46,10 +46,10 @@ namespace debug {
   class ParameterUnexistingException : public ParameterException {
   public:
     ParameterUnexistingException(const std::string & name,
-                                 const ParameterRegistry & registery)
+                                 const ParameterRegistry & registry)
         : ParameterException(name, "Parameter " + name +
                                        " does not exists in this scope") {
-      auto && params = registery.listParameters();
+      auto && params = registry.listParameters();
       this->_info =
           std::accumulate(params.begin(), params.end(),
                           this->_info + "\n Possible parameters are: ",
@@ -104,16 +104,6 @@ template <typename T> ParameterTyped<T> & Parameter::getParameterTyped() {
 }
 
 /* ------------------------------------------------------------------------ */
-template <typename T, typename V> void Parameter::set(const V & value) {
-  if (not isWritable()) {
-    AKANTU_CUSTOM_EXCEPTION(
-        debug::ParameterAccessRightException(name, "writable"));
-  }
-  ParameterTyped<T> & typed_param = getParameterTyped<T>();
-  typed_param.setTyped(value);
-}
-
-/* ------------------------------------------------------------------------ */
 inline void Parameter::setAuto(const ParserParameter & /*value*/) {
   if (not isParsable()) {
     AKANTU_CUSTOM_EXCEPTION(
@@ -154,13 +144,24 @@ ParameterTyped<T>::ParameterTyped(const std::string & name,
     : Parameter(name, description, param_type), param(param) {}
 
 /* -------------------------------------------------------------------------- */
-template <typename T>
-template <typename V>
-void ParameterTyped<T>::setTyped(const V & value) {
-  param = value;
+template <typename T> inline void ParameterTyped<T>::set(std::any value) {
+  try {
+    param = std::any_cast<T>(value);
+  } catch (std::bad_any_cast & e) {
+    AKANTU_EXCEPTION("Cannot cast std::any to parameter\n" << e.what());
+  }
 }
 
 /* -------------------------------------------------------------------------- */
+template <typename T> inline std::string ParameterTyped<T>::to_string() {
+  if constexpr (std::is_same_v<std::string, T>)
+    return param;
+  else {
+    return std::to_string(param);
+  }
+}
+/* -------------------------------------------------------------------------- */
+
 template <typename T>
 inline void ParameterTyped<T>::setAuto(const ParserParameter & value) {
   Parameter::setAuto(value);
@@ -198,7 +199,15 @@ public:
                  ParameterAccessType param_type, Eigen::Matrix<T, m, n> & param)
       : Parameter(name, description, param_type), param(param) {}
 
-  template <typename V> void setTyped(const V & value) { param = value; }
+  std::string to_string() override {
+    std::stringstream sstr;
+    sstr << param;
+    return sstr.str();
+  }
+
+  void set(std::any value) {
+    param = std::any_cast<Eigen::Matrix<T, m, n>>(value);
+  }
   void setAuto(const ParserParameter & value) override {
     Parameter::setAuto(value);
     if constexpr (n == 1) {
@@ -249,16 +258,21 @@ private:
 };
 
 /* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
 template <typename T> class ParameterTyped<std::vector<T>> : public Parameter {
 public:
   ParameterTyped(const std::string & name, const std::string & description,
                  ParameterAccessType param_type, std::vector<T> & param)
       : Parameter(name, description, param_type), param(param) {}
 
-  /* ------------------------------------------------------------------------
-   */
-  template <typename V> void setTyped(const V & value) { param = value; }
+  /* ------------------------------------------------------------------------ */
+
+  std::string to_string() override {
+    std::stringstream sstr;
+    sstr << param;
+    return sstr.str();
+  }
+
+  void set(std::any value) { param = value; }
   void setAuto(const ParserParameter & value) override {
     Parameter::setAuto(value);
     param.zero();
@@ -297,9 +311,18 @@ public:
                  ParameterAccessType param_type, std::set<T> & param)
       : Parameter(name, description, param_type), param(param) {}
 
-  /* ------------------------------------------------------------------------
-   */
-  template <typename V> void setTyped(const V & value) { param = value; }
+  /* ------------------------------------------------------------------------ */
+  std::string to_string() override {
+    std::stringstream sstr;
+    sstr << "set[";
+    for (auto && el : param) {
+      sstr << el << ",";
+    }
+    sstr << "]";
+    return sstr.str();
+  }
+
+  void set(std::any value) { param = std::any_cast<std::set<T>>(value); }
   void setAuto(const ParserParameter & value) {
     Parameter::setAuto(value);
     param.clear();
@@ -328,14 +351,16 @@ private:
   std::set<T> & param;
 };
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <>
 inline void ParameterTyped<bool>::printself(std::ostream & stream) const {
   Parameter::printself(stream);
   stream << std::boolalpha << param << "\n";
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename T>
 void ParameterRegistry::registerParam(const std::string & name, T & variable,
                                       ParameterAccessType type,
@@ -350,7 +375,8 @@ void ParameterRegistry::registerParam(const std::string & name, T & variable,
   params[name] = std::move(param);
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename T>
 void ParameterRegistry::registerParam(const std::string & name, T & variable,
                                       const T & default_value,
@@ -360,31 +386,8 @@ void ParameterRegistry::registerParam(const std::string & name, T & variable,
   registerParam(name, variable, type, description);
 }
 
-/* -------------------------------------------------------------------------- */
-template <typename T, typename V>
-void ParameterRegistry::setMixed(const std::string & name, const V & value) {
-  auto it = params.find(name);
-  if (it == params.end()) {
-    if (consisder_sub) {
-      for (auto && [_, registery] : sub_registries) {
-        registery.get().template setMixed<T>(name, value);
-      }
-    } else {
-      AKANTU_CUSTOM_EXCEPTION(debug::ParameterUnexistingException(name, *this));
-    }
-  } else {
-    Parameter & param = *(it->second);
-    param.set<T>(value);
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-template <typename T>
-void ParameterRegistry::set(const std::string & name, const T & value) {
-  this->template setMixed<T>(name, value);
-}
-
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 template <typename T> T & ParameterRegistry::get_(const std::string & name) {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -405,7 +408,8 @@ template <typename T> T & ParameterRegistry::get_(const std::string & name) {
   return param.get<T>();
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 const Parameter & ParameterRegistry::get(const std::string & name) const {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -426,7 +430,8 @@ const Parameter & ParameterRegistry::get(const std::string & name) const {
   return param;
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 Parameter & ParameterRegistry::get(const std::string & name) {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -447,7 +452,8 @@ Parameter & ParameterRegistry::get(const std::string & name) {
   return param;
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 namespace details {
   template <class T, class R, class Enable = void> struct CastHelper {
     static R convert(const T & /*unused*/) { throw std::bad_cast(); }

@@ -187,8 +187,7 @@ FEEngine & ContactMechanicsModel::getFEEngineBoundary(const ID & name) {
 
 /* -------------------------------------------------------------------------- */
 void ContactMechanicsModel::initSolver(
-    TimeStepSolverType /*time_step_solver_type*/,
-    NonLinearSolverType /*unused*/) {
+    TimeStepSolverType /*time_step_solver_type*/) {
 
   // for alloc type of solvers
   this->allocNodalField(this->displacement, spatial_dimension, "displacement");

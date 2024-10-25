@@ -79,6 +79,12 @@ public:
   /* ------------------------------------------------------------------------ */
   /* Integration method bridges                                               */
   /* ------------------------------------------------------------------------ */
+  /// integrate f for all elements
+  void
+  integrate(const ElementTypeMapArray<Real> & f,
+            ElementTypeMapArray<Real> & intf,
+            const ElementTypeMapArray<Idx> * filter_elements = nullptr) const;
+
   /// integrate f for all elements of type "type"
   void
   integrate(const Array<Real> & f, Array<Real> & intf, Int nb_degree_of_freedom,

@@ -78,7 +78,7 @@ public:
   /* ------------------------------------------------------------------------ */
 protected:
   /// manager handling the dofs for this SparseMatrix solver
-  DOFManager & _dof_manager;
+  DOFManager & dof_manager;
 
   /// The id of the associated matrix
   ID matrix_id;

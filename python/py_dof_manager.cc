@@ -25,7 +25,10 @@
 /* -------------------------------------------------------------------------- */
 #include <dof_manager.hh>
 #include <non_linear_solver.hh>
+#include <non_linear_solver_lumped.hh>
+#include <non_linear_solver_newton_raphson.hh>
 #include <solver_callback.hh>
+#include <sparse_solver.hh>
 #include <time_step_solver.hh>
 /* -------------------------------------------------------------------------- */
 #include <pybind11/operators.h>
@@ -192,6 +195,18 @@ void register_dof_manager(py::module & mod) {
       .def("set",
            [](NonLinearSolver & self, const std::string & id,
               const SolveConvergenceCriteria & val) { self.set(id, val); });
+
+  py::class_<NonLinearSolverNewtonRaphson, NonLinearSolver>(
+      mod, "NonLinearSolverNewtonRaphson")
+      .def(
+          "getSparseSolver",
+          [](NonLinearSolverNewtonRaphson & self) -> SparseSolver & {
+            return self.getSparseSolver();
+          },
+          py::return_value_policy::reference);
+
+  py::class_<NonLinearSolverLumped, NonLinearSolver>(mod,
+                                                     "NonLinearSolverLumped");
 
   py::class_<TimeStepSolver>(mod, "TimeStepSolver")
       .def("getIntegrationScheme", &TimeStepSolver::getIntegrationScheme);

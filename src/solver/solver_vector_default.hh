@@ -59,20 +59,17 @@ template <class Array_> class SolverVectorArrayTmpl : public SolverVectorArray {
 public:
   SolverVectorArrayTmpl(DOFManagerDefault & dof_manager, Array_ & vector,
                         const ID & id = "solver_vector_default")
-      : SolverVectorArray(dof_manager, id), dof_manager(dof_manager),
-        vector(vector) {}
+      : SolverVectorArray(dof_manager, id), vector(vector) {}
 
   template <class A = Array_,
             std::enable_if_t<not std::is_reference<A>::value> * = nullptr>
   SolverVectorArrayTmpl(DOFManagerDefault & dof_manager,
                         const ID & id = "solver_vector_default")
-      : SolverVectorArray(dof_manager, id), dof_manager(dof_manager),
-        vector(0, 1, id + ":vector") {}
+      : SolverVectorArray(dof_manager, id), vector(0, 1, id + ":vector") {}
 
   SolverVectorArrayTmpl(const SolverVectorArrayTmpl & vector,
                         const ID & id = "solver_vector_default")
-      : SolverVectorArray(vector, id), dof_manager(vector.dof_manager),
-        vector(vector.vector) {}
+      : SolverVectorArray(vector, id), vector(vector.vector) {}
 
   operator const Array<Real> &() const override { return getVector(); };
   virtual operator Array<Real> &() { return getVector(); };
@@ -94,13 +91,7 @@ public:
     ++this->release_;
   }
 
-  virtual
-  bool
-  isDistributed()
-    const
-    override
-      { return false; }
-
+  virtual bool isDistributed() const override { return false; }
 
 public:
   Array<Real> & getVector() override { return vector; }
@@ -117,7 +108,6 @@ public:
   bool isFinite() const override { return vector.isFinite(); }
 
 protected:
-  DOFManagerDefault & dof_manager;
   Array_ vector;
 
   template <class A> friend class SolverVectorArrayTmpl;

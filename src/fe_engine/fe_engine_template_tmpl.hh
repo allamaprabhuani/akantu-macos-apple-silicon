@@ -123,6 +123,37 @@ void FEEngineTemplate<I, S, kind, IntegrationOrderFunctor>::initShapeFunctions(
 template <template <ElementKind, class> class I, template <ElementKind> class S,
           ElementKind kind, class IntegrationOrderFunctor>
 void FEEngineTemplate<I, S, kind, IntegrationOrderFunctor>::integrate(
+    const ElementTypeMapArray<Real> & f, ElementTypeMapArray<Real> & intf,
+    const ElementTypeMapArray<Idx> * filter_elements) const {
+  AKANTU_DEBUG_IN();
+
+  const Array<Idx> * filter = nullptr;
+
+  for (auto ghost_type : ghost_types) {
+    auto && types = f.elementTypes(_all_dimensions, ghost_type, kind);
+    for (const auto & type : types) {
+
+      if (filter_elements != nullptr) {
+        filter = &((*filter_elements)(type, ghost_type));
+      } else {
+        filter = &empty_filter;
+      }
+
+      const Array<Real> & fq = f(type, ghost_type);
+      Array<Real> & intf_el = intf(type, ghost_type);
+
+      integrate(fq, intf_el, fq.getNbComponent(), type, ghost_type, *filter);
+    }
+  }
+
+  AKANTU_DEBUG_OUT();
+}
+
+/* -------------------------------------------------------------------------- */
+
+template <template <ElementKind, class> class I, template <ElementKind> class S,
+          ElementKind kind, class IntegrationOrderFunctor>
+void FEEngineTemplate<I, S, kind, IntegrationOrderFunctor>::integrate(
     const Array<Real> & f, Array<Real> & intf, Int nb_degree_of_freedom,
     ElementType type, GhostType ghost_type,
     const Array<Idx> & filter_elements) const {

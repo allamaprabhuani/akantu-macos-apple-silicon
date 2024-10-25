@@ -30,37 +30,43 @@
 
 namespace akantu {
 class DOFManagerDefault;
+class SparseMatrixAIJ;
 } // namespace akantu
 
 namespace akantu {
 
 class SparseSolverEigen : public SparseSolver {
-  /* ------------------------------------------------------------------------ */
-  /* Constructors/Destructors                                                 */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Constructors/Destructors */
+  /* ------------------------------------------------------------------------
+   */
 public:
-  SparseSolverEigen(DOFManagerDefault & dof_manager, const ID & matrix_id,
+  SparseSolverEigen(DOFManager & dof_manager, const ID & matrix_id,
                     const ID & id = "sparse_solver_eigen");
 
-  /* ------------------------------------------------------------------------ */
-  /* Methods                                                                  */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Methods */
+  /* ------------------------------------------------------------------------
+   */
 public:
   void initialize() override{};
 
   /// solve using residual and solution from the dof_manager
   void solve() override;
 
+  DOFManagerDefault & getDOFManager();
+
 private:
   void setA();
 
-  /* ------------------------------------------------------------------------ */
-  /* Class Members                                                            */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Class Members */
+  /* ------------------------------------------------------------------------
+   */
 private:
-  /// DOFManager used by the Eigen implementation of the SparseSolver
-  DOFManagerDefault & dof_manager;
-
   /// matrix release at last solve
   Int last_profile_release{-1};
 

@@ -22,6 +22,8 @@
 #include "element_group.hh"
 #include "mesh_utils.hh"
 #include "model.hh"
+#include "non_linear_solver_newton_raphson.hh"
+#include "sparse_solver.hh"
 #include "test_gtest_utils.hh"
 /* -------------------------------------------------------------------------- */
 #include <gtest/gtest.h>
@@ -35,11 +37,16 @@
 
 using namespace akantu;
 
-template <typename type_, typename M>
+template <typename element_type_, typename Model_, typename ModelOptions>
 class TestPatchTestLinear : public ::testing::Test {
 public:
-  static constexpr ElementType type = type_::value;
+  static constexpr ElementType type = element_type_::value;
   static constexpr Int dim = ElementClass<type>::getSpatialDimension();
+
+  using dof_manager_type = std::tuple_element_t<0, ModelOptions>;
+  using solver_options = std::tuple_element_t<1, ModelOptions>;
+  static constexpr NonLinearSolverType nls_type = solver_options::nls_type;
+  static constexpr SparseSolverType ss_type = solver_options::ss_type;
 
   void SetUp() override {
     mesh = std::make_unique<Mesh>(dim);
@@ -47,7 +54,14 @@ public:
     MeshUtils::buildFacets(*mesh);
     mesh->createBoundaryGroupFromGeometry();
 
-    model = std::make_unique<M>(*mesh);
+    model =
+        std::make_unique<Model_>(*mesh, _all_dimensions, std::to_string(type));
+
+#if defined(AKANTU_USE_PETSC)
+    if constexpr (std::is_same_v<dof_manager_type, DOFManagerPETSc>) {
+      model->initDOFManager("petsc");
+    }
+#endif
   }
 
   void TearDown() override {
@@ -60,9 +74,25 @@ public:
     debug::setDebugLevel(dblError);
     getStaticParser().parse(material_file);
 
-    this->model->initFull(_analysis_method = method);
+    this->model->initFull(
+        _analysis_method = method,
+        _solver_options = ModelSolverOptions{.non_linear_solver_type = nls_type,
+                                             .sparse_solver_type = ss_type});
     this->applyBC();
 
+#if defined(AKANTU_USE_PETSC)
+    if constexpr (std::is_same_v<dof_manager_type, DOFManagerPETSc>) {
+      auto & solver = model->getNonLinearSolver();
+
+      if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+        auto & sparse_solver =
+            aka::as_type<NonLinearSolverNewtonRaphson>(solver)
+                .getSparseSolver();
+        sparse_solver.set("pc_type", "cholesky");
+        sparse_solver.set("ksp_rtol", "1e-30");
+      }
+    }
+#endif
     if (method != _static) {
       this->model->setTimeStep(0.8 * this->model->getStableTimeStep());
     }
@@ -154,20 +184,14 @@ public:
 
 protected:
   std::unique_ptr<Mesh> mesh;
-  std::unique_ptr<M> model;
+  std::unique_ptr<Model_> model;
   Matrix<Real> alpha{{0.01, 0.02, 0.03, 0.04},
                      {0.05, 0.06, 0.07, 0.08},
                      {0.09, 0.10, 0.11, 0.12}};
 
-  Real gradient_tolerance{1e-13};
-  Real result_tolerance{1e-13};
-  Real dofs_tolerance{1e-15};
+  Real gradient_tolerance{1e-8};
+  Real result_tolerance{1e-9};
+  Real dofs_tolerance{1e-10};
 };
-
-// template <typename type_, typename M>
-// constexpr ElementType TestPatchTestLinear<type_, M>::type;
-
-// template <typename tuple_, typename M>
-// constexpr Int TestPatchTestLinear<tuple_, M>::dim;
 
 #endif /* AKANTU_PATCH_TEST_LINEAR_FIXTURE_HH_ */

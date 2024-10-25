@@ -31,8 +31,8 @@ TimeStepSolver::TimeStepSolver(DOFManager & dof_manager,
                                const TimeStepSolverType & type,
                                NonLinearSolver & non_linear_solver,
                                SolverCallback & solver_callback, const ID & id)
-    : SolverCallback(dof_manager), id(id), _dof_manager(dof_manager),
-      type(type), time_step(0.), solver_callback(&solver_callback),
+    : SolverCallback(dof_manager), id(id), dof_manager(dof_manager), type(type),
+      time_step(0.), solver_callback(&solver_callback),
       non_linear_solver(non_linear_solver) {
   this->registerSubRegistry("non_linear_solver", non_linear_solver);
 }
@@ -65,8 +65,8 @@ void TimeStepSolver::setIntegrationScheme(
       continue;
     }
 
-    if (not _dof_manager.hasMatrix(name)) {
-      _dof_manager.getNewMatrix(name, mat_type);
+    if (not dof_manager.hasMatrix(name)) {
+      dof_manager.getNewMatrix(name, mat_type);
     }
   }
 }
@@ -127,8 +127,8 @@ void TimeStepSolver::assembleLumpedMatrix(const ID & matrix_id) {
       this->solver_callback != nullptr,
       "This function cannot be called if the solver_callback is not set");
 
-  if (not _dof_manager.hasLumpedMatrix(matrix_id)) {
-    _dof_manager.getNewLumpedMatrix(matrix_id);
+  if (not dof_manager.hasLumpedMatrix(matrix_id)) {
+    dof_manager.getNewLumpedMatrix(matrix_id);
   }
 
   this->solver_callback->assembleLumpedMatrix(matrix_id);
@@ -148,16 +148,16 @@ void TimeStepSolver::assembleMatrix(const ID & matrix_id) {
       return;
     }
 
-    if (not _dof_manager.hasMatrix(matrix_id)) {
-      _dof_manager.getNewMatrix(matrix_id, type);
+    if (not dof_manager.hasMatrix(matrix_id)) {
+      dof_manager.getNewMatrix(matrix_id, type);
     }
 
     this->solver_callback->assembleMatrix(matrix_id);
     return;
   }
 
-  if (not _dof_manager.hasMatrix("J")) {
-    _dof_manager.getNewMatrix("J", common_type);
+  if (not dof_manager.hasMatrix("J")) {
+    dof_manager.getNewMatrix("J", common_type);
   }
 
   MatrixType type;
@@ -178,7 +178,7 @@ void TimeStepSolver::assembleResidual() {
       this->solver_callback != nullptr,
       "This function cannot be called if the solver_callback is not set");
 
-  this->_dof_manager.zeroResidual();
+  this->dof_manager.zeroResidual();
   this->solver_callback->assembleResidual();
 }
 
