@@ -145,12 +145,20 @@ PYBIND11_MODULE(py11_akantu, mod) {
         std::rethrow_exception(ptr);
       }
     } catch (akantu::debug::NLSNotConvergedException & e) {
+#if PYBIND11_VERSION_HEX >= 0x020C0000
+      py::set_error(akantu_exception_nls_not_converged, e.info().c_str());
+#else
       akantu_exception_nls_not_converged(e.info().c_str());
+#endif
     } catch (akantu::debug::Exception & e) {
       if (akantu::debug::debugger.printBacktrace()) {
         akantu::debug::printBacktrace();
       }
+#if PYBIND11_VERSION_HEX >= 0x020C0000
+      py::set_error(akantu_exception, e.info().c_str());
+#else
       akantu_exception(e.info().c_str());
+#endif
     }
   });
 

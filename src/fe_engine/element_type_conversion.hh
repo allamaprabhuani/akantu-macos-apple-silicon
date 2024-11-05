@@ -45,7 +45,7 @@ convertType<ElementType, InterpolationType>(ElementType type) {
         constexpr ElementType type = aka::decay_v<decltype(enum_type)>;
         return ElementClassProperty<type>::interpolation_type;
       },
-      type, [&](auto && /*type*/) { return _itp_not_defined; });
+      [&](auto && /*type*/) { return _itp_not_defined; }, type);
 }
 
 } // namespace akantu

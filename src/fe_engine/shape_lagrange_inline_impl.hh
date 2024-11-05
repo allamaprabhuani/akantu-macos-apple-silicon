@@ -103,7 +103,7 @@ void ShapeLagrange<kind>::inverseMap(
 
 /* -------------------------------------------------------------------------- */
 template <ElementKind kind>
-template <ElementType type, typename D, std::enable_if_t<aka::is_vector_v<D>> *>
+template <ElementType type, typename D>
 bool ShapeLagrange<kind>::contains(const Eigen::MatrixBase<D> & real_coords,
                                    Idx elem, GhostType ghost_type) const {
   auto spatial_dimension = mesh.getSpatialDimension();

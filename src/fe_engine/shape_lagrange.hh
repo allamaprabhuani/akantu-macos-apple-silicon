@@ -144,8 +144,7 @@ public:
 
   /// return true if the coordinates provided are inside the element, false
   /// otherwise
-  template <ElementType type, typename D,
-            std::enable_if_t<aka::is_vector_v<D>> *>
+  template <ElementType type, typename D>
   bool contains(const Eigen::MatrixBase<D> & real_coords, Idx elem,
                 GhostType ghost_type) const;
 

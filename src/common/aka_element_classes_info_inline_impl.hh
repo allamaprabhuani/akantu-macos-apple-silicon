@@ -307,8 +307,9 @@ namespace details {
 
 template <class Tuple, class Function, class DynamicType, class DefaultFunction>
 [[gnu::visibility("hidden")]] constexpr decltype(auto)
-tuple_dispatch_with_default(Function && function, const DynamicType & type,
-                            DefaultFunction && default_function) {
+tuple_dispatch_with_default(Function && function,
+                            DefaultFunction && default_function,
+                            const DynamicType & type) {
   return details::static_switch_dispatch(
       Tuple{}, std::forward<Function>(function), type,
       std::forward<DefaultFunction>(default_function),
@@ -321,8 +322,9 @@ tuple_dispatch(Function && function, const DynamicType & type) {
   return details::static_switch_dispatch(
       Tuple{}, std::forward<Function>(function), type,
       [](auto && type) -> decltype(function(std::tuple_element_t<0, Tuple>{})) {
-        throw std::range_error("Unknown type in dispatch: " +
-                               std::to_string(type));
+        throw std::range_error(
+            "Unknown " + debug::demangle(typeid(DynamicType).name()) +
+            " type in dispatch: " + std::to_string(Int(type)));
       },
       std::make_index_sequence<std::tuple_size<Tuple>::value>{});
 }
