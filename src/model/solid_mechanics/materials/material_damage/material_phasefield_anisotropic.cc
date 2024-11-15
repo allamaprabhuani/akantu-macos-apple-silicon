@@ -53,6 +53,7 @@ template <Int dim>
 void MaterialPhaseFieldAnisotropic<dim>::computeStress(ElementType el_type,
                                                        GhostType ghost_type) {
 
+  MaterialThermal<dim>::computeStress(el_type, ghost_type);
   auto && arguments = Parent::getArguments(el_type, ghost_type);
 
   if (not this->finite_deformation) {

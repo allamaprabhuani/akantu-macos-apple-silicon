@@ -44,6 +44,7 @@ MaterialPhaseField<dim>::MaterialPhaseField(SolidMechanicsModel & model,
 template <Int dim>
 void MaterialPhaseField<dim>::computeStress(ElementType el_type,
                                             GhostType ghost_type) {
+  Parent::computeStress(el_type, ghost_type);
 
   if (this->is_hybrid) {
     computeEffectiveDamage(el_type, ghost_type);
@@ -65,6 +66,7 @@ void MaterialPhaseField<dim>::computeTangentModuli(ElementType el_type,
                                                    Array<Real> & tangent_matrix,
                                                    GhostType ghost_type) {
   computeEffectiveDamage(el_type, ghost_type);
+  Parent::computeTangentModuli(el_type, tangent_matrix, ghost_type);
 
   if (this->is_hybrid) {
     computeEffectiveDamage(el_type, ghost_type);
