@@ -47,6 +47,9 @@ MaterialPhaseFieldAnisotropic<dim>::MaterialPhaseFieldAnisotropic(
   this->registerParam("is_isotropic", is_isotropic, false,
                       _pat_parsable | _pat_readable,
                       "Use isotropic formulation");
+  this->registerParam("degrade_mass", degrade_mass, false,
+                      _pat_parsable | _pat_readable,
+                      "Degrade mass with damage");
 }
 
 template <Int dim>

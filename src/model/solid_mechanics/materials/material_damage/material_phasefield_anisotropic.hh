@@ -82,6 +82,27 @@ public:
   //           make_view(this->effective_damage(el_type, ghost_type)));
   // }
 
+  /// get mass density degraded by damage
+  Vector<Real> getRho(const Element & element) const override;
+
+  bool hasMassMatrixChanged() override { return degrade_mass; };
+
+  /* ------------------------------------------------------------------------ */
+  /* DataAccessor inherited members                                           */
+  /* ------------------------------------------------------------------------ */
+public:
+  [[nodiscard]] inline Int
+  getNbData(const Array<Element> & elements,
+            const SynchronizationTag & tag) const override;
+
+  inline void packData(CommunicationBuffer & buffer,
+                       const Array<Element> & elements,
+                       const SynchronizationTag & tag) const override;
+
+  inline void unpackData(CommunicationBuffer & buffer,
+                         const Array<Element> & elements,
+                         const SynchronizationTag & tag) override;
+
 protected:
   /// constitutive law for a given quadrature point
   template <class Args> inline void computeStressOnQuad(Args && args);
@@ -101,6 +122,8 @@ protected:
 
   // Dimension considered in volumetric-deviatoric split
   Int dev_dim;
+
+  bool degrade_mass;
 
   std::shared_ptr<EnergySplit> energy_split{nullptr};
 };
