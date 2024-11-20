@@ -373,6 +373,8 @@ void CouplerSolidPhaseField::computeStrainOnQuadPoints(GhostType ghost_type) {
 
   auto & gradu_internal =
       solid->flattenInternal("grad_u", _ek_regular, ghost_type);
+  auto & epsilon_thermal_internal =
+      solid->flattenInternal("epsilon_th", _ek_regular, ghost_type);
 
   auto & mesh = solid->getMesh();
   auto & fem = solid->getFEEngine();
@@ -386,10 +388,15 @@ void CouplerSolidPhaseField::computeStrainOnQuadPoints(GhostType ghost_type) {
   for (const auto & type : mesh.elementTypes(spatial_dimension, ghost_type)) {
     auto & strain_vect = strain_tmp(type, ghost_type);
     const auto & gradu_vect = gradu_internal(type, ghost_type);
-    for (auto && [grad_u, strain] :
+    const auto & epsilon_thermal_vect =
+        epsilon_thermal_internal(type, ghost_type);
+    for (auto && [grad_u, strain, epsilon_th] :
          zip(make_view(gradu_vect, spatial_dimension, spatial_dimension),
-             make_view(strain_vect, spatial_dimension, spatial_dimension))) {
-      strain = (grad_u + grad_u.transpose()) / 2.;
+             make_view(strain_vect, spatial_dimension, spatial_dimension),
+             epsilon_thermal_vect)) {
+      strain = (grad_u + grad_u.transpose()) / 2. -
+               epsilon_th *
+                   Matrix<Real>::Identity(spatial_dimension, spatial_dimension);
     }
   }
 
