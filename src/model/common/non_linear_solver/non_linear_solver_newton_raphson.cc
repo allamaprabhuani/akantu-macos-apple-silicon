@@ -184,7 +184,7 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
             NonLinearSolverType::_newton_raphson_contact) {
       solver_callback.assembleMatrix("J");
     }
-    this->dof_manager.getMatrix("J").saveMatrix("J_computed_by_default.mtx");
+    // this->dof_manager.getMatrix("J").saveMatrix("J_computed_by_default.mtx");
     this->sparse_solver->solve();
     solver_callback.corrector();
 
