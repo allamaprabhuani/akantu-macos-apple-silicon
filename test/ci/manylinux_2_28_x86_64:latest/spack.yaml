@@ -2,11 +2,11 @@ spack:
   compilers:
     - compiler:
         paths:
-          cc: /opt/rh/devtoolset-10/root/usr/bin/gcc
-          cxx: /opt/rh/devtoolset-10/root/usr/bin/g++
-          f77: /opt/rh/devtoolset-10/root/usr/bin/gfortran
-          fc: /opt/rh/devtoolset-10/root/usr/bin/gfortran
-        operating_system: centos7
+          cc: /opt/rh/gcc-toolset-13/root/usr/bin/gcc
+          cxx: /opt/rh/gcc-toolset-13/root/usr/bin/g++
+          f77: /opt/rh/gcc-toolset-13/root/usr/bin/gfortran
+          fc: /opt/rh/gcc-toolset-13/root/usr/bin/gfortran
+        operating_system: almalinux8
         target: x86_64
         modules: []
         environment:
@@ -14,7 +14,7 @@ spack:
             LD_LIBRARY_PATH: /usr/local/lib
         extra_rpaths: []
         flags: {}
-        spec: gcc@10.2.1
+        spec: gcc@13.3.1
 
   include:
     - /softs/spack/etc/spack/packages.yaml
@@ -24,27 +24,11 @@ spack:
 
   specs:
     - boost ~atomic ~chrono ~clanglibcpp ~container ~context ~coroutine ~date_time ~debug ~exception ~fiber ~filesystem ~graph ~icu~iostreams ~locale ~log ~math ~mpi ~multithreaded ~numpy ~pic ~program_options ~python ~random ~regex ~serialization ~shared ~signals ~singlethreaded ~system ~taggedlayout ~test ~thread ~timer ~wave
-    - openblas +pic threads=none
+    - ccache
+    #- openblas +pic threads=none
     - eigen
-    - mumps ~mpi ~complex ~float
+    #- mumps ~mpi ~complex ~float
   view: /softs/view
   concretizer:
     unify: true
 
-  packages:
-    cmake:
-      externals:
-      - spec: cmake@3.27.7
-        prefix: /usr/local
-    gmake:
-      externals:
-      - spec: gmake@3.82
-        prefix: /usr
-    openssl:
-      externals:
-      - spec: openssl@1.0.2k-fips
-        prefix: /usr
-    perl:
-      externals:
-      - spec: perl@5.16.3
-        prefix: /usr
