@@ -5,8 +5,8 @@
     entrypoint: [""]
   script:
     - /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "test/ci/${IMAGE_NAME}/Dockerfile"
+      --context "${CI_PROJECT_DIR}/test/ci/${IMAGE_NAME}"
+      --dockerfile "Dockerfile"
       --destination "registry.gitlab.com/akantu/akantu/${IMAGE_NAME}"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
