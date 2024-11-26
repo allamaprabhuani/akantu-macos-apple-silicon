@@ -37,7 +37,7 @@ docker build:ubuntu-lts:
 
 docker build:manylinux:
   variables:
-    IMAGE_NAME: 'manylinux:2014_x86_64'
+    IMAGE_NAME: 'manylinux_2_28_x86_64:latest'
   extends: .docker_build
 
 docker build:debian-testing:
@@ -209,7 +209,7 @@ test:ubuntu_lts_gcc_valgrind:
 # ------------------------------------------------------------------------------
 configure:python_package:
   extends:
-    - .manylinux_2014_x86_64_gcc
+    - .manylinux_gcc
     - .configure_python
   needs:
     - version_determination
@@ -217,7 +217,7 @@ configure:python_package:
 build_akantu:python_package:
   extends:
     - .build_python_akantu
-    - .manylinux_2014_x86_64_gcc
+    - .manylinux_gcc
   needs:
     - job: configure:python_package
 
@@ -225,7 +225,7 @@ build_pip:python_package:
   extends:
     - .code_only
     - .build_release
-    - .manylinux_2014_x86_64_gcc
+    - .manylinux_gcc
     - .build_python_package
   needs:
     - job: build_akantu:python_package
@@ -311,7 +311,6 @@ package:python_pypi:
     - job: test:python_package_macos
   rules:
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /v[0-9]+.*/
-
 
 # ------------------------------------------------------------------------------
 # Release

@@ -28,6 +28,7 @@
           - "third-party/akantu-iterators/**/*.{cc, hh, txt, cmake, py}"
           - .gitlab-ci.yml
           - .gitlab/ci.d/**
+          - cmake/**
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG
 

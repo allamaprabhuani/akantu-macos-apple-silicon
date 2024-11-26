@@ -1,4 +1,4 @@
-FROM quay.io/pypa/manylinux2014_x86_64 as builder
+FROM quay.io/pypa/manylinux_2_28_x86_64 as builder
 
 ENV LANG en_US.UTF-8
 
@@ -13,7 +13,7 @@ RUN mkdir -p /softs && chown -R app:app /softs
 
 USER app
 
-RUN cd /softs && git clone https://github.com/spack/spack.git -b v0.20.2
+RUN cd /softs && git clone https://github.com/spack/spack.git -b v0.22.2
 
 #RUN cd /softs && git clone https://gitlab.com/epfl-lsms/spack-packages.git
 
@@ -21,8 +21,8 @@ COPY packages.yaml /softs/spack/etc/spack
 #COPY repos.yaml /softs/spack/etc/spack
 
 # Install the software, remove unnecessary deps
-RUN /opt/python/cp36-cp36m/bin/python /softs/spack/bin/spack -e /softs/spack-environment install && \
-    /opt/python/cp36-cp36m/bin/python /softs/spack/bin/spack gc -y
+RUN python3 /softs/spack/bin/spack -e /softs/spack-environment install && \
+    python3 /softs/spack/bin/spack gc -y
 
 # Strip all the binaries
 RUN find -L /softs/view/* -type f -exec readlink -f '{}' \; | \
@@ -35,12 +35,12 @@ USER root
 
 # Modifications to the environment that are necessary to run
 RUN cd /softs/spack-environment && \
-    /opt/python/cp36-cp36m/bin/python /softs/spack/bin/spack env activate --sh -d . >> /etc/profile.d/z10_spack_environment.sh
+    python3 /softs/spack/bin/spack env activate --sh -d . >> /etc/profile.d/z10_spack_environment.sh
 
 # Bare OS image to run the installed executables
-FROM quay.io/pypa/manylinux2014_x86_64
+FROM quay.io/pypa/manylinux_2_28_x86_64
 
-RUN yum install -y xz zlib-devel ccache
+RUN yum install -y xz zlib-devel
 
 RUN adduser -u 1000  -s /bin/false app
 
@@ -54,7 +54,7 @@ RUN chown -R app:app /softs
 
 RUN mkdir -p /build && chown app:app /build
 
-ENV CROSS_ROOT /opt/rh/devtoolset-10/root/usr/bin
+ENV CROSS_ROOT /opt/rh/gcc-toolset-13/root/usr/bin
 ENV AS=${CROSS_ROOT}/as \
     AR=${CROSS_ROOT}/ar \
     CC=${CROSS_ROOT}/gcc \

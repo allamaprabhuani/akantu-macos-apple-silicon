@@ -1,18 +1,13 @@
 .docker_build:
-  image: "docker:20.10.21"
   stage: .pre
-  services:
-    - docker:20.10.21-dind
-  variables:
-    # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
   script:
-    - cd test/ci/${IMAGE_NAME}/
-    - docker build --no-cache -t registry.gitlab.com/akantu/akantu/${IMAGE_NAME} .
-    - docker push registry.gitlab.com/akantu/akantu/${IMAGE_NAME}
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/test/ci/${IMAGE_NAME}"
+      --dockerfile "Dockerfile"
+      --destination "registry.gitlab.com/akantu/akantu/${IMAGE_NAME}"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
@@ -42,8 +37,8 @@
 
 .image_manylinux:
   variables:
-    IMAGE_NAME: 'manylinux:2014_x86_64'
-  image: registry.gitlab.com/akantu/akantu/manylinux:2014_x86_64
+    IMAGE_NAME: 'manylinux_2_28_x86_64:latest'
+  image: registry.gitlab.com/akantu/akantu/manylinux_2_28_x86_64:latest
 
 # ------------------------------------------------------------------------------
 .compiler_gcc:
@@ -107,9 +102,9 @@
     - .image_ubuntu_lts
     - .cache_build
 
-.manylinux_2014_x86_64_gcc:
+.manylinux_gcc:
   variables:
-    output: manylinux_2014_x86_64_gcc
+    output: manylinux_gcc
   extends:
     - .compiler_gcc
     - .image_manylinux

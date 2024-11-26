@@ -1,0 +1,40 @@
+packages:
+  all:
+    target: [x86_64]
+  gcc:
+    externals:
+      - spec: gcc@13.3.1 languages=c,c++,fortran
+        prefix: /opt/rh/gcc-toolset-13/root/usr
+        extra_attributes:
+          compilers:
+            c: /opt/rh/gcc-toolset-13/root/usr/bin/gcc
+            cxx: /opt/rh/gcc-toolset-13/root/usr/bin/g++
+            fortran: /opt/rh/gcc-toolset-13/root/usr/bin/gfortran
+  cmake:
+    externals:
+    - spec: cmake@3.31.0
+      prefix: /usr/local
+  diffutils:
+    externals:
+    - spec: diffutils@3.6
+      prefix: /usr
+  git:
+    externals:
+    - spec: git@2.47.0~tcltk
+      prefix: /usr/local
+  openssl:
+    externals:
+    - spec: openssl@1.1.1k
+      prefix: /usr
+  perl:
+    externals:
+    - spec: perl@5.26.3~cpanm+opcode~open+shared+threads
+      prefix: /usr
+  curl:
+    externals:
+    - spec: curl@7.61.1+gssapi+ldap+nghttp2
+      prefix: /usr
+  gmake:
+    externals:
+    - spec: gmake@4.2.1
+      prefix: /usr
