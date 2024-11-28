@@ -119,12 +119,12 @@ MaterialPhaseFieldAnisotropic<dim>::getRho(const Element & element) const {
 }
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-inline Int
-MaterialPhaseFieldAnisotropic<dim>::getNbData(const Array<Element> & elements,
-                                   const SynchronizationTag & tag) const {
+inline Int MaterialPhaseFieldAnisotropic<dim>::getNbData(
+    const Array<Element> & elements, const SynchronizationTag & tag) const {
 
   if (tag == SynchronizationTag::_smm_density && degrade_mass) {
-    return Int(sizeof(Real)) *
+    return (this->spatial_dimension * this->spatial_dimension + 1) *
+           Int(sizeof(Real)) *
            this->getHandler().getNbIntegrationPoints(elements);
   }
 
@@ -133,14 +133,14 @@ MaterialPhaseFieldAnisotropic<dim>::getNbData(const Array<Element> & elements,
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-inline void
-MaterialPhaseFieldAnisotropic<dim>::packData(CommunicationBuffer & buffer,
-                                  const Array<Element> & elements,
-                                  const SynchronizationTag & tag) const {
+inline void MaterialPhaseFieldAnisotropic<dim>::packData(
+    CommunicationBuffer & buffer, const Array<Element> & elements,
+    const SynchronizationTag & tag) const {
   Parent::packData(buffer, elements, tag);
 
   if (tag == SynchronizationTag::_smm_density && degrade_mass) {
     this->packInternalFieldHelper(this->damage, buffer, elements);
+    this->packInternalFieldHelper(this->gradu, buffer, elements);
   }
 }
 
@@ -148,15 +148,15 @@ MaterialPhaseFieldAnisotropic<dim>::packData(CommunicationBuffer & buffer,
 template <Int dim>
 inline void
 MaterialPhaseFieldAnisotropic<dim>::unpackData(CommunicationBuffer & buffer,
-                                    const Array<Element> & elements,
-                                    const SynchronizationTag & tag) {
+                                               const Array<Element> & elements,
+                                               const SynchronizationTag & tag) {
   Parent::unpackData(buffer, elements, tag);
 
   if (tag == SynchronizationTag::_smm_density && degrade_mass) {
     this->unpackInternalFieldHelper(this->damage, buffer, elements);
+    this->unpackInternalFieldHelper(this->gradu, buffer, elements);
   }
 }
-
 
 } // namespace akantu
 #endif
