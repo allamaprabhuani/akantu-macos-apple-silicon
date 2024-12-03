@@ -182,14 +182,13 @@
          xsltproc -o ./juint.xml ${CI_PROJECT_DIR}/test/ci/ctest2junit.xsl Testing/${tag}/Test.xml;
       fi
     - if [ ${BUILD_TYPE} = "Coverage" ]; then
-         gcovr --xml
+         gcovr --root ${CI_PROJECT_DIR}
                --gcov-executable "${GCOV_EXECUTABLE}"
-               --xml-pretty
+               --object-directory .
                --exclude-unreachable-branches
-               --print-summary
-               --output coverage.xml
-               --object-directory ${CI_PROJECT_DIR}/build
-               --root ${CI_PROJECT_DIR}  -s || true;
+               --xml-pretty
+               --xml coverage.xml
+               --print-summary || true;
       fi
   artifacts:
     when: always
