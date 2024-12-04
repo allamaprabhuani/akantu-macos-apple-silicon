@@ -1,5 +1,4 @@
 Contact Mechanics Model
-`````````````````````
 
 .. include:: examples/c++/contact_mechanics_model/hertz/README.rst
 
