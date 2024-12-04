@@ -1,5 +1,5 @@
 Friction (2D)
-````````````````````````````
+'''''''''''''
 :Sources:
 
    .. collapse:: bloc_friction.py (click to expand)
