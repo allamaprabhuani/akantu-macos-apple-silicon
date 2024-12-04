@@ -29,8 +29,8 @@
     - ccache --show-stats || true
 
 # ------------------------------------------------------------------------------
-.image_debian_bullseye:
-  image: registry.gitlab.com/akantu/akantu/debian:bullseye
+.image_debian_stable:
+  image: registry.gitlab.com/akantu/akantu/debian:bookworm
 
 .image_ubuntu_lts:
   image: registry.gitlab.com/akantu/akantu/ubuntu:lts
@@ -50,9 +50,9 @@
 
 .compiler_gcc_ubuntu:
   variables:
-    CC: /usr/lib/ccache/gcc-8
-    CXX: /usr/lib/ccache/g++-8
-    FC: /usr/bin/gfortran-8
+    CC: /usr/lib/ccache/gcc
+    CXX: /usr/lib/ccache/g++
+    FC: /usr/bin/gfortran
     GCOV_EXECUTABLE: gcov
 
 .compiler_clang:
@@ -78,20 +78,20 @@
     BUILD_TYPE: "Valgrind"
 
 # ------------------------------------------------------------------------------
-.debian_bullseye_gcc:
+.debian_stable_gcc:
   variables:
-    output: debian_bullseye_gcc
+    output: debian_stable_gcc
   extends:
     - .compiler_gcc
-    - .image_debian_bullseye
+    - .image_debian_stable
     - .cache_build
 
-.debian_bullseye_clang:
+.debian_stable_clang:
   variables:
-    output: debian_bullseye_clang
+    output: debian_stable_clang
   extends:
     - .compiler_clang
-    - .image_debian_bullseye
+    - .image_debian_stable
     - .cache_build
 
 .ubuntu_lts_gcc:
