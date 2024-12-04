@@ -1,5 +1,5 @@
 Compression (2D)
-````````````````````````````
+''''''''''''''''
 :Sources:
 
    .. collapse:: compression.py (click to expand)
