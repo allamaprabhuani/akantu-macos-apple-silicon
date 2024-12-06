@@ -94,7 +94,6 @@ test:debian_stable_gcc:
     - .debian_stable_gcc
     - .build_coverage
     - .tests
-  coverage: '/^lines: (\d+\.\d+\%)/'
   needs:
     - job: build_tests:debian_stable_gcc
 
@@ -130,7 +129,6 @@ test:debian_stable_clang:
     - .debian_stable_clang
     - .build_release
     - .tests
-  coverage: '/^lines: (\d+\.\d+\%)/'
   needs:
     - job: build_tests:debian_stable_clang
 

@@ -192,6 +192,7 @@
     - if [ -e Testing/${tag}/Test.xml ]; then
          xsltproc -o ./juint.xml ${CI_PROJECT_DIR}/test/ci/ctest2junit.xsl Testing/${tag}/Test.xml;
       fi
+  coverage: '/^lines: (\d+\.\d+\%)/'
   artifacts:
     when: always
     expire_in: 2 days
