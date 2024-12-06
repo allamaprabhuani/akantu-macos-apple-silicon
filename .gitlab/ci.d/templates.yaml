@@ -176,6 +176,8 @@
     - cd build
     - ctest -T test --output-on-failure --no-compress-output --timeout 1800
     - if [ ${BUILD_TYPE} = "Coverage" ]; then
+         ls ../src;
+         pwd;
          gcovr --root ${CI_PROJECT_DIR}
                --gcov-executable "${GCOV_EXECUTABLE}"
                --object-directory .
