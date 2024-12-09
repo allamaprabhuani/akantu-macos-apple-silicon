@@ -30,6 +30,8 @@ package_declare_sources(petsc
   model/common/dof_manager/dof_manager_petsc.hh
   model/common/non_linear_solver/non_linear_solver_petsc.cc
   model/common/non_linear_solver/non_linear_solver_petsc.hh
+  model/common/non_linear_solver/non_linear_solver_tao.cc
+  model/common/non_linear_solver/non_linear_solver_tao.hh
   solver/petsc_wrapper.hh
   solver/solver_vector_petsc.cc
   solver/solver_vector_petsc.hh

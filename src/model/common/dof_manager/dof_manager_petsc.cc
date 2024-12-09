@@ -25,6 +25,7 @@
 #include "cppargparse.hh"
 #include "non_linear_solver_default.hh"
 #include "non_linear_solver_petsc.hh"
+#include "non_linear_solver_tao.hh"
 #include "solver_vector_petsc.hh"
 #include "sparse_matrix_petsc.hh"
 #include "time_step_solver_default.hh"
@@ -299,6 +300,9 @@ NonLinearSolver & DOFManagerPETSc::getNewNonLinearSolver(
   switch (solver_options.non_linear_solver_type) {
   case NonLinearSolverType::_petsc_snes:
     return this->registerNonLinearSolver<NonLinearSolverPETSc>(*this, id,
+                                                               solver_options);
+  case NonLinearSolverType::_petsc_tao:
+    return this->registerNonLinearSolver<NonLinearSolverTAO>(*this, id,
                                                                solver_options);
   case NonLinearSolverType::_newton_raphson:
     /* FALLTHRU */

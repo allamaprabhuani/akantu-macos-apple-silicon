@@ -163,6 +163,7 @@ enum DOFSupportType { _dst_nodal, _dst_generic };
   (lumped)                                                             \
   (newton_raphson_contact)                                             \
   (petsc_snes)                                                         \
+  (petsc_tao)                                                          \
   (auto)
 // clang-format on
 AKANTU_CLASS_ENUM_DECLARE(NonLinearSolverType, AKANTU_NON_LINEAR_SOLVER_TYPES)
@@ -180,6 +181,7 @@ enum class NonLinearSolverType {
   _newton_raphson_contact,  ///< Regular Newton-Raphson modified
                             /// for contact problem
   _petsc_snes,              /// < PETSc SNES solver
+  _petsc_tao,               /// < PETSc TAO solver
   _auto, ///< This will take a default value that make sense in case of
          ///  model::getNewSolver
 };

@@ -93,7 +93,8 @@ MaterialPhaseFieldAnisotropic<dim>::getRho(const Element & element) const {
 
   auto damage_it = this->damage(element.type, element.ghost_type).begin();
 
-  auto gradu_view = make_view<dim, dim>(this->gradu(element.type));
+  auto gradu_view =
+      make_view<dim, dim>(this->gradu(element.type, element.ghost_type));
 
   auto & fem = this->getFEEngine();
   UInt nb_quadrature_points =
@@ -108,7 +109,6 @@ MaterialPhaseFieldAnisotropic<dim>::getRho(const Element & element) const {
   for (auto & rho : rhos) {
     Real trace = gradu_it->trace();
     if (trace > 0) {
-      rho *= (1 - *damage_it) * (1 - *damage_it) + eta;
       rho *= (1 - *damage_it) * (1 - *damage_it) + eta;
       rho = std::min(rho_base, rho);
     }
