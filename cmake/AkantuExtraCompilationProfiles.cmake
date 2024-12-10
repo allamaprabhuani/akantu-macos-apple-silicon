@@ -90,7 +90,7 @@ declare_compilation_profile(VALGRIND
 
 # Coverage
 declare_compilation_profile(COVERAGE
-  COMPILER "-g -ggdb3 -DNDEBUG -DAKANTU_NDEBUG -O2 --coverage")
+  COMPILER "-g -ggdb3 -DNDEBUG -DAKANTU_NDEBUG -O2 --coverage -fprofile-abs-path")
 
 # Sanitize the code
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.2") OR
