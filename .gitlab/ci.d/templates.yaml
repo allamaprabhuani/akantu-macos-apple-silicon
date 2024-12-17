@@ -48,11 +48,11 @@
         - third-party/eigen3
         - third-party/pybind11
         - third-party/google-test
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: push
       paths:
         - build/
@@ -104,11 +104,11 @@
         - third-party/eigen3
         - third-party/pybind11
         - third-party/google-test
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull-push
       paths:
         - build/
@@ -142,11 +142,11 @@
         - third-party/eigen3
         - third-party/pybind11
         - third-party/google-test
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull-push
       paths:
         - build/
@@ -168,7 +168,7 @@
   extends:
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull
       paths:
         - build/
@@ -215,10 +215,10 @@
     - .build_release
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       paths:
         - build/
         - spack/
@@ -259,11 +259,11 @@
     - .build_release
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull-push
       paths:
         - build/
@@ -286,10 +286,10 @@
     - .build_release
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull
       paths:
         - build/

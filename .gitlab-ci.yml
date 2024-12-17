@@ -320,7 +320,7 @@ package:release:
     EXAMPLES_PACKAGE: "akantu-python-examples-${CI_COMMIT_TAG}.tgz"
     PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/akantu-examples/${CI_COMMIT_TAG}"
   cache:
-    - key: debian_stable_clang-Release-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-debian_stable_clang-Release-${CI_COMMIT_SHORT_SHA}
       policy: pull
       paths:
         - build/
