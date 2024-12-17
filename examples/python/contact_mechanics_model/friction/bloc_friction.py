@@ -44,53 +44,53 @@ coupler.addDumpField("areas")
 coupler.addDumpField("stress")
 coupler.addDumpField("blocked_dofs")
 
-solid.applyBC(aka.FixedValue(0.0,aka._x), "XFixed")
-solid.applyBC(aka.FixedValue(0.0,aka._y), "YFixed")
-solid.applyBC(aka.FixedValue(0.0,aka._x), "loading")
-solid.applyBC(aka.FixedValue(0.0,aka._y), "loading")
+solid.applyBC(aka.FixedValue(0.0, aka._x), "XFixed")
+solid.applyBC(aka.FixedValue(0.0, aka._y), "YFixed")
+solid.applyBC(aka.FixedValue(0.0, aka._x), "loading")
+solid.applyBC(aka.FixedValue(0.0, aka._y), "loading")
 
 velocity = solid.getVelocity()
 gaps = contact.getGaps()
 
 coupler.dump()
 
-for s in range(0,10000):
-    solid.applyBC(aka.IncrementValue(-1.0 / 10000, aka._y),"loading")
-    
+for s in range(0, 10000):
+    solid.applyBC(aka.IncrementValue(-1.0 / 10000, aka._y), "loading")
+
     coupler.solveStep()
-    
+
     for i, (gap, vel) in enumerate(zip(gaps, velocity)):
         if gap > 0:
             velocity[i] *= 0.99
-            
+
     if s % 100 == 0:
         coupler.dump()
         print(f"Step {s}\t", end="\r", flush=True)
-        
+
 print("Compression done !")
 
-for s in range(0,10000):
-    solid.applyBC(aka.IncrementValue(2.0 / 10000, aka._x),"loading")
-    
+for s in range(0, 10000):
+    solid.applyBC(aka.IncrementValue(2.0 / 10000, aka._x), "loading")
+
     coupler.solveStep()
-    
+
     for i, (gap, vel) in enumerate(zip(gaps, velocity)):
         if gap > 0:
             velocity[i] *= 0.99
-            
+
     if s % 100 == 0:
         coupler.dump()
         print(f"Step {s}\t", end="\r", flush=True)
-        
+
 print("Sliding done !")
 
-for s in range(0,10000):    
+for s in range(0, 10000):
     coupler.solveStep()
-    
+
     for i, (gap, vel) in enumerate(zip(gaps, velocity)):
         if gap > 0:
             velocity[i] *= 0.99
-            
+
     if s % 100 == 0:
         coupler.dump()
         print(f"Step {s}\t", end="\r", flush=True)
