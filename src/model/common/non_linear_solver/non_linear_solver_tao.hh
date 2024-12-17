@@ -19,6 +19,7 @@
  */
 
 /* -------------------------------------------------------------------------- */
+#include "mesh.hh"
 #include "non_linear_solver.hh"
 #include "solver_vector_petsc.hh"
 /* -------------------------------------------------------------------------- */
@@ -50,6 +51,8 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
+  /// set TAO solver type
+  void setTAOType(const ID & type);
   /// solve the system described by the jacobian matrix, and rhs contained in
   /// the dof manager
   void solve(SolverCallback & callback) override;
@@ -58,7 +61,7 @@ public:
   void parseSection(const ParserSection & section) override;
 
   /// set solution bounds
-  void setBounds(const Vec lower_bound, const Vec upper_bound);
+  void setBounds(Vec lower_array, Vec upper_array);
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */

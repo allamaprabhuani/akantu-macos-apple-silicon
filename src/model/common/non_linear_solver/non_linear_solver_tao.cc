@@ -28,6 +28,7 @@
 #include "sparse_matrix_petsc.hh"
 /* -------------------------------------------------------------------------- */
 #include "petscsnes.h"
+#include <cstdlib>
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -67,6 +68,11 @@ NonLinearSolverTAO::NonLinearSolverTAO(
 
 /* -------------------------------------------------------------------------- */
 NonLinearSolverTAO::~NonLinearSolverTAO() { TaoDestroy(&tao); }
+
+/* -------------------------------------------------------------------------- */
+void NonLinearSolverTAO::setTAOType(const ID & type) {
+  PetscOptionsSetValue(NULL, "-tao_type", type.c_str());
+}
 
 /* -------------------------------------------------------------------------- */
 

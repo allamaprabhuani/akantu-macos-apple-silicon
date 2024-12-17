@@ -20,6 +20,7 @@
 
 /* -------------------------------------------------------------------------- */
 #include "phase_field_model.hh"
+#include "aka_common.hh"
 #include "dumpable_inline_impl.hh"
 #include "element_synchronizer.hh"
 #include "fe_engine_template.hh"
@@ -27,6 +28,7 @@
 #include "integrator_gauss.hh"
 #include "shape_lagrange.hh"
 /* -------------------------------------------------------------------------- */
+#include "non_linear_solver_tao.hh"
 #include "dumper_element_partition.hh"
 #include "dumper_elemental_field.hh"
 #include "dumper_internal_material_field.hh"
@@ -102,6 +104,14 @@ void PhaseFieldModel::corrector() {
 void PhaseFieldModel::initSolver(TimeStepSolverType time_step_solver_type) {
   DOFManager & dof_manager = this->getDOFManager();
 
+// #if defined(AKANTU_USE_PETSC)
+//       auto & solver = this->getNonLinearSolver();
+// 
+//       if (aka::is_of_type<NonLinearSolverTAO>(solver)) {
+//             aka::as_type<NonLinearSolverTAO>(solver).setTAOType("cpcg");
+//       }
+// #endif
+
   this->allocNodalField(this->damage, 1, "damage");
   this->allocNodalField(this->external_force, 1, "external_force");
   this->allocNodalField(this->internal_force, 1, "internal_force");
@@ -146,6 +156,12 @@ PhaseFieldModel::getDefaultSolverID(const AnalysisMethod & method) {
   case _implicit_dynamic: {
     return std::make_tuple("implicit", TimeStepSolverType::_dynamic);
   }
+#if defined(AKANTU_USE_PETSC)
+  case _static_constrained_opt: {
+    return std::make_tuple("static_constrained_opt",
+                           TimeStepSolverType::_static_constrained_opt);
+  }
+#endif
   default:
     return std::make_tuple("unknown", TimeStepSolverType::_not_defined);
   }
@@ -178,6 +194,15 @@ ModelSolverOptions PhaseFieldModel::getDefaultSolverOptions(
     options.solution_type["damage"] = IntegrationScheme::_damage;
     break;
   }
+#if defined(AKANTU_USE_PETSC)
+  case TimeStepSolverType::_static_constrained_opt: {
+    options.non_linear_solver_type = NonLinearSolverType::_petsc_tao;
+    options.integration_scheme_type["damage"] =
+        IntegrationSchemeType::_pseudo_time;
+    options.solution_type["damage"] = IntegrationScheme::_not_defined;
+    break;
+  }
+#endif
   default:
     AKANTU_EXCEPTION(type << " is not a valid time step solver type");
   }
@@ -246,15 +271,16 @@ void PhaseFieldModel::afterSolveStep(bool converged) {
   //   prev_dam = dam;
   // }
 
-  for (auto && values : zip(*damage, *blocked_dofs)) {
-    auto & dam = std::get<0>(values);
-    auto & blocked = std::get<1>(values);
+  // for (auto && values : zip(*damage, *blocked_dofs)) {
+  //   auto & dam = std::get<0>(values);
+  //   auto & blocked = std::get<1>(values);
 
-    dam = std::min(1., dam);
-    if (!blocked && dam > 0.98) {
-      blocked = Math::are_float_equal(dam, 1.);
-    }
-  }
+  //   if (!blocked && dam > 0.98) {
+  //     dam = 1.;
+  //     blocked = true;
+  //   }
+  //   std::cout << dam << std::endl;
+  // }
 
   for_each_constitutive_law(
       [](auto && phasefield) { phasefield.afterSolveStep(); });
