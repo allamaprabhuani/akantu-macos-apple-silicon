@@ -80,3 +80,9 @@ register_test(test_phase_field_linear
   FILES_TO_COPY material_linear.dat test_one_element.msh
   PACKAGE phase_field
   )
+
+register_test(test_phase_field_tao
+  SOURCES test_phase_field_tao.cc
+  FILES_TO_COPY material_linear_tao.dat test_one_element.msh
+  PACKAGE phase_field
+  )
