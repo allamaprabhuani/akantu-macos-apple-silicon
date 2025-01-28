@@ -27,10 +27,10 @@ public:
   // compute stress on quad
   void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
                           const Real & sigma_th, Matrix<Real> & sigma_plus,
-                          Matrix<Real> & sigma_minus) override;
+                          Matrix<Real> & /*sigma_minus*/) override;
 
   // compute tangent moduli coefficients on quad
-  void computeTangentCoefsOnQuad(const Matrix<Real> & strain_quad,
+  void computeTangentCoefsOnQuad(const Matrix<Real> & /*strain_quad*/,
                                  const Real & g_d,
                                  Matrix<Real> & tangent) override;
 
