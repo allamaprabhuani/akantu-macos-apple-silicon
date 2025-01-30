@@ -5,7 +5,7 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 template <Int dim>
 inline void PhaseFieldLinear<dim>::computeDissipatedEnergyOnQuad(
-    const Real & dam, const Real & dam_prev, const Vector<Real> & grad_d,
+    const Real & dam, const Real & /*dam_prev*/, const Vector<Real> & grad_d,
     Real & edis, Real & g_c_quad) {
 
   edis = 0.;

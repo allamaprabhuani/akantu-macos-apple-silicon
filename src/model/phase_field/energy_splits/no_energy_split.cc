@@ -24,7 +24,7 @@ template <Int dim>
 void NoEnergySplit<dim>::computeSigmaOnQuad(const Matrix<Real> & strain_quad,
                                             const Real & sigma_th,
                                             Matrix<Real> & sigma_plus,
-                                            Matrix<Real> & sigma_minus) {
+                                            Matrix<Real> & /*sigma_minus*/) {
   Real trace = strain_quad.trace();
   sigma_plus =
       2. * this->mu * strain_quad +
@@ -34,7 +34,7 @@ void NoEnergySplit<dim>::computeSigmaOnQuad(const Matrix<Real> & strain_quad,
 /* -------------------------------------------------------------------------- */
 template <Int dim>
 void NoEnergySplit<dim>::computeTangentCoefsOnQuad(
-    const Matrix<Real> & strain_quad, const Real & g_d,
+    const Matrix<Real> & /*strain_quad*/, const Real & g_d,
     Matrix<Real> & tangent) {
 
   constexpr auto n = (dim * (dim - 1) / 2 + dim);

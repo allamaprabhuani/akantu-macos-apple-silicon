@@ -78,27 +78,27 @@ void PhaseFieldLinear<dim>::computeDrivingForce(ElementType el_type,
     this->energy_split->computePhiOnQuad(strain, phi_quad);
   }
 
-  for (auto && tuple :
-       zip(this->phi(el_type, ghost_type),
-           this->driving_force(el_type, ghost_type),
-           this->damage_energy_density(el_type, ghost_type),
-           this->damage_on_qpoints(el_type, _not_ghost),
-           make_view(this->driving_energy(el_type, ghost_type), dim),
-           make_view(this->damage_energy(el_type, ghost_type), dim, dim),
-           make_view(this->gradd(el_type, ghost_type), dim),
-           this->g_c(el_type, ghost_type),
-           this->damage_on_qpoints.previous(el_type, ghost_type))) {
-    auto & phi_quad = std::get<0>(tuple);
-    auto & driving_force_quad = std::get<1>(tuple);
-    auto & dam_energy_density_quad = std::get<2>(tuple);
-    auto & dam_on_quad = std::get<3>(tuple);
-    auto & driving_energy_quad = std::get<4>(tuple);
-    auto & damage_energy_quad = std::get<5>(tuple);
-    auto & gradd_quad = std::get<6>(tuple);
-    auto & g_c_quad = std::get<7>(tuple);
-    auto & dam_prev_quad = std::get<8>(tuple);
+  if (non_linear) {
+    for (auto && tuple :
+         zip(this->phi(el_type, ghost_type),
+             this->driving_force(el_type, ghost_type),
+             this->damage_energy_density(el_type, ghost_type),
+             this->damage_on_qpoints(el_type, _not_ghost),
+             make_view(this->driving_energy(el_type, ghost_type), dim),
+             make_view(this->damage_energy(el_type, ghost_type), dim, dim),
+             make_view(this->gradd(el_type, ghost_type), dim),
+             this->g_c(el_type, ghost_type),
+             this->damage_on_qpoints.previous(el_type, ghost_type))) {
+      auto & phi_quad = std::get<0>(tuple);
+      auto & driving_force_quad = std::get<1>(tuple);
+      auto & dam_energy_density_quad = std::get<2>(tuple);
+      auto & dam_on_quad = std::get<3>(tuple);
+      auto & driving_energy_quad = std::get<4>(tuple);
+      auto & damage_energy_quad = std::get<5>(tuple);
+      auto & gradd_quad = std::get<6>(tuple);
+      auto & g_c_quad = std::get<7>(tuple);
+      auto & dam_prev_quad = std::get<8>(tuple);
 
-    if (non_linear) {
       computeDamageEnergyDensityOnQuad(phi_quad, dam_energy_density_quad);
       Real penalization_ir =
           this->gamma * std::min(Real(0.), dam_on_quad - dam_prev_quad);
@@ -111,7 +111,22 @@ void PhaseFieldLinear<dim>::computeDrivingForce(ElementType el_type,
 
       dam_energy_density_quad += this->gamma * (dam_on_quad < dam_prev_quad);
       dam_energy_density_quad += this->rho_rec * (dam_on_quad < 0);
-    } else {
+    }
+  } else {
+    for (auto && tuple :
+         zip(this->phi(el_type, ghost_type),
+             this->driving_force(el_type, ghost_type),
+             this->damage_energy_density(el_type, ghost_type),
+             make_view(this->driving_energy(el_type, ghost_type), dim),
+             make_view(this->gradd(el_type, ghost_type), dim),
+             this->g_c(el_type, ghost_type))) {
+      auto & phi_quad = std::get<0>(tuple);
+      auto & driving_force_quad = std::get<1>(tuple);
+      auto & dam_energy_density_quad = std::get<2>(tuple);
+      auto & driving_energy_quad = std::get<3>(tuple);
+      auto & gradd_quad = std::get<4>(tuple);
+      auto & g_c_quad = std::get<5>(tuple);
+
       computeDamageEnergyDensityOnQuad(phi_quad, dam_energy_density_quad);
       driving_force_quad = -2 * phi_quad + 3 * g_c_quad / (8 * this->l0);
       driving_energy_quad = 0 * gradd_quad;
