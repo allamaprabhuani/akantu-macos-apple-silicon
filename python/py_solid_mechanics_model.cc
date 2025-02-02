@@ -151,7 +151,6 @@ void register_solid_mechanics_model(py::module & mod) {
       .def("setMaterialSelector",
            [](SolidMechanicsModel & self,
               std::shared_ptr<ConstitutiveLawSelector> material_selector) {
-             std::cout << (*material_selector)(ElementNull) << std::endl;
              self.setMaterialSelector(material_selector);
            })
       .def("getMaterialSelector", &SolidMechanicsModel::getMaterialSelector)
