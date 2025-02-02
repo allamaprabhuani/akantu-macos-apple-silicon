@@ -57,7 +57,7 @@
 .clang_tools:
   extends:
     - .code_quality_common
-    - .debian_bullseye_clang
+    - .debian_stable_clang
   before_script:
     - if [ 'x${CI_MERGE_REQUEST_ID}' != 'x' ]; then
     -   git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME

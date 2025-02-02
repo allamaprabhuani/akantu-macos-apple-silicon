@@ -1,4 +1,4 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
 # library dependencies
 RUN apt -qq update && apt -qq -y install \
@@ -29,7 +29,7 @@ RUN apt -qq update && apt -qq -y install \
     ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install warning_parser
+RUN pip3 install --break-system-packages warning_parser
 
 COPY .openmpi /root/.openmpi
 

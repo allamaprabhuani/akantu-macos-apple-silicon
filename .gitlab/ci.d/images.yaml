@@ -29,8 +29,8 @@
     - ccache --show-stats || true
 
 # ------------------------------------------------------------------------------
-.image_debian_bullseye:
-  image: registry.gitlab.com/akantu/akantu/debian:bullseye
+.image_debian_stable:
+  image: registry.gitlab.com/akantu/akantu/debian:bookworm
 
 .image_ubuntu_lts:
   image: registry.gitlab.com/akantu/akantu/ubuntu:lts
@@ -78,20 +78,20 @@
     BUILD_TYPE: "Valgrind"
 
 # ------------------------------------------------------------------------------
-.debian_bullseye_gcc:
+.debian_stable_gcc:
   variables:
-    output: debian_bullseye_gcc
+    output: debian_stable_gcc
   extends:
     - .compiler_gcc
-    - .image_debian_bullseye
+    - .image_debian_stable
     - .cache_build
 
-.debian_bullseye_clang:
+.debian_stable_clang:
   variables:
-    output: debian_bullseye_clang
+    output: debian_stable_clang
   extends:
     - .compiler_clang
-    - .image_debian_bullseye
+    - .image_debian_stable
     - .cache_build
 
 .ubuntu_lts_gcc:
