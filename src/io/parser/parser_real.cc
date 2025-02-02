@@ -37,6 +37,7 @@
 #include "parser_grammar_tmpl.hh"
 /* -------------------------------------------------------------------------- */
 #include "algebraic_parser.hh"
+#include "algebraic_parser_x3.hh"
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -44,11 +45,7 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 Real Parser::parseReal(const std::string & value,
                        const ParserSection & section) {
-  using boost::spirit::ascii::space_type;
-  parser::AlgebraicGrammar<std::string::const_iterator, space_type> grammar(
-      section);
-  grammar.name("algebraic_grammar");
-  return Parser::parseType<Real>(value, grammar);
+  return parser::algebraic::parse_real(value, section);
 }
 
 /* -------------------------------------------------------------------------- */

@@ -142,6 +142,8 @@ package_declare_sources(core
   io/mesh_io/mesh_io_msh.hh
 
   io/parser/algebraic_parser.hh
+  io/parser/algebraic_parser_x3.hh
+  io/parser/algebraic_parser_x3.cc
   io/parser/input_file_parser.hh
   io/parser/parsable.cc
   io/parser/parsable.hh
