@@ -66,7 +66,8 @@ void MaterialPhaseField<dim>::computeTangentModuli(ElementType el_type,
                                                    Array<Real> & tangent_matrix,
                                                    GhostType ghost_type) {
   computeEffectiveDamage(el_type, ghost_type);
-  MaterialElastic<dim>::computeTangentModuli(el_type, tangent_matrix, ghost_type);
+  MaterialElastic<dim>::computeTangentModuli(el_type, tangent_matrix,
+                                             ghost_type);
 
   if (this->is_hybrid) {
     computeEffectiveDamage(el_type, ghost_type);

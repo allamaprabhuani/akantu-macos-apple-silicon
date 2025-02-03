@@ -85,6 +85,11 @@ public:
                          const Array<Element> & elements,
                          const SynchronizationTag & tag) override;
 
+  inline InternalField<Real> & getDamage() override {
+    this->was_stiffness_assembled = false;
+    return this->damage;
+  }
+
 protected:
   /// constitutive law for a given quadrature point
   template <class Args> inline void computeStressOnQuad(Args && args);
@@ -98,6 +103,9 @@ protected:
 
   template <class Args> inline void computeEffectiveDamageOnQuad(Args && args);
 
+  auto hasStiffnessMatrixChanged() -> bool override {
+    return (not this->was_stiffness_assembled);
+  }
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
