@@ -78,16 +78,17 @@ Using ``homebrew``
 
 .. code-block:: bash
 
- > brew install gcc
- > brew install boost@1.76
+ > brew install gcc boost scotch eigen
  > brew tap brewsci/num
  > brew install brewsci-mumps --without-brewsci-parmetis
 
-If it does not work you can edit url to http://graal.ens-lyon.fr/MUMPS/MUMPS_5.3.5.tar.gz using the command:
+If it does not work you can point "url" to "http://graal.ens-lyon.fr/MUMPS/MUMPS_5.6.2.tar.gz" together with "sha256" to "13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a" using the command::
 
 .. code-block:: bash
 
  > brew edit brewsci-mumps
+
+For the brew installation of mumps to work I also had to change in brewsci/num "alllib" -> "all", "-shared" -> "-dynamiclib" and remove all mentions of "-noall_load".
 
 Configuring and compilation
 ```````````````````````````
