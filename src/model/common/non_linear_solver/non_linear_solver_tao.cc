@@ -178,7 +178,7 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
 
   callback.assembleMatrix("J");
   auto & x = dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
-  // x.zero();
+  x.zero();
 
   this->callback = &callback;
 
@@ -202,8 +202,18 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
   // auto & model_x = this->dof_manager.getDOFs("displacement");
   dof_manager.splitSolutionPerDOFs();
   callback.restoreLastConvergedStep();
-  callback.corrector();
 
+  // \TODO: not efficient, TAO returns full solution, pseudo_time add it to
+  // previous one, need to substract in model or script
+  auto & us = this->dof_manager.getDOFs("damage");
+  const auto & blocked_dofs = this->dof_manager.getBlockedDOFs("damage");
+  for (auto && [u, bld] : zip(make_view(us), make_view(blocked_dofs))) {
+    if (not bld) {
+      u = 0;
+    }
+  }
+
+  callback.corrector();
   bool converged = reason >= 0;
   callback.afterSolveStep(converged);
 
