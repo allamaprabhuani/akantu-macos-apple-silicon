@@ -35,7 +35,7 @@ namespace akantu {
 CouplerSolidPhaseField::CouplerSolidPhaseField(Mesh & mesh, Int dim,
                                                const ID & id,
                                                const ModelType model_type)
-    : Model(mesh, model_type, dim, id) {
+    : Model(mesh, model_type, dim, id), initial_mass(0, 1, "initial_mass") {
   this->registerFEEngineObject<MyFEEngineType>("CouplerSolidPhaseField", mesh,
                                                Model::spatial_dimension);
 
@@ -58,8 +58,7 @@ CouplerSolidPhaseField::CouplerSolidPhaseField(Mesh & mesh, Int dim,
     this->registerSynchronizer(synchronizer, SynchronizationTag::_csp_strain);
   }
 
-  this->initial_mass =
-      Array<Real>(mesh.getNbNodes() * Model::spatial_dimension);
+  this->initial_mass.resize(mesh.getNbNodes() * Model::spatial_dimension);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -477,12 +476,8 @@ bool CouplerSolidPhaseField::checkConvergence(Array<Real> & u_new,
 std::shared_ptr<dumpers::Field> CouplerSolidPhaseField::createElementalField(
     const std::string & field_name, const std::string & group_name,
     bool padding_flag, Idx spatial_dimension, ElementKind kind) {
-
   return solid->createElementalField(field_name, group_name, padding_flag,
                                      spatial_dimension, kind);
-
-  std::shared_ptr<dumpers::Field> field;
-  return field;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -490,11 +485,7 @@ std::shared_ptr<dumpers::Field>
 CouplerSolidPhaseField::createNodalFieldReal(const std::string & field_name,
                                              const std::string & group_name,
                                              bool padding_flag) {
-
   return solid->createNodalFieldReal(field_name, group_name, padding_flag);
-
-  std::shared_ptr<dumpers::Field> field;
-  return field;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -502,11 +493,7 @@ std::shared_ptr<dumpers::Field>
 CouplerSolidPhaseField::createNodalFieldBool(const std::string & field_name,
                                              const std::string & group_name,
                                              bool padding_flag) {
-
   return solid->createNodalFieldBool(field_name, group_name, padding_flag);
-
-  std::shared_ptr<dumpers::Field> field;
-  return field;
 }
 
 /* -----------------------------------------------------------------------*/
