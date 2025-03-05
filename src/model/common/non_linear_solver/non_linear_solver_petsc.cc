@@ -101,6 +101,8 @@ void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
   std::vector<Real> zeros_to_set(blocked_dofs.size());
   VecSetValuesLocal(residual, blocked_dofs.size(), blocked_dofs.data(),
                     zeros_to_set.data(), INSERT_VALUES);
+  VecAssemblyBegin(residual);
+  VecAssemblyEnd(residual);
 
   // for PETSc F is -akantu::residual
   VecScale(residual, -1);

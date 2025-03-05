@@ -349,17 +349,18 @@ void CouplerSolidPhaseField::computeDamageOnQuadPoints(GhostType ghost_type) {
               constexpr auto && dim_ = aka::decay_v<decltype(_)>;
               auto & mat = static_cast<MaterialPhaseField<dim_> &>(material);
               auto & damage = mat.getDamage();
-              // auto & phase_damage = phasefield.getDamage();
+              auto & phase_damage = phasefield.getDamage();
               for (const auto & type :
                    mesh.elementTypes(this->spatial_dimension, ghost_type)) {
                 auto & damage_on_qpoints_vect = damage(type, ghost_type);
-                // auto & phase_damage_on_qpoints_vect =
-                //     phase_damage(type, ghost_type);
+                auto & phase_damage_on_qpoints_vect =
+                    phase_damage(type, ghost_type);
                 fem.interpolateOnIntegrationPoints(phase->getDamage(),
-                                                   damage_on_qpoints_vect, 1,
-                                                   type, ghost_type);
-                // Doesn't work because phase_damage_on_qpoints is not interpolated after solve step
-                // damage_on_qpoints_vect.copy(phase_damage_on_qpoints_vect);
+                                                   phase_damage_on_qpoints_vect,
+                                                   1, type, ghost_type);
+                // Doesn't work because phase_damage_on_qpoints is not
+                // interpolated after solve step
+                damage_on_qpoints_vect.copy(phase_damage_on_qpoints_vect);
               }
             },
             this->spatial_dimension);
