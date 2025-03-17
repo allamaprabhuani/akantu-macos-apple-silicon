@@ -30,8 +30,10 @@ MaterialThermal<dim>::MaterialThermal(SolidMechanicsModel & model,
                                       const ID & id, const ID & fe_engine_id)
     : Parent(model, id, fe_engine_id),
       delta_T(this->registerInternal("delta_T", 1)),
-      sigma_th(this->registerInternal("sigma_th", 1)) {
+      sigma_th(this->registerInternal("sigma_th", 1)),
+      epsilon_th(this->registerInternal("epsilon_th", 1)) {
   sigma_th.initializeHistory();
+  epsilon_th.initializeHistory();
 
   this->registerParam("E", E, Real(0.), _pat_parsable | _pat_modifiable,
                       "Young's modulus");

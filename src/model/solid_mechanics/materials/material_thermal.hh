@@ -53,11 +53,13 @@ public:
   /* ------------------------------------------------------------------------ */
   template <Int dim_ = dim>
   decltype(auto) getArguments(ElementType el_type, GhostType ghost_type) {
-    return zip_append(Material::getArguments<dim_>(el_type, ghost_type),
-                      "delta_T"_n = delta_T(el_type, ghost_type),
-                      "sigma_th"_n = sigma_th(el_type, ghost_type),
-                      "previous_sigma_th"_n =
-                          sigma_th.previous(el_type, ghost_type));
+    return zip_append(
+        Material::getArguments<dim_>(el_type, ghost_type),
+        "delta_T"_n = delta_T(el_type, ghost_type),
+        "epsilon_th"_n = epsilon_th(el_type, ghost_type),
+        "previous_epsilon_th"_n = epsilon_th.previous(el_type, ghost_type),
+        "sigma_th"_n = sigma_th(el_type, ghost_type),
+        "previous_sigma_th"_n = sigma_th.previous(el_type, ghost_type));
   }
 
   template <Int dim_ = dim>
@@ -87,6 +89,9 @@ protected:
 
   /// Current thermal stress
   InternalField<Real> & sigma_th;
+
+  /// Thermal strain
+  InternalField<Real> & epsilon_th;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -95,9 +100,11 @@ protected:
 template <Int dim>
 template <class Args>
 inline void MaterialThermal<dim>::computeStressOnQuad(Args && args) {
+  auto && epsilon = args["epsilon_th"_n];
   auto && sigma = args["sigma_th"_n];
   auto && deltaT = args["delta_T"_n];
-  sigma = -this->E / (1. - 2. * this->nu) * this->alpha * deltaT;
+  epsilon = deltaT * this->alpha;
+  sigma = -this->E / (1. - 2. * this->nu) * epsilon;
 }
 
 template <>
@@ -113,9 +120,11 @@ inline void MaterialThermal<2>::computeStressOnQuadPlaneStress(Args && args) {
 template <>
 template <class Args>
 inline void MaterialThermal<1>::computeStressOnQuad(Args && args) {
+  auto && epsilon = args["epsilon_th"_n];
   auto && sigma = args["sigma_th"_n];
   auto && deltaT = args["delta_T"_n];
-  sigma = -this->E * this->alpha * deltaT;
+  epsilon = deltaT * this->alpha;
+  sigma = -this->E * epsilon;
 }
 
 } // namespace akantu
