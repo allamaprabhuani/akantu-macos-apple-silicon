@@ -20,13 +20,17 @@
 
 /* -------------------------------------------------------------------------- */
 #include "material.hh"
+#include "plane_stress_toolbox.hh"
 /* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_MATERIAL_THERMAL_HH_
 #define AKANTU_MATERIAL_THERMAL_HH_
 
 namespace akantu {
-template <Int dim> class MaterialThermal : public Material {
+template <Int dim>
+class MaterialThermal : public PlaneStressToolbox<dim, Material> {
+private:
+  using Parent = PlaneStressToolbox<dim, Material>;
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -43,6 +47,8 @@ public:
 
   /// local computation of thermal stress
   template <class Args> inline void computeStressOnQuad(Args && args);
+  template <class Args>
+  inline void computeStressOnQuadPlaneStress(Args && args);
 
   /* ------------------------------------------------------------------------ */
   template <Int dim_ = dim>
@@ -92,6 +98,16 @@ inline void MaterialThermal<dim>::computeStressOnQuad(Args && args) {
   auto && sigma = args["sigma_th"_n];
   auto && deltaT = args["delta_T"_n];
   sigma = -this->E / (1. - 2. * this->nu) * this->alpha * deltaT;
+}
+
+template <>
+template <class Args>
+inline void MaterialThermal<2>::computeStressOnQuadPlaneStress(Args && args) {
+  auto && epsilon = args["epsilon_th"_n];
+  auto && sigma = args["sigma_th"_n];
+  auto && deltaT = args["delta_T"_n];
+  epsilon = deltaT * this->alpha;
+  sigma = -this->E / (1. - this->nu) * epsilon;
 }
 
 template <>
