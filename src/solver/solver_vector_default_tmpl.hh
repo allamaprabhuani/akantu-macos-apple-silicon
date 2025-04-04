@@ -22,6 +22,9 @@
 #include "dof_manager_default.hh"
 #include "solver_vector_default.hh"
 /* -------------------------------------------------------------------------- */
+#include <filesystem>
+#include <fstream>
+/* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_SOLVER_VECTOR_DEFAULT_TMPL_HH_
 #define AKANTU_SOLVER_VECTOR_DEFAULT_TMPL_HH_
@@ -70,6 +73,33 @@ inline Int SolverVectorArrayTmpl<Array_>::localSize() const {
   return dof_manager.getLocalSystemSize();
 }
 
+/* -------------------------------------------------------------------------- */
+template <class Array_>
+inline void
+SolverVectorArrayTmpl<Array_>::saveVector(const std::string & filename) const {
+  std::filesystem::path file = filename;
+  if (not file.has_extension()) {
+    file.replace_extension(".mtx");
+  }
+  // open and set the properties of the stream
+  std::ofstream outfile;
+  auto range = arange(this->vector.size());
+  auto size = std::count_if(range.begin(), range.end(), [&](auto n) {
+    return dof_manager.isLocalOrMasterDOF(n);
+  });
+
+  outfile.open(file);
+  outfile.precision(std::numeric_limits<Real>::digits10);
+  outfile << "%%MatrixMarket matrix coordinate real general\n"
+          << this->size() << " 1 " << size << "\n";
+  for (auto && [i, a] : enumerate(this->vector)) {
+    if (dof_manager.isLocalOrMasterDOF(i)) {
+      outfile << (dof_manager.localToGlobalEquationNumber(i) + 1) << " 1 " << a
+              << "\n";
+    }
+  }
+  outfile.close();
+}
 } // namespace akantu
 
 #endif /* AKANTU_SOLVER_VECTOR_DEFAULT_TMPL_HH_ */

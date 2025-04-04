@@ -21,8 +21,6 @@
 /* -------------------------------------------------------------------------- */
 #include "solver_vector.hh"
 /* -------------------------------------------------------------------------- */
-#include <utility>
-/* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_SOLVER_VECTOR_DEFAULT_HH_
 #define AKANTU_SOLVER_VECTOR_DEFAULT_HH_
@@ -92,6 +90,8 @@ public:
   }
 
   virtual bool isDistributed() const override { return false; }
+
+  void saveVector(const std::string & filename) const override;
 
 public:
   Array<Real> & getVector() override { return vector; }

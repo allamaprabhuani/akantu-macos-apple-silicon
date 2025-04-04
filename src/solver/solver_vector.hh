@@ -67,6 +67,10 @@ public:
   /// Returns `true` if `*this` is distributed or not.
   virtual bool isDistributed() const { return false; }
 
+  virtual void saveVector(const std::string & /*filename*/) const {
+    AKANTU_TO_IMPLEMENT();
+  }
+
 protected:
   ID id;
 

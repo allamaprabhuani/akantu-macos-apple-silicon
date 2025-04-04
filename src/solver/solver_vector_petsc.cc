@@ -20,11 +20,13 @@
 
 /* -------------------------------------------------------------------------- */
 #include "solver_vector_petsc.hh"
+#include "aka_array_printer.hh"
 #include "dof_manager_petsc.hh"
 #include "mpi_communicator_data.hh"
 /* -------------------------------------------------------------------------- */
-#include <numeric>
+#include <filesystem>
 #include <petscvec.h>
+#include <string>
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -268,5 +270,53 @@ bool SolverVectorPETSc::isFinite() const {
 }
 /* -------------------------------------------------------------------------- */
 void PetscPrint(Vec x) { VecView(x, PETSC_VIEWER_STDOUT_WORLD); }
+
+/* -------------------------------------------------------------------------- */
+void SolverVectorPETSc::saveVector(const std::string & filename) const {
+
+  AKANTU_DEBUG_IN();
+
+  auto & comm = dof_manager.getCommunicator();
+
+  std::filesystem::path file = filename;
+  if (comm.getNbProc() > 1) {
+    file.replace_extension("");
+    file += "_rank-" + std::to_string(comm.whoAmI()) + ".mtx";
+  }
+
+  if (not file.has_extension()) {
+    file.replace_extension(".mtx");
+  }
+
+  // // open and set the properties of the stream
+  std::ofstream outfile;
+  // auto range = arange(this->localSize());
+  // auto size = std::count_if(range.begin(), range.end(), [&](auto n) {
+  //   return dof_manager.isLocalOrMasterDOF(n);
+  // });
+
+  outfile.open(file);
+  outfile.precision(std::numeric_limits<Real>::digits10);
+  outfile << "%%MatrixMarket matrix coordinate real general\n"
+          << this->size() << " 1 " << this->localSize() << "\n";
+  // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
+  Int start;
+  const Real * array;
+  VecGetOwnershipRange(x, &start, PETSC_NULLPTR);
+  VecGetArrayRead(x, &array);
+  // const Array<Real> & vector = *this;
+  // ArrayPrinter<Array<Real>> printer(vector);
+  // printer.printself(std::cout);
+  for (Int i = 0; i < this->localSize(); ++i) {
+    outfile << (start + i + 1) << " 1 " << array[i] << "\n";
+    //   if (dof_manager.isLocalOrMasterDOF(i)) {
+    //     outfile << (dof_manager.localToGlobalEquationNumber(i) + 1) << " 1 "
+    //     << a
+    //             << "\n";
+    //   }
+  }
+  outfile.close();
+  AKANTU_DEBUG_OUT();
+}
 
 } // namespace akantu

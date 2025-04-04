@@ -341,6 +341,8 @@ public:
   /// access the matrix.
   inline decltype(auto) getLocalEquationsNumbers(const ID & dof_id) const;
 
+  void saveAssociatedNodes();
+
 protected:
   /// get the array of dof types (use only if you know what you do...)
   inline decltype(auto) getDOFsAssociatedNodes(const ID & dof_id) const;

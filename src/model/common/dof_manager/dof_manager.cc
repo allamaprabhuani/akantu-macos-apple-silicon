@@ -1029,6 +1029,28 @@ void DOFManager::assembleMatMulVectToResidual(const ID & dof_id,
                                               Real scale_factor) {
   assembleMatMulVectToGlobalArray(dof_id, A_id, x, *residual, scale_factor);
 }
+
 /* -------------------------------------------------------------------------- */
+void DOFManager::saveAssociatedNodes() {
+  auto & nodes = getNewLumpedMatrix("nodes");
+
+  for (auto && [dof, data] : dofs) {
+    if (data->support_type != _dst_nodal) {
+      continue;
+    }
+    Array<Real> gnodes(data->associated_nodes.size(), 1);
+    std::transform(data->associated_nodes.begin(), data->associated_nodes.end(),
+                   gnodes.begin(), [&](auto n) {
+                     Idx gid = mesh->isLocalOrMasterNode(n)
+                                   ? mesh->getNodeGlobalId(n)
+                                   : 0;
+                     return Real(gid);
+                   });
+
+    this->assembleToGlobalArray(dof, gnodes, nodes, 1.);
+  }
+
+  nodes.saveVector("nodes");
+}
 
 } // namespace akantu

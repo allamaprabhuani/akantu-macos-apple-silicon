@@ -42,6 +42,8 @@ public:
 
   virtual bool isDistributed() const override { return true; }
 
+  void saveVector(const std::string & filename) const override;
+
 protected:
   // full vector in case it needs to be centralized on master
   std::unique_ptr<Array<Real>> global_vector;

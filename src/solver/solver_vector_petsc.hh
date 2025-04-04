@@ -111,6 +111,8 @@ public:
   bool isDistributed() const override { return true; }
   bool isFinite() const override;
 
+  void saveVector(const std::string & filename) const override;
+
 protected:
   void applyModifications();
   void updateGhost();

@@ -22,6 +22,8 @@
 #include "solver_vector_distributed.hh"
 #include "dof_manager_default.hh"
 #include "dof_synchronizer.hh"
+#include <filesystem>
+#include <string>
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -77,6 +79,19 @@ bool SolverVectorDistributed::isFinite() const {
   return is_finite;
 }
 
+/* -------------------------------------------------------------------------- */
+void SolverVectorDistributed::saveVector(const std::string & filename) const {
+  auto & comm = dof_manager.getCommunicator();
+
+  std::filesystem::path file = filename;
+  if (comm.getNbProc() > 1) {
+    file.replace_extension("");
+    file += "_rank-" + std::to_string(comm.whoAmI()) + ".mtx";
+  }
+
+  SolverVectorDefault::saveVector(file);
+}
+/* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
 } // namespace akantu
