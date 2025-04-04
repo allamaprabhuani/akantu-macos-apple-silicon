@@ -212,6 +212,7 @@ void SolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
 
     VecSetOption(x, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
     VecSetValuesLocal(x, lidx.size(), lidx.data(), to_add, ADD_VALUES);
+    applyModifications();
     return;
   }
 
