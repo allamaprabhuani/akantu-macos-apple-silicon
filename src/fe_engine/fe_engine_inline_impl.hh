@@ -20,7 +20,7 @@
 
 /* -------------------------------------------------------------------------- */
 #include "element_class.hh"
-//#include "fe_engine.hh"
+// #include "fe_engine.hh"
 #include "mesh.hh"
 /* -------------------------------------------------------------------------- */
 #include "element_type_conversion.hh"
@@ -37,9 +37,8 @@ inline Real
 FEEngine::getElementInradius(const Eigen::MatrixBase<Derived> & coord,
                              ElementType type) {
   return tuple_dispatch<AllElementTypes>(
-      [&coord](auto && enum_type) -> Real {
-        constexpr ElementType type = aka::decay_v<decltype(enum_type)>;
-        return ElementClass<type>::getInradius(coord);
+      [&coord](auto type) -> Real {
+        return ElementClass<type.value>::getInradius(coord);
       },
       type);
 }
@@ -71,11 +70,10 @@ inline constexpr auto FEEngine::getInterpolationType(ElementType type) {
 inline constexpr ElementType
 FEEngine::getCohesiveElementType(ElementType type) {
   return tuple_dispatch_with_default<ElementTypes_t<_ek_regular>>(
-      [&](auto && enum_type) -> ElementType {
-        constexpr ElementType type = aka::decay_v<decltype(enum_type)>;
-        return CohesiveFacetProperty<type>::cohesive_type;
+      [](auto type) -> ElementType {
+        return CohesiveFacetProperty<type.value>::cohesive_type;
       },
-      type, [](auto && /*enum_type*/) { return _not_defined; });
+      [](auto /*type*/) { return _not_defined; }, type);
 }
 #endif
 
@@ -87,10 +85,7 @@ namespace akantu {
 
 inline Vector<ElementType> FEEngine::getIGFEMElementTypes(ElementType type) {
   tuple_dispatch<ElementTypes_t<_ek_regular>>(
-      [&](auto && enum_type) {
-        constexpr ElementType type = aka::decay_v<decltype(enum_type)>;
-        return IGFEMHelper::getIGFEMElementTypes<type>();
-      },
+      [](auto type) { return IGFEMHelper::getIGFEMElementTypes<type.value>(); },
       type);
 }
 #endif
@@ -185,4 +180,4 @@ void FEEngine::filterElementalData(const Mesh & mesh, const Array<T> & elem_f,
 
 } // namespace akantu
 
-//#endif /* __AKANTU_FE_ENGINE_INLINE_IMPL_CC__ */
+// #endif /* __AKANTU_FE_ENGINE_INLINE_IMPL_CC__ */

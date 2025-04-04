@@ -27,3 +27,10 @@ register_test(test_parser
   FILES_TO_COPY input_file.dat
   PACKAGE core
   )
+
+register_gtest_sources(
+  SOURCES test_parser_gtest.cc
+  PACKAGE core
+  )
+
+register_gtest_test(parser_gtest)

@@ -28,6 +28,7 @@
           - "third-party/akantu-iterators/**/*.{cc, hh, txt, cmake, py}"
           - .gitlab-ci.yml
           - .gitlab/ci.d/**
+          - cmake/**
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG
 
@@ -47,11 +48,11 @@
         - third-party/eigen3
         - third-party/pybind11
         - third-party/google-test
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: push
       paths:
         - build/
@@ -103,11 +104,11 @@
         - third-party/eigen3
         - third-party/pybind11
         - third-party/google-test
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull-push
       paths:
         - build/
@@ -141,11 +142,11 @@
         - third-party/eigen3
         - third-party/pybind11
         - third-party/google-test
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull-push
       paths:
         - build/
@@ -167,29 +168,31 @@
   extends:
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull
       paths:
         - build/
   script:
     - cd build
     - ctest -T test --output-on-failure --no-compress-output --timeout 1800
+    - if [ ${BUILD_TYPE} = "Coverage" ]; then
+         ls ../src;
+         pwd;
+         gcovr --root ${CI_PROJECT_DIR}
+               --gcov-executable "${GCOV_EXECUTABLE}"
+               --object-directory .
+               --exclude-unreachable-branches
+               --xml-pretty
+               --xml coverage.xml
+               --print-summary || true;
+      fi
   after_script:
     - cd build
     - tag=$(head -n 1 < Testing/TAG)
     - if [ -e Testing/${tag}/Test.xml ]; then
          xsltproc -o ./juint.xml ${CI_PROJECT_DIR}/test/ci/ctest2junit.xsl Testing/${tag}/Test.xml;
       fi
-    - if [ ${BUILD_TYPE} = "Coverage" ]; then
-         gcovr --xml
-               --gcov-executable "${GCOV_EXECUTABLE}"
-               --xml-pretty
-               --exclude-unreachable-branches
-               --print-summary
-               --output coverage.xml
-               --object-directory ${CI_PROJECT_DIR}/build
-               --root ${CI_PROJECT_DIR}  -s || true;
-      fi
+  coverage: '/^lines: (\d+\.\d+\%)/'
   artifacts:
     when: always
     expire_in: 2 days
@@ -212,10 +215,10 @@
     - .build_release
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       paths:
         - build/
         - spack/
@@ -256,11 +259,11 @@
     - .build_release
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       policy: pull-push
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull-push
       paths:
         - build/
@@ -283,10 +286,10 @@
     - .build_release
     - .code_only
   cache:
-    - key: ${output}-${BUILD_TYPE}-ccache
+    - key: CCACHE-${output}-${BUILD_TYPE}
       paths:
         - .ccache/
-    - key: ${output}-${BUILD_TYPE}-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-${output}-${BUILD_TYPE}-${CI_PIPELINE_ID}
       policy: pull
       paths:
         - build/

@@ -242,7 +242,7 @@ public:
 
   /// return true if the coordinates provided are inside the element, false
   /// otherwise
-  inline bool contains(const Vector<Real> & real_coords, Int element,
+  inline bool contains(const Ref<const VectorXr> real_coords, Int element,
                        ElementType type,
                        GhostType ghost_type = _not_ghost) const;
 

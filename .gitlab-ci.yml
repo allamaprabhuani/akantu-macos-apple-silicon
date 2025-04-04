@@ -14,9 +14,7 @@ stages:
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      when: never
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG =~ /^v[0-9].*$/
 
 include:
@@ -25,9 +23,9 @@ include:
 #-------------------------------------------------------------------------------
 # Rebuilding the docker images if needed
 #-------------------------------------------------------------------------------
-docker build:debian-bullseye:
+docker build:debian-stable:
   variables:
-    IMAGE_NAME: 'debian:bullseye'
+    IMAGE_NAME: 'debian:bookworm'
   extends: .docker_build
 
 docker build:ubuntu-lts:
@@ -37,7 +35,7 @@ docker build:ubuntu-lts:
 
 docker build:manylinux:
   variables:
-    IMAGE_NAME: 'manylinux:2014_x86_64'
+    IMAGE_NAME: 'manylinux_2_28_x86_64:latest'
   extends: .docker_build
 
 docker build:debian-testing:
@@ -63,76 +61,74 @@ version_determination:
     expire_in: 1day
 
 # ------------------------------------------------------------------------------
-# Debian bullseye compiled with GCC
+# Debian stable compiled with GCC
 # ------------------------------------------------------------------------------
-configure:debian_bullseye_gcc:
+configure:debian_stable_gcc:
   extends:
-    - .debian_bullseye_gcc
+    - .debian_stable_gcc
     - .build_coverage
     - .configure
   needs:
     - version_determination
 
-build_libs:debian_bullseye_gcc:
+build_libs:debian_stable_gcc:
   extends:
-    - .debian_bullseye_gcc
+    - .debian_stable_gcc
     - .build_coverage
     - .build_libs
   needs:
-    - job: configure:debian_bullseye_gcc
+    - job: configure:debian_stable_gcc
 
-build_tests:debian_bullseye_gcc:
+build_tests:debian_stable_gcc:
   extends:
-    - .debian_bullseye_gcc
+    - .debian_stable_gcc
     - .build_coverage
     - .build_tests
   needs:
-    - job: build_libs:debian_bullseye_gcc
+    - job: build_libs:debian_stable_gcc
 
-test:debian_bullseye_gcc:
+test:debian_stable_gcc:
   extends:
-    - .debian_bullseye_gcc
+    - .debian_stable_gcc
     - .build_coverage
     - .tests
-  coverage: '/^lines: (\d+\.\d+\%)/'
   needs:
-    - job: build_tests:debian_bullseye_gcc
+    - job: build_tests:debian_stable_gcc
 
 # ------------------------------------------------------------------------------
-# Debian bullseye compiled with Clang
+# Debian stable compiled with Clang
 # ------------------------------------------------------------------------------
-configure:debian_bullseye_clang:
+configure:debian_stable_clang:
   extends:
-    - .debian_bullseye_clang
+    - .debian_stable_clang
     - .build_release
     - .configure
   needs:
     - version_determination
 
-build_libs:debian_bullseye_clang:
+build_libs:debian_stable_clang:
   extends:
-    - .debian_bullseye_clang
+    - .debian_stable_clang
     - .build_release
     - .build_libs
   needs:
-    - job: configure:debian_bullseye_clang
+    - job: configure:debian_stable_clang
 
-build_tests:debian_bullseye_clang:
+build_tests:debian_stable_clang:
   extends:
-    - .debian_bullseye_clang
+    - .debian_stable_clang
     - .build_release
     - .build_tests
   needs:
-    - job: build_libs:debian_bullseye_clang
+    - job: build_libs:debian_stable_clang
 
-test:debian_bullseye_clang:
+test:debian_stable_clang:
   extends:
-    - .debian_bullseye_clang
+    - .debian_stable_clang
     - .build_release
     - .tests
-  coverage: '/^lines: (\d+\.\d+\%)/'
   needs:
-    - job: build_tests:debian_bullseye_clang
+    - job: build_tests:debian_stable_clang
 
 # ------------------------------------------------------------------------------
 # Ubuntu LTS compiled with GCC
@@ -170,7 +166,7 @@ test:ubuntu_lts_gcc:
     - job: build_tests:ubuntu_lts_gcc
 
 # ------------------------------------------------------------------------------
-# Debian bullseye compiled with GCC tested with valgrind
+# Debian stable compiled with GCC tested with valgrind
 # ------------------------------------------------------------------------------
 configure:ubuntu_lts_gcc_valgrind:
   extends:
@@ -209,7 +205,7 @@ test:ubuntu_lts_gcc_valgrind:
 # ------------------------------------------------------------------------------
 configure:python_package:
   extends:
-    - .manylinux_2014_x86_64_gcc
+    - .manylinux_gcc
     - .configure_python
   needs:
     - version_determination
@@ -217,7 +213,7 @@ configure:python_package:
 build_akantu:python_package:
   extends:
     - .build_python_akantu
-    - .manylinux_2014_x86_64_gcc
+    - .manylinux_gcc
   needs:
     - job: configure:python_package
 
@@ -225,7 +221,7 @@ build_pip:python_package:
   extends:
     - .code_only
     - .build_release
-    - .manylinux_2014_x86_64_gcc
+    - .manylinux_gcc
     - .build_python_package
   needs:
     - job: build_akantu:python_package
@@ -312,7 +308,6 @@ package:python_pypi:
   rules:
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /v[0-9]+.*/
 
-
 # ------------------------------------------------------------------------------
 # Release
 # ------------------------------------------------------------------------------
@@ -323,7 +318,7 @@ package:release:
     EXAMPLES_PACKAGE: "akantu-python-examples-${CI_COMMIT_TAG}.tgz"
     PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/akantu-examples/${CI_COMMIT_TAG}"
   cache:
-    - key: debian_bullseye_clang-Release-build-${CI_COMMIT_SHORT_SHA}
+    - key: BUILD-debian_stable_clang-Release-${CI_COMMIT_SHORT_SHA}
       policy: pull
       paths:
         - build/
@@ -354,7 +349,7 @@ package:release:
         --assets-link "{\"name\": \"PyPi package\", \"url\": \"https://pypi.org/project/akantu/${VERSION}/\", \"link_type\":  \"package\"}" \
         --assets-link "{\"name\": \"Documentation\", \"url\": \"https://akantu.readthedocs.io/en/${CI_COMMIT_TAG}/\", \"link_type\": \"other\"}"
   needs:
-    - job: build_tests:debian_bullseye_clang
+    - job: build_tests:debian_stable_clang
     - job: version_determination
     - job: package:python_pypi
 
@@ -366,7 +361,7 @@ cq:code_quality:
     - .code_quality_gitlab_template
     - .code_only
   needs:
-    - job: build_libs:debian_bullseye_clang
+    - job: build_libs:debian_stable_clang
   artifacts:
     paths:
       - gl-code-quality-report.json
@@ -386,7 +381,7 @@ cq:clang_tidy:
         clang-tidy
         -p ${CI_PROJECT_DIR} > gl-clang-tidy-report.json
   needs:
-    - job: configure:debian_bullseye_clang
+    - job: configure:debian_stable_clang
   artifacts:
     paths:
       - gl-clang-tidy-report.json
@@ -403,7 +398,7 @@ cq:clang_format:
         clang-format
         -p ${CI_PROJECT_DIR} > gl-clang-format-report.json
   needs:
-    - job: configure:debian_bullseye_clang
+    - job: configure:debian_stable_clang
   artifacts:
     paths:
       - gl-clang-format-report.json
@@ -423,8 +418,8 @@ cq:compilation_warnings:
         warnings
         build-*-err.log > gl-warnings-report.json
   needs:
-    - job: build_libs:debian_bullseye_clang
-    - job: build_libs:debian_bullseye_gcc
+    - job: build_libs:debian_stable_clang
+    - job: build_libs:debian_stable_gcc
     - job: build_libs:ubuntu_lts_gcc
   artifacts:
     paths:
@@ -433,7 +428,7 @@ cq:compilation_warnings:
 cq:merge_code_quality:
   stage: deploy
   extends:
-    - .debian_bullseye_clang
+    - .debian_stable_clang
     - .code_only
   script:
     - jq -Ms '[.[][]]' gl-*-report.json | tee gl-codequality.json | jq -C

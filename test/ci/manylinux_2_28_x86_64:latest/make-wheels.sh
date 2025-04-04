@@ -3,7 +3,7 @@ set -eo pipefail
 
 set +x
 
-export PLAT=manylinux2014_x86_64
+export PLAT=manylinux_2_28_x86_64
 
 source /etc/profile
 
@@ -17,7 +17,8 @@ function repair_wheel {
 }
 
 # Compile wheels
-for PYBIN in /opt/python/cp3*/bin; do
+for PYVER in cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313 cp39-cp39; do
+  PYBIN=/opt/python/${PYVER}/bin
   ccache --zero-stats
   echo "${PYBIN}/pip" wheel . --no-deps -w dist/
   "${PYBIN}/pip" wheel . --no-deps -w dist/

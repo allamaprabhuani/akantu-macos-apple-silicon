@@ -1,6 +1,8 @@
 cohesive (2D)
 '''''''''''''
 
+.. _ex-python-cohesive:
+
 :Sources:
 
    .. collapse:: plate.py (click to expand)

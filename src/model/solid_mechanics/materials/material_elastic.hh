@@ -20,7 +20,6 @@
 
 /* -------------------------------------------------------------------------- */
 #include "material_thermal.hh"
-#include "plane_stress_toolbox.hh"
 /* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_MATERIAL_ELASTIC_HH_
@@ -36,13 +35,12 @@ namespace akantu {
  *   - nu  : Poisson's ratio (default: 1/2)
  *   - Plane_Stress : if 0: plane strain, else: plane stress (default: 0)
  */
-template <Int dim>
-class MaterialElastic : public PlaneStressToolbox<dim, MaterialThermal<dim>> {
+template <Int dim> class MaterialElastic : public MaterialThermal<dim> {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 private:
-  using Parent = PlaneStressToolbox<dim, MaterialThermal<dim>>;
+  using Parent = MaterialThermal<dim>;
 
 public:
   MaterialElastic(SolidMechanicsModel & model, const ID & id = "",

@@ -28,7 +28,7 @@ namespace akantu {
 template <Int dim>
 MaterialThermal<dim>::MaterialThermal(SolidMechanicsModel & model,
                                       const ID & id, const ID & fe_engine_id)
-    : Material(model, id, fe_engine_id),
+    : Parent(model, id, fe_engine_id),
       delta_T(this->registerInternal("delta_T", 1)),
       sigma_th(this->registerInternal("sigma_th", 1)),
       epsilon_th(this->registerInternal("epsilon_th", 1)) {
@@ -52,6 +52,22 @@ void MaterialThermal<dim>::computeStress(ElementType el_type,
   auto && arguments = getArguments(el_type, ghost_type);
   for (auto && args : arguments) {
     computeStressOnQuad(args);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+template <>
+void MaterialThermal<2>::computeStress(ElementType el_type,
+                                       GhostType ghost_type) {
+  auto && arguments = getArguments(el_type, ghost_type);
+  if (this->plane_stress) {
+    for (auto && args : arguments) {
+      computeStressOnQuadPlaneStress(args);
+    }
+  } else {
+    for (auto && args : arguments) {
+      computeStressOnQuad(args);
+    }
   }
 }
 
