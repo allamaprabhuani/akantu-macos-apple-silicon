@@ -951,7 +951,7 @@ void DOFManager::updateGlobalBlockedDofs() {
 
     for (auto && [dof, is_blocked] : zip(dof_data->getLocalEquationsNumbers(),
                                          make_view(*dof_data->blocked_dofs))) {
-      if (is_blocked) {
+      if (is_blocked && dof != -1) {
         this->global_blocked_dofs_indexes.push_back(dof);
       }
     }
