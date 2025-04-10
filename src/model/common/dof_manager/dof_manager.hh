@@ -699,10 +699,6 @@ protected:
 
   /// Array containing the true or false if the node is in global_blocked_dofs
   Array<bool> global_blocked_dofs;
-
-private:
-  /// This is for unit testing
-  friend class DOFManagerTester;
 };
 
 using DefaultDOFManagerFactory = Factory<DOFManager, ID, const ID &>;

@@ -19,40 +19,49 @@
  */
 
 /* -------------------------------------------------------------------------- */
+
 #include "test_gtest_utils.hh"
 /* -------------------------------------------------------------------------- */
+#include <aka_common.hh>
+#include <algorithm>
+#include <communicator.hh>
 #include <dof_manager.hh>
+#include <element.hh>
+#include <mesh.hh>
 #include <mesh_partition_scotch.hh>
 #include <mesh_utils.hh>
 /* -------------------------------------------------------------------------- */
 #include <gtest/gtest.h>
+#include <memory>
 #include <numeric>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
 enum DOFManagerType { _dmt_default, _dmt_petsc };
-}
+} // namespace akantu
+
 AKANTU_ENUM_HASH(DOFManagerType)
 
 using namespace akantu;
 
 // defined as struct to get there names in gtest outputs
-struct dof_manager_default_
+struct dof_manager_default_t
     : public std::integral_constant<DOFManagerType, _dmt_default> {};
-struct dof_manager_petsc_
+struct dof_manager_petsc_t
     : public std::integral_constant<DOFManagerType, _dmt_petsc> {};
 
 using dof_manager_types = ::testing::Types<
 #ifdef AKANTU_USE_PETSC
-    dof_manager_petsc_,
+    dof_manager_petsc_t,
 #endif
-    dof_manager_default_>;
+    dof_manager_default_t>;
 
 namespace std {
 
-std::string to_string(const DOFManagerType & type) {
+auto to_string(const DOFManagerType & type) -> std::string {
   std::unordered_map<DOFManagerType, std::string> map{
 #ifdef AKANTU_USE_PETSC
       {_dmt_petsc, "petsc"},
@@ -67,25 +76,6 @@ std::string to_string(const DOFManagerType & type) {
 /* -------------------------------------------------------------------------- */
 using namespace akantu;
 /* -------------------------------------------------------------------------- */
-namespace akantu {
-class DOFManagerTester {
-public:
-  DOFManagerTester(std::unique_ptr<DOFManager> dof_manager)
-      : dof_manager(std::move(dof_manager)) {}
-
-  DOFManager & operator*() { return *dof_manager; }
-  DOFManager * operator->() { return dof_manager.get(); }
-  void getArrayPerDOFs(const ID & id, SolverVector & vector,
-                       Array<Real> & array) {
-    dof_manager->getArrayPerDOFs(id, vector, array);
-  }
-
-  SolverVector & residual() { return *dof_manager->residual; }
-
-private:
-  std::unique_ptr<DOFManager> dof_manager;
-};
-} // namespace akantu
 
 template <class T> class DOFManagerFixture : public ::testing::Test {
 public:
@@ -95,7 +85,10 @@ public:
     mesh = std::make_unique<Mesh>(this->dim);
 
     auto & communicator = Communicator::getStaticCommunicator();
-    if (communicator.whoAmI() == 0) {
+    prank = communicator.whoAmI();
+    psize = communicator.getNbProc();
+
+    if (prank == 0) {
       mesh->read("mesh.msh");
     }
     mesh->distribute();
@@ -109,80 +102,72 @@ public:
                         [&](auto && init, auto && val) {
                           return init + mesh->isLocalOrMasterNode(val);
                         });
+
+    dof_manager = this->allocDOFManager();
   }
   void TearDown() override {
+    dof_manager.reset();
     mesh.reset();
     dof1.reset();
     dof2.reset();
   }
 
-  decltype(auto) alloc() {
-    std::unordered_map<DOFManagerType, std::string> types{
-        {_dmt_default, "default"}, {_dmt_petsc, "petsc"}};
-
-    return DOFManagerTester(DOFManagerFactory::getInstance().allocate(
-        types[T::value], *mesh, "dof_manager"));
+  auto allocDOFManager() -> decltype(auto) {
+    return DOFManagerFactory::getInstance().allocate(std::to_string(type),
+                                                     *mesh, "dof_manager");
   }
 
-  decltype(auto) registerDOFs(DOFSupportType dst1, DOFSupportType dst2) {
-    auto dof_manager = DOFManagerTester(this->alloc());
-
+  void registerDOFs(DOFSupportType dst1, DOFSupportType dst2) {
     auto n1 = dst1 == _dst_nodal ? nb_nodes : nb_pure_local;
     this->dof1 = std::make_unique<Array<Real>>(n1, 3);
 
-    dof_manager->registerDOFs("dofs1", *this->dof1, dst1);
+    this->dof_manager->registerDOFs("dofs1", *this->dof1, dst1);
 
-    EXPECT_EQ(dof_manager.residual().size(), nb_total_nodes * 3);
+    EXPECT_EQ(dof_manager->getResidual().size(), nb_total_nodes * 3);
 
     auto n2 = dst2 == _dst_nodal ? nb_nodes : nb_pure_local;
     this->dof2 = std::make_unique<Array<Real>>(n2, 5);
 
-    dof_manager->registerDOFs("dofs2", *this->dof2, dst2);
+    this->dof_manager->registerDOFs("dofs2", *this->dof2, dst2);
 
-    EXPECT_EQ(dof_manager.residual().size(), nb_total_nodes * 8);
-    return dof_manager;
+    EXPECT_EQ(dof_manager->getResidual().size(), nb_total_nodes * 8);
   }
 
 protected:
   Int nb_nodes{0}, nb_total_nodes{0}, nb_pure_local{0};
+  int prank{0}, psize{1};
   std::unique_ptr<Mesh> mesh;
   std::unique_ptr<Array<Real>> dof1;
   std::unique_ptr<Array<Real>> dof2;
-};
 
-template <class T> constexpr DOFManagerType DOFManagerFixture<T>::type;
-template <class T> constexpr Int DOFManagerFixture<T>::dim;
+  std::unique_ptr<DOFManager> dof_manager;
+};
 
 TYPED_TEST_SUITE(DOFManagerFixture, dof_manager_types, );
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(DOFManagerFixture, Construction) {
-  auto dof_manager = this->alloc();
+  // Construction in SetUp
 }
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(DOFManagerFixture, DoubleConstruction) {
-  auto dof_manager = this->alloc();
-  dof_manager = this->alloc();
+  this->dof_manager = this->allocDOFManager();
 }
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(DOFManagerFixture, RegisterGenericDOF1) {
-  auto dof_manager = this->alloc();
-
   Array<Real> dofs(this->nb_pure_local, 3);
 
-  dof_manager->registerDOFs("dofs1", dofs, _dst_generic);
-  EXPECT_GE(dof_manager.residual().size(), this->nb_total_nodes * 3);
+  this->dof_manager->registerDOFs("dofs1", dofs, _dst_generic);
+  EXPECT_GE(this->dof_manager->getResidual().size(), this->nb_total_nodes * 3);
 }
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(DOFManagerFixture, RegisterNodalDOF1) {
-  auto dof_manager = this->alloc();
-
   Array<Real> dofs(this->nb_nodes, 3);
-  dof_manager->registerDOFs("dofs1", dofs, _dst_nodal);
-  EXPECT_GE(dof_manager.residual().size(), this->nb_total_nodes * 3);
+  this->dof_manager->registerDOFs("dofs1", dofs, _dst_nodal);
+  EXPECT_GE(this->dof_manager->getResidual().size(), this->nb_total_nodes * 3);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -197,52 +182,89 @@ TYPED_TEST(DOFManagerFixture, RegisterNodalDOF2) {
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(DOFManagerFixture, RegisterMixedDOF) {
-  auto dof_manager = this->registerDOFs(_dst_nodal, _dst_generic);
+  this->registerDOFs(_dst_nodal, _dst_generic);
+}
+
+/* -------------------------------------------------------------------------- */
+TYPED_TEST(DOFManagerFixture, splitArrayPerDOFs) {
+  Array<Real> dofs(this->nb_nodes, 1);
+
+  auto && range = arange(this->nb_nodes);
+  std::transform(range.begin(), range.end(), dofs.begin(), [&](auto n) {
+    Idx gid =
+        this->mesh->isLocalOrMasterNode(n) ? this->mesh->getNodeGlobalId(n) : 0;
+    return gid;
+  });
+
+  this->dof_manager->registerDOFs("dofs1", dofs, _dst_nodal);
+
+  auto & nodes = this->dof_manager->getNewLumpedMatrix("nodes");
+
+  this->dof_manager->assembleToGlobalArray("dofs1", dofs, nodes, 1.);
+
+  dofs.set(0.);
+
+  this->dof_manager->getArrayPerDOFs("dofs1", nodes, dofs);
+
+  for (auto && [i, node] : enumerate(dofs)) {
+    if (not this->mesh->isPureGhostNode(i)) {
+      EXPECT_EQ(node, this->mesh->getNodeGlobalId(i));
+    }
+  }
 }
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(DOFManagerFixture, AssembleVector) {
-  auto dof_manager = this->registerDOFs(_dst_nodal, _dst_generic);
+  this->registerDOFs(_dst_nodal, _dst_generic);
 
-  dof_manager.residual().zero();
+  this->dof_manager->getResidual().zero();
 
-  for (auto && data :
+  for (auto && [n, l] :
        enumerate(make_view(*this->dof1, this->dof1->getNbComponent()))) {
-    auto n = std::get<0>(data);
-    auto & l = std::get<1>(data);
     l.set(1. * this->mesh->isLocalOrMasterNode(n));
   }
 
   this->dof2->set(2.);
 
-  dof_manager->assembleToResidual("dofs1", *this->dof1);
-  dof_manager->assembleToResidual("dofs2", *this->dof2);
+  this->dof_manager->assembleToResidual("dofs1", *this->dof1);
+  this->dof_manager->assembleToResidual("dofs2", *this->dof2);
 
   this->dof1->set(0.);
   this->dof2->set(0.);
 
-  dof_manager.getArrayPerDOFs("dofs1", dof_manager.residual(), *this->dof1);
-  for (auto && data :
+  const auto ref1 = Vector<Real>{1., 1., 1.};
+
+  this->dof_manager->getArrayPerDOFs("dofs1", this->dof_manager->getResidual(),
+                                     *this->dof1);
+  for (auto && [node, dof] :
        enumerate(make_view(*this->dof1, this->dof1->getNbComponent()))) {
-    if (this->mesh->isLocalOrMasterNode(std::get<0>(data))) {
-      const auto & l = std::get<1>(data);
-      auto e = (l - Vector<Real>{1., 1., 1.}).norm();
-      ASSERT_EQ(e, 0.);
+    if (not this->mesh->isPureGhostNode(node)) {
+      auto e = (dof - ref1).norm() / ref1.norm();
+      EXPECT_NEAR(e, 0., 1e-14)
+          << "[" << this->prank << "/" << this->psize << "] DOF: " << dof
+          << " should be: " << ref1 << " for node: " << node;
     }
   }
 
-  dof_manager.getArrayPerDOFs("dofs2", dof_manager.residual(), *this->dof2);
-  for (auto && l : make_view(*this->dof2, this->dof2->getNbComponent())) {
-    auto e = (l - Vector<Real>{2., 2., 2., 2., 2.}).norm();
-    ASSERT_EQ(e, 0.);
+  const auto ref2 = Vector<Real>{2., 2., 2., 2., 2.};
+  this->dof_manager->getArrayPerDOFs("dofs2", this->dof_manager->getResidual(),
+                                     *this->dof2);
+  for (auto && [node, dof] :
+       enumerate(make_view(*this->dof2, this->dof2->getNbComponent()))) {
+    if (not this->mesh->isPureGhostNode(node)) {
+      auto e = (dof - ref2).norm() / ref2.norm();
+      EXPECT_NEAR(e, 0., 1e-14)
+          << "[" << this->prank << "/" << this->psize << "] DOF: " << dof
+          << " should be: " << ref2 << " for node: " << node;
+    }
   }
 }
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(DOFManagerFixture, AssembleMatrixNodal) {
-  auto dof_manager = this->registerDOFs(_dst_nodal, _dst_nodal);
+  this->registerDOFs(_dst_nodal, _dst_nodal);
 
-  auto && K = dof_manager->getNewMatrix("K", _symmetric);
+  auto && K = this->dof_manager->getNewMatrix("K", _symmetric);
   K.zero();
 
   auto && elemental_matrix = std::make_unique<Array<Real>>(
@@ -252,40 +274,18 @@ TYPED_TEST(DOFManagerFixture, AssembleMatrixNodal) {
     m.set(1.);
   }
 
-  dof_manager->assembleElementalMatricesToMatrix(
+  this->dof_manager->assembleElementalMatricesToMatrix(
       "K", "dofs1", *elemental_matrix, _hexahedron_8);
 
   elemental_matrix = std::make_unique<Array<Real>>(
       this->mesh->getNbElement(this->dim), 8 * 5 * 8 * 5);
 
   for (auto && m : make_view(*elemental_matrix, 8 * 5, 8 * 5)) {
-    m.set(1.);
+    m.set(2.);
   }
 
-  dof_manager->assembleElementalMatricesToMatrix(
+  this->dof_manager->assembleElementalMatricesToMatrix(
       "K", "dofs2", *elemental_matrix, _hexahedron_8);
 
-  CSR<Element> node_to_elem;
-  MeshUtils::buildNode2Elements(*this->mesh, node_to_elem, this->dim);
-
-  dof_manager.residual().zero();
-
-  for (auto && data :
-       enumerate(zip(make_view(*this->dof1, this->dof1->getNbComponent()),
-                     make_view(*this->dof2, this->dof2->getNbComponent())))) {
-    auto n = std::get<0>(data);
-    auto & l1 = std::get<0>(std::get<1>(data));
-    auto & l2 = std::get<1>(std::get<1>(data));
-    auto v = 1. * this->mesh->isLocalOrMasterNode(n);
-    l1.set(v);
-    l2.set(v);
-  }
-
-  dof_manager->assembleToResidual("dofs1", *this->dof1);
-  dof_manager->assembleToResidual("dofs2", *this->dof2);
-
-  for (auto && n : arange(this->nb_nodes)) {
-    if (not this->mesh->isLocalOrMasterNode(n)) {
-    }
-  }
+  K.saveMatrix("K_" + std::to_string(this->type) + ".mtx");
 }

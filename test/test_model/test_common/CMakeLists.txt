@@ -27,9 +27,10 @@ add_mesh(dof_manager_mesh mesh.geo 3 1)
 register_gtest_sources(
   SOURCES test_dof_manager.cc
   PACKAGE core)
-register_gtest_test(test_dof_manager DEPENDS dof_manager_mesh)
 
 register_gtest_sources(
   SOURCES test_dof_mesh_distribute.cc
   PACKAGE parallel)
-register_gtest_test(test_dof_mesh_distribute DEPENDS dof_manager_mesh)
+
+register_gtest_test(test_dof_manager DEPENDS dof_manager_mesh
+  PARALLEL)
