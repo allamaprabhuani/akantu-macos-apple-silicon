@@ -66,6 +66,19 @@ constexpr auto PETSc_call(Func && func, Args... args) -> decltype(auto) {
   return ierr;
 }
 
+inline auto petscErrorHandler(MPI_Comm /* comm */, int line, const char * fun,
+                              const char * file, PetscErrorCode n,
+                              PetscErrorType p, const char * mess,
+                              void * /* ctx */) -> PetscErrorCode {
+  if (PetscUnlikely(n != 0)) {
+    const char * desc{nullptr};
+    PetscErrorMessage(n, &desc, nullptr);
+    AKANTU_EXCEPTION(file << ":" << line << ": Error(" << p
+                          << ") in PETSc call to \'" << fun << "\': " << mess);
+  }
+  return n;
+}
+
 /* -------------------------------------------------------------------------- */
 class PETScSingleton {
 private:

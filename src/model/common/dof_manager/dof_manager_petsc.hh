@@ -22,9 +22,7 @@
 #include "dof_manager.hh"
 /* -------------------------------------------------------------------------- */
 #include <memory>
-#include <mpi.h>
 #include <petscao.h>
-#include <petscerror.h>
 #include <petscis.h>
 #include <petscistypes.h>
 #include <petscmacros.h>
@@ -37,19 +35,6 @@
 
 #ifndef AKANTU_DOF_MANAGER_PETSC_HH
 #define AKANTU_DOF_MANAGER_PETSC_HH
-
-inline auto petscErrorHandler(MPI_Comm /* comm */, int line, const char * fun,
-                              const char * file, PetscErrorCode n,
-                              PetscErrorType p, const char * mess,
-                              void * /* ctx */) -> PetscErrorCode {
-  if (PetscUnlikely(n != 0)) {
-    const char * desc{nullptr};
-    PetscErrorMessage(n, &desc, nullptr);
-    AKANTU_EXCEPTION(file << ":" << line << ": Error(" << p
-                          << ") in PETSc call to \'" << fun << "\': " << mess);
-  }
-  return n;
-}
 
 namespace akantu::detail {
 template <typename T> void PETScSetName(T t, const ID & id) {
