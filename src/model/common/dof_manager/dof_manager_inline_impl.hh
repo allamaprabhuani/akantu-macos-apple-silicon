@@ -323,4 +323,4 @@ void DOFManager::assemblePreassembledMatrix_(Mat & A,
 
 } // namespace akantu
 
-//#endif /* __AKANTU_DOF_MANAGER_INLINE_IMPL_CC__ */
+// #endif /* __AKANTU_DOF_MANAGER_INLINE_IMPL_CC__ */
