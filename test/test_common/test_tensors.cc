@@ -507,14 +507,9 @@ TEST_F(TensorFixture, MatrixIteratorZip) {
   Matrix<double> m1(mref);
   Matrix<double> m2(mref);
 
-  UInt col_count = 0;
-  for (auto && col : zip(m1, m2)) {
-    Vector<Real> col1(std::get<0>(col));
-    Vector<Real> col2(std::get<1>(col));
-
+  for (auto && [col1, col2] : zip(m1, m2)) {
     auto comp = (col1 - col2).lpNorm<Eigen::Infinity>();
     EXPECT_DOUBLE_EQ(0., comp);
-    ++col_count;
   }
 }
 

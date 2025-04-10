@@ -31,7 +31,7 @@
 namespace akantu {
 class DOFManager;
 class SolverCallback;
-class ModelSolverOptions;
+struct ModelSolverOptions;
 } // namespace akantu
 
 namespace akantu {
@@ -78,15 +78,15 @@ protected:
 };
 
 namespace debug {
-  class NLSNotConvergedException : public Exception {
-  public:
-    NLSNotConvergedException(Real threshold, Int niter, Real error)
-        : Exception("The non linear solver did not converge."),
-          threshold(threshold), niter(niter), error(error) {}
-    Real threshold;
-    Int niter;
-    Real error;
-  };
+class NLSNotConvergedException : public Exception {
+public:
+  NLSNotConvergedException(Real threshold, Int niter, Real error)
+      : Exception("The non linear solver did not converge."),
+        threshold(threshold), niter(niter), error(error) {}
+  Real threshold;
+  Int niter;
+  Real error;
+};
 } // namespace debug
 
 } // namespace akantu

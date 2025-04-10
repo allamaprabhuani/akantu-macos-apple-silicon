@@ -12,15 +12,20 @@ namespace akantu {
 
 class EnergySplit {
 public:
+  EnergySplit(const EnergySplit &) = default;
+  EnergySplit(EnergySplit &&) = delete;
+  auto operator=(const EnergySplit &) -> EnergySplit & = default;
+  auto operator=(EnergySplit &&) -> EnergySplit & = delete;
+
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
   EnergySplit(Real E, Real nu, bool plane_stress = false);
+  virtual ~EnergySplit() = default;
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
-public:
   // compute strain energy density on quad
   virtual void computePhiOnQuad(const Matrix<Real> & /*strain_quad*/,
                                 Real & /*phi_quad*/) = 0;

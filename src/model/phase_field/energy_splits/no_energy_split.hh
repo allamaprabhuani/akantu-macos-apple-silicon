@@ -19,7 +19,6 @@ public:
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
-public:
   // compute strain energy density on quad
   void computePhiOnQuad(const Matrix<Real> & strain_quad,
                         Real & phi_quad) override;
@@ -33,11 +32,6 @@ public:
   void computeTangentCoefsOnQuad(const Matrix<Real> & /*strain_quad*/,
                                  const Real & g_d,
                                  Matrix<Real> & tangent) override;
-
-  /* ------------------------------------------------------------------------ */
-  /* Class Members                                                            */
-  /* ------------------------------------------------------------------------ */
-private:
 };
 
 } // namespace akantu

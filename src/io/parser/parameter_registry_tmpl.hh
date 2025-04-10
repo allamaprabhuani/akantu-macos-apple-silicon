@@ -36,49 +36,49 @@
 namespace akantu {
 
 namespace debug {
-  class ParameterException : public Exception {
-  public:
-    ParameterException(const std::string & name, const std::string & message)
-        : Exception(message), name(name) {}
-    const std::string & name;
-  };
+class ParameterException : public Exception {
+public:
+  ParameterException(const std::string & name, const std::string & message)
+      : Exception(message), name(name) {}
+  const std::string & name;
+};
 
-  class ParameterUnexistingException : public ParameterException {
-  public:
-    ParameterUnexistingException(const std::string & name,
-                                 const ParameterRegistry & registry)
-        : ParameterException(name, "Parameter " + name +
-                                       " does not exists in this scope") {
-      auto && params = registry.listParameters();
-      this->_info =
-          std::accumulate(params.begin(), params.end(),
-                          this->_info + "\n Possible parameters are: ",
-                          [](auto && str, auto && param) {
-                            static auto first = true;
-                            auto ret = str + (first ? " " : ", ") + param;
-                            first = false;
-                            return ret;
-                          });
-    }
-  };
+class ParameterUnexistingException : public ParameterException {
+public:
+  ParameterUnexistingException(const std::string & name,
+                               const ParameterRegistry & registry)
+      : ParameterException(name, "Parameter " + name +
+                                     " does not exists in this scope") {
+    auto && params = registry.listParameters();
+    this->_info = std::accumulate(params.begin(), params.end(),
+                                  this->_info + "\n Possible parameters are: ",
+                                  [](auto && str, auto && param) {
+                                    static auto first = true;
+                                    auto ret =
+                                        str + (first ? " " : ", ") + param;
+                                    first = false;
+                                    return ret;
+                                  });
+  }
+};
 
-  class ParameterAccessRightException : public ParameterException {
-  public:
-    ParameterAccessRightException(const std::string & name,
-                                  const std::string & perm)
-        : ParameterException(name, "Parameter " + name + " is not " + perm) {}
-  };
+class ParameterAccessRightException : public ParameterException {
+public:
+  ParameterAccessRightException(const std::string & name,
+                                const std::string & perm)
+      : ParameterException(name, "Parameter " + name + " is not " + perm) {}
+};
 
-  class ParameterWrongTypeException : public ParameterException {
-  public:
-    ParameterWrongTypeException(const std::string & name,
-                                const std::type_info & wrong_type,
-                                const std::type_info & type)
-        : ParameterException(name, "Parameter " + name +
-                                       " type error, cannot convert " +
-                                       debug::demangle(type.name()) + " to " +
-                                       debug::demangle(wrong_type.name())) {}
-  };
+class ParameterWrongTypeException : public ParameterException {
+public:
+  ParameterWrongTypeException(const std::string & name,
+                              const std::type_info & wrong_type,
+                              const std::type_info & type)
+      : ParameterException(name, "Parameter " + name +
+                                     " type error, cannot convert " +
+                                     debug::demangle(type.name()) + " to " +
+                                     debug::demangle(wrong_type.name())) {}
+};
 } // namespace debug
 /* -------------------------------------------------------------------------- */
 template <typename T>
@@ -205,7 +205,7 @@ public:
     return sstr.str();
   }
 
-  void set(std::any value) {
+  void set(std::any value) override {
     param = std::any_cast<Eigen::Matrix<T, m, n>>(value);
   }
   void setAuto(const ParserParameter & value) override {
@@ -322,8 +322,10 @@ public:
     return sstr.str();
   }
 
-  void set(std::any value) { param = std::any_cast<std::set<T>>(value); }
-  void setAuto(const ParserParameter & value) {
+  void set(std::any value) override {
+    param = std::any_cast<std::set<T>>(value);
+  }
+  void setAuto(const ParserParameter & value) override {
     Parameter::setAuto(value);
     param.clear();
     const std::set<T> & tmp = value;
@@ -335,7 +337,7 @@ public:
   std::set<T> & getTyped() { return param; }
   const std::set<T> & getTyped() const { return param; }
 
-  void printself(std::ostream & stream) const {
+  void printself(std::ostream & stream) const override {
     Parameter::printself(stream);
     stream << "[ ";
     for (auto && v : param) {
@@ -344,7 +346,9 @@ public:
     stream << "]\n";
   }
 
-  inline const std::type_info & type() const { return typeid(std::set<T>); }
+  inline const std::type_info & type() const override {
+    return typeid(std::set<T>);
+  }
 
 private:
   /// Value of parameter
@@ -455,14 +459,14 @@ Parameter & ParameterRegistry::get(const std::string & name) {
 /* --------------------------------------------------------------------------
  */
 namespace details {
-  template <class T, class R, class Enable = void> struct CastHelper {
-    static R convert(const T & /*unused*/) { throw std::bad_cast(); }
-  };
+template <class T, class R, class Enable = void> struct CastHelper {
+  static R convert(const T & /*unused*/) { throw std::bad_cast(); }
+};
 
-  template <class T, class R>
-  struct CastHelper<T, R, std::enable_if_t<std::is_convertible<T, R>::value>> {
-    static R convert(const T & val) { return val; }
-  };
+template <class T, class R>
+struct CastHelper<T, R, std::enable_if_t<std::is_convertible<T, R>::value>> {
+  static R convert(const T & val) { return val; }
+};
 } // namespace details
 
 template <typename T> inline ParameterTyped<T>::operator Real() const {

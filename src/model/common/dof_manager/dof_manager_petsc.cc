@@ -56,12 +56,12 @@
 namespace akantu {
 
 template <class Func, class... Args>
-constexpr auto PETSc_call(Func && func, Args... args) -> decltype(auto) {
+auto PETSc_call(Func && func, Args... args) -> decltype(auto) {
   auto ierr = std::forward<Func>(func)(std::forward<Args>(args)...);
   if (PetscUnlikely(ierr != 0)) {
     const char * desc{nullptr};
     PetscErrorMessage(ierr, &desc, nullptr);
-    AKANTU_EXCEPTION("Error in PETSc call: " << desc);
+    AKANTU_EXCEPTION("Error in PETSc call: " << std::string(desc));
   }
   return ierr;
 }

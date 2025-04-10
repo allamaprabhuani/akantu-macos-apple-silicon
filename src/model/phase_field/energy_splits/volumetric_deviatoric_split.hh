@@ -13,7 +13,8 @@ template <Int dim> class VolumetricDeviatoricSplit : public EnergySplit {
 public:
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------s------------------------------------------
+   */
   VolumetricDeviatoricSplit(Real E, Real nu, bool plane_stress = false);
 
   /* ------------------------------------------------------------------------ */

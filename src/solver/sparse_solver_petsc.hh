@@ -54,7 +54,7 @@ public:
   virtual void setOperators();
   void solve() override;
 
-  void set(const std::string & name, std::any value);
+  void set(const std::string & name, std::any value) override;
   void parseSection(const ParserSection & section) override;
   void updateInternalParameters() override;
 

@@ -36,10 +36,10 @@ class ShapeFunctions;
 namespace akantu {
 class DOFManager;
 namespace fe_engine {
-  namespace details {
-    template <ElementKind> struct AssembleLumpedTemplateHelper;
-    template <ElementKind> struct AssembleFieldMatrixHelper;
-  } // namespace details
+namespace details {
+template <ElementKind> struct AssembleLumpedTemplateHelper;
+template <ElementKind> struct AssembleFieldMatrixHelper;
+} // namespace details
 } // namespace fe_engine
 
 template <ElementKind, typename> struct AssembleFieldMatrixStructHelper;
@@ -80,10 +80,10 @@ public:
   /* Integration method bridges                                               */
   /* ------------------------------------------------------------------------ */
   /// integrate f for all elements
-  void
-  integrate(const ElementTypeMapArray<Real> & f,
-            ElementTypeMapArray<Real> & intf,
-            const ElementTypeMapArray<Idx> * filter_elements = nullptr) const;
+  void integrate(const ElementTypeMapArray<Real> & f,
+                 ElementTypeMapArray<Real> & intf,
+                 const ElementTypeMapArray<Idx> * filter_elements =
+                     nullptr) const override;
 
   /// integrate f for all elements of type "type"
   void

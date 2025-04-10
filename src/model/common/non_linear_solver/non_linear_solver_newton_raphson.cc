@@ -22,15 +22,15 @@
 #include "non_linear_solver_newton_raphson.hh"
 #include "communicator.hh"
 #include "dof_manager_default.hh"
-#if defined(AKANTU_USE_PETSC)
-#include "dof_manager_petsc.hh"
-#include "sparse_solver_petsc.hh"
-#endif
 #include "solver_callback.hh"
 #include "solver_vector.hh"
 #include "sparse_solver_eigen.hh"
 #if defined(AKANTU_USE_MUMPS)
 #include "sparse_solver_mumps.hh"
+#endif
+#if defined(AKANTU_USE_PETSC)
+#include "dof_manager_petsc.hh"
+#include "sparse_solver_petsc.hh"
 #endif
 /* -------------------------------------------------------------------------- */
 
