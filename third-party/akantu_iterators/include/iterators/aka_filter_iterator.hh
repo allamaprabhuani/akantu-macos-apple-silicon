@@ -195,7 +195,11 @@ namespace iterators AKA_ITERATOR_EXPORT_NAMESPACE {
                      container_iterator_t && container_end,
                      Predicate && predicate)
         : container_it(container_begin), container_end(container_end),
-          predicate(predicate) {}
+          predicate(predicate) {
+      if (container_it != container_end and not predicate(*container_it)) {
+        this->operator++();
+      }
+    }
 
     auto operator++() -> FilterIfIterator & {
       do {
