@@ -20,9 +20,11 @@
 
 /* -------------------------------------------------------------------------- */
 #include "dof_manager_petsc.hh"
+#include "aka_common.hh"
 #include "aka_iterators.hh"
 #include "communicator.hh"
 #include "cppargparse.hh"
+#include "mesh.hh"
 #include "non_linear_solver_default.hh"
 #include "non_linear_solver_petsc.hh"
 #include "non_linear_solver_tao.hh"
@@ -33,48 +35,80 @@
 #include "mpi_communicator_data.hh"
 #endif
 /* -------------------------------------------------------------------------- */
+#include <memory>
+#include <mpi.h>
+#include <numeric>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+/* -------------------------------------------------------------------------- */
+#include <petscao.h>
+#include <petscerror.h>
 #include <petscis.h>
+#include <petscistypes.h>
+#include <petscmacros.h>
 #include <petscsys.h>
+#include <petscsystypes.h>
+#include <petscvec.h>
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
 
+template <class Func, class... Args>
+constexpr auto PETSc_call(Func && func, Args... args) -> decltype(auto) {
+  auto ierr = std::forward<Func>(func)(std::forward<Args>(args)...);
+  if (PetscUnlikely(ierr != 0)) {
+    const char * desc{nullptr};
+    PetscErrorMessage(ierr, &desc, nullptr);
+    AKANTU_EXCEPTION("Error in PETSc call: " << desc);
+  }
+  return ierr;
+}
+
+/* -------------------------------------------------------------------------- */
 class PETScSingleton {
 private:
   PETScSingleton() {
-    _PETSc_call(PetscInitialized, &is_initialized);
+    // Using PETSc_call since the Error handler is not set yet
 
-    if (is_initialized == 0U) {
+    PETSc_call(PetscInitialized, &is_initialized);
+
+    if (is_initialized == PETSC_FALSE) {
       cppargparse::ArgumentParser & argparser = getStaticArgumentParser();
       int & argc = argparser.getArgC();
       char **& argv = argparser.getArgV();
-      _PETSc_call(PetscInitialize, &argc, &argv, nullptr, nullptr);
-      _PETSc_call(
-          PetscPopErrorHandler, ); // remove the default PETSc signal handler
-      _PETSc_call(PetscPushErrorHandler, petscErrorHandler, nullptr);
+      PETSc_call(PetscInitialize, &argc, &argv, nullptr, nullptr);
+
+      // remove the default PETSc signal handler
+      PETSc_call(PetscPopErrorHandler);
+      PETSc_call(PetscPushErrorHandler, petscErrorHandler, nullptr);
     }
   }
 
 public:
+  PETScSingleton(PETScSingleton &&) = delete;
+  auto operator=(PETScSingleton &&) -> PETScSingleton & = delete;
   PETScSingleton(const PETScSingleton &) = delete;
-  PETScSingleton & operator=(const PETScSingleton &) = delete;
+  auto operator=(const PETScSingleton &) -> PETScSingleton & = delete;
 
   ~PETScSingleton() {
     if (is_initialized == 0U) {
-      int mpi_finalized;
+      int mpi_finalized{0};
       MPI_Finalized(&mpi_finalized);
-      if (not mpi_finalized)
+      if (mpi_finalized == 0) {
         PetscFinalize();
+      }
     }
   }
 
-  static PETScSingleton & getInstance() {
+  static auto getInstance() -> PETScSingleton & {
     static PETScSingleton instance;
     return instance;
   }
 
 private:
-  PetscBool is_initialized;
+  PetscBool is_initialized{PETSC_FALSE};
 };
 
 /* -------------------------------------------------------------------------- */
@@ -118,7 +152,6 @@ auto DOFManagerPETSc::getNewDOFData(const ID & dof_id)
 }
 
 /* -------------------------------------------------------------------------- */
-
 void DOFManagerPETSc::updateLocalEquationNumber(const ID & dof_id) {
   auto & dof_data = this->getDOFDataTyped<DOFDataPETSc>(dof_id);
 
@@ -126,6 +159,8 @@ void DOFManagerPETSc::updateLocalEquationNumber(const ID & dof_id) {
   for (auto && [local, global] : zip(dof_data.local_equation_number, gidx)) {
     global = localToGlobalEquationNumber(local);
   }
+
+  AOApplicationToPetsc(ao, PetscInt(gidx.size()), gidx.data());
 
   auto & lidx = dof_data.local_equation_number_petsc;
   if (is_ltog_map != nullptr) {
@@ -138,49 +173,77 @@ void DOFManagerPETSc::updateLocalEquationNumber(const ID & dof_id) {
 }
 
 /* -------------------------------------------------------------------------- */
-
-std::pair<Int, Int>
-DOFManagerPETSc::updateNodalDOFs(const ID & dof_id,
-                                 const Array<Idx> & nodes_list) {
+auto DOFManagerPETSc::updateNodalDOFs(const ID & dof_id,
+                                      const Array<Idx> & nodes_list)
+    -> std::pair<Int, Int> {
   auto && ret = DOFManager::updateNodalDOFs(dof_id, nodes_list);
   this->setISLocalToGlobalMapping();
   this->updateLocalEquationNumber(dof_id);
   return ret;
 }
-/* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+void DOFManagerPETSc::setSolverVectorDataForParallelism(
+    SolverVectorPETSc & vector) const {
+  Vec & x = vector.getVec();
+
+  auto nb_local_dofs = this->getPureLocalSystemSize();
+  auto system_size = this->getSystemSize();
+  VecSetSizes(x, nb_local_dofs, system_size);
+
+  VecSetLocalToGlobalMapping(x, is_ltog_map);
+}
+
+/* -------------------------------------------------------------------------- */
 void DOFManagerPETSc::setISLocalToGlobalMapping() {
   auto local_system_size = this->getLocalSystemSize();
   auto nb_local_dofs = this->getPureLocalSystemSize();
-  Vec x;
+
+  if (ao != nullptr) {
+    AODestroy(&ao);
+  }
+
+  Array<PetscInt> app_indexes(nb_local_dofs);
+  for (auto && [lidx, app_idx] :
+       zip(filter_if(arange(local_system_size),
+                     [&](auto lidx) {
+                       auto is_local = this->isLocalOrMasterDOF(lidx);
+                       return is_local;
+                     }),
+           app_indexes)) {
+    app_idx = this->localToGlobalEquationNumber(lidx);
+  }
+
+  AOCreateBasic(mpi_communicator, nb_local_dofs, app_indexes.data(), nullptr,
+                &ao);
+
+  Vec x{nullptr};
   VecCreate(this->getMPIComm(), &x);
   VecSetFromOptions(x);
   VecSetSizes(x, nb_local_dofs, PETSC_DECIDE);
 
-  VecType vec_type;
+  VecType vec_type{};
   VecGetType(x, &vec_type);
   if (std::string(vec_type) == std::string(VECMPI)) {
-    PetscInt lowest_gidx;
-    PetscInt highest_gidx;
-    VecGetOwnershipRange(x, &lowest_gidx, &highest_gidx);
-
-    std::vector<PetscInt> ghost_idx;
-    for (auto && d : arange(local_system_size)) {
-      int gidx = this->localToGlobalEquationNumber(d);
-      if (gidx != -1) {
-        if ((gidx < lowest_gidx) or (gidx >= highest_gidx)) {
-          ghost_idx.push_back(gidx);
-        }
-      }
+    std::vector<Int> app_ghosts;
+    for (auto lidx : filter_if(arange(local_system_size), [&](auto lidx) {
+           return this->isSlaveDOF(lidx);
+         })) {
+      app_ghosts.push_back(this->localToGlobalEquationNumber(lidx));
     }
 
-    VecMPISetGhost(x, ghost_idx.size(), ghost_idx.data());
+    auto nghosts = PetscInt(app_ghosts.size());
+    ghost_idx.resize(nghosts);
+    AOApplicationToPetsc(ao, nghosts, app_ghosts.data());
+
+    VecMPISetGhost(x, nghosts, ghost_idx.data());
   } else {
     std::vector<int> idx(nb_local_dofs);
     std::iota(idx.begin(), idx.end(), 0);
-    ISLocalToGlobalMapping is;
-    ISLocalToGlobalMappingCreate(PETSC_COMM_SELF, 1, idx.size(), idx.data(),
-                                 PETSC_COPY_VALUES, &is);
+
+    ISLocalToGlobalMapping is{};
+    ISLocalToGlobalMappingCreate(PETSC_COMM_SELF, 1, PetscInt(idx.size()),
+                                 idx.data(), PETSC_COPY_VALUES, &is);
     VecSetLocalToGlobalMapping(x, is);
     ISLocalToGlobalMappingDestroy(&is);
   }
@@ -189,15 +252,13 @@ void DOFManagerPETSc::setISLocalToGlobalMapping() {
 }
 
 /* -------------------------------------------------------------------------- */
-
-std::tuple<Int, Int, Int>
-DOFManagerPETSc::registerDOFsInternal(const ID & dof_id,
-                                      Array<Real> & dofs_array) {
+auto DOFManagerPETSc::registerDOFsInternal(const ID & dof_id,
+                                           Array<Real> & dofs_array)
+    -> std::tuple<Int, Int, Int> {
   dofs_ids.push_back(dof_id);
-  auto ret = DOFManager::registerDOFsInternal(dof_id, dofs_array);
-  UInt nb_dofs;
-  UInt nb_pure_local_dofs;
-  std::tie(nb_dofs, nb_pure_local_dofs, std::ignore) = ret;
+
+  auto && [nb_dofs, nb_pure_local_dofs, nb_total_pure_local_dofs] =
+      DOFManager::registerDOFsInternal(dof_id, dofs_array);
 
   this->setISLocalToGlobalMapping();
 
@@ -215,7 +276,7 @@ DOFManagerPETSc::registerDOFsInternal(const ID & dof_id,
     A.resize();
   }
 
-  return ret;
+  return {nb_dofs, nb_pure_local_dofs, nb_total_pure_local_dofs};
 }
 
 /* -------------------------------------------------------------------------- */
@@ -303,7 +364,7 @@ NonLinearSolver & DOFManagerPETSc::getNewNonLinearSolver(
                                                                solver_options);
   case NonLinearSolverType::_petsc_tao:
     return this->registerNonLinearSolver<NonLinearSolverTAO>(*this, id,
-                                                               solver_options);
+                                                             solver_options);
   case NonLinearSolverType::_newton_raphson:
     /* FALLTHRU */
     /* [[fallthrough]]; un-comment when compiler will get it */

@@ -21,11 +21,22 @@
 /* -------------------------------------------------------------------------- */
 #include "solver_vector_petsc.hh"
 #include "aka_array_printer.hh"
+#include "aka_common.hh"
 #include "dof_manager_petsc.hh"
+#include "mesh.hh"
 #include "mpi_communicator_data.hh"
 /* -------------------------------------------------------------------------- */
+#include <cmath>
 #include <filesystem>
+#include <fstream>
+#include <limits>
+#include <ostream>
+#include <petscis.h>
+#include <petscistypes.h>
+#include <petscmacros.h>
+#include <petscsystypes.h>
 #include <petscvec.h>
+#include <petscviewer.h>
 #include <string>
 /* -------------------------------------------------------------------------- */
 
@@ -39,7 +50,7 @@ SolverVectorPETSc::SolverVectorPETSc(DOFManagerPETSc & dof_manager,
   VecCreate(mpi_comm, &x);
   detail::PETScSetName(x, id);
 
-  resize();
+  dof_manager.setSolverVectorDataForParallelism(*this);
   VecSetFromOptions(x);
 }
 
@@ -84,20 +95,16 @@ SolverVectorPETSc::~SolverVectorPETSc() {
 
 /* -------------------------------------------------------------------------- */
 void SolverVectorPETSc::resize() {
+  auto & dof_manager_petsc = aka::as_type<DOFManagerPETSc>(dof_manager);
   if (x != nullptr) {
     VecDestroy(&x);
-    auto && mpi_comm = aka::as_type<DOFManagerPETSc>(dof_manager).getMPIComm();
+    auto && mpi_comm = dof_manager_petsc.getMPIComm();
     VecCreate(mpi_comm, &x);
     detail::PETScSetName(x, id);
     VecSetFromOptions(x);
   }
 
-  auto nb_local_dofs = dof_manager.getPureLocalSystemSize();
-  VecSetSizes(x, nb_local_dofs, dof_manager.getSystemSize());
-
-  auto & is_ltog_mapping =
-      aka::as_type<DOFManagerPETSc>(dof_manager).getISLocalToGlobalMapping();
-  VecSetLocalToGlobalMapping(x, is_ltog_mapping);
+  dof_manager_petsc.setSolverVectorDataForParallelism(*this);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -150,19 +157,14 @@ void SolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
 
   Vec x_ghosted{nullptr};
   VecGhostGetLocalForm(x, &x_ghosted);
-  // VecScatterBegin(scatter, x, x_local, INSERT_VALUES, SCATTER_FORWARD);
-  // VecScatterEnd(scatter, x, x_local, INSERT_VALUES, SCATTER_FORWARD);
-
-  // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
 
   if (x_ghosted == nullptr) {
-    const PetscScalar * array;
+    const PetscScalar * array{nullptr};
     VecGetArrayRead(x, &array);
 
-    for (auto && data : zip(idx, make_view(values))) {
-      auto i = std::get<0>(data);
+    for (auto && [i, value] : zip(idx, make_view(values))) {
       if (i != -1) {
-        std::get<1>(data) = array[i];
+        value = array[i];
       }
     }
 
@@ -179,7 +181,7 @@ void SolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
 void SolverVectorPETSc::addValues(const Array<Int> & gidx,
                                   const Array<Real> & values,
                                   Real scale_factor) {
-  auto to_add = values.data();
+  const auto * to_add = values.data();
   Array<Real> scaled_array(0, values.getNbComponent());
   if (scale_factor != 1.) {
     scaled_array.copy(values, false);
@@ -202,7 +204,7 @@ void SolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
   VecGhostGetLocalForm(x, &x_ghosted);
 
   if (x_ghosted == nullptr) {
-    auto to_add = values.data();
+    const auto * to_add = values.data();
     Array<Real> scaled_array;
     if (scale_factor != 1.) {
       scaled_array.copy(values, false);
@@ -218,7 +220,7 @@ void SolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
 
   VecGhostRestoreLocalForm(x, &x_ghosted);
 
-  ISLocalToGlobalMapping is_ltog_map;
+  ISLocalToGlobalMapping is_ltog_map{nullptr};
   VecGetLocalToGlobalMapping(x, &is_ltog_map);
 
   Array<Int> gidx(lidx.size());
