@@ -33,7 +33,6 @@
 #include <ostream>
 #include <petscis.h>
 #include <petscistypes.h>
-#include <petscmacros.h>
 #include <petscsystypes.h>
 #include <petscvec.h>
 #include <petscviewer.h>

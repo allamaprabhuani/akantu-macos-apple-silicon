@@ -28,11 +28,14 @@
 #include "integrator_gauss.hh"
 #include "shape_lagrange.hh"
 /* -------------------------------------------------------------------------- */
-#include "non_linear_solver_tao.hh"
 #include "dumper_element_partition.hh"
 #include "dumper_elemental_field.hh"
 #include "dumper_internal_material_field.hh"
 #include "dumper_iohelper_paraview.hh"
+#if defined(AKANTU_USE_PETSC)
+#include "non_linear_solver_tao.hh"
+#endif
+/* -------------------------------------------------------------------------- */
 #include <algorithm>
 #include <utility>
 /* -------------------------------------------------------------------------- */
@@ -104,13 +107,13 @@ void PhaseFieldModel::corrector() {
 void PhaseFieldModel::initSolver(TimeStepSolverType time_step_solver_type) {
   DOFManager & dof_manager = this->getDOFManager();
 
-// #if defined(AKANTU_USE_PETSC)
-//       auto & solver = this->getNonLinearSolver();
-// 
-//       if (aka::is_of_type<NonLinearSolverTAO>(solver)) {
-//             aka::as_type<NonLinearSolverTAO>(solver).setTAOType("cpcg");
-//       }
-// #endif
+  // #if defined(AKANTU_USE_PETSC)
+  //       auto & solver = this->getNonLinearSolver();
+  //
+  //       if (aka::is_of_type<NonLinearSolverTAO>(solver)) {
+  //             aka::as_type<NonLinearSolverTAO>(solver).setTAOType("cpcg");
+  //       }
+  // #endif
 
   this->allocNodalField(this->damage, 1, "damage");
   this->allocNodalField(this->external_force, 1, "external_force");

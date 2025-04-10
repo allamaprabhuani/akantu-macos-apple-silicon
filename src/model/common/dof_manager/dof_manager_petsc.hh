@@ -25,7 +25,6 @@
 #include <petscao.h>
 #include <petscis.h>
 #include <petscistypes.h>
-#include <petscmacros.h>
 #include <petscsys.h>
 #include <petscsystypes.h>
 #include <tuple>
