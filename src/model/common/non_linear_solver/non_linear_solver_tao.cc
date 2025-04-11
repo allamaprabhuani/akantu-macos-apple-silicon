@@ -27,8 +27,10 @@
 #include "solver_vector_petsc.hh"
 #include "sparse_matrix_petsc.hh"
 /* -------------------------------------------------------------------------- */
-#include "petscsnes.h"
 #include <cstdlib>
+#include <petscsnes.h>
+#include <petsctao.h>
+#include <petscvec.h>
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -146,8 +148,8 @@ void NonLinearSolverTAO::computeObjectiveGradient(Vec x, PetscReal * obj,
   assembleJacobian(x, K);
   SolverVectorPETSc Kx(x, aka::as_type<DOFManagerPETSc>(this->dof_manager),
                        this->id + ":Kx");
-  Real fx;
-  Real xKx;
+  Real fx{};
+  Real xKx{};
 
   MatMult(K, x, Kx);
   VecWAXPY(grad, 1, Kx, rhs);
@@ -179,7 +181,7 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
   this->dof_manager.updateGlobalBlockedDofs();
 
   callback.assembleMatrix("J");
-  auto & x = dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
+  auto & x = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
   x.zero();
 
   this->callback = &callback;
@@ -189,10 +191,19 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
 
   auto & J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
 
+#if PETSC_VERSION_GE(3, 17, 0)
   TaoSetSolution(tao, x);
-  TaoSetObjectiveAndGradient(tao, NULL,
+  TaoSetObjectiveAndGradient(tao, PETSC_NULLPTR,
                              NonLinearSolverTAO::FormFunctionGradient, this);
   TaoSetHessian(tao, J, J, NonLinearSolverTAO::FormHessian, this);
+#else
+  TaoSetInitialVector(tao, x);
+
+  TaoSetObjectiveAndGradientRoutine(
+      tao, NonLinearSolverTAO::FormFunctionGradient, this);
+  TaoSetHessianRoutine(tao, J, J, NonLinearSolverTAO::FormHessian, this);
+
+#endif
 
   callback.predictor();
 

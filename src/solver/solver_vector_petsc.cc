@@ -265,9 +265,10 @@ SolverVector & SolverVectorPETSc::operator+(const SolverVector & y) {
 }
 /* -------------------------------------------------------------------------- */
 bool SolverVectorPETSc::isFinite() const {
-  Real max, min;
-  VecMax(x, PETSC_NULLPTR, &max);
-  VecMin(x, PETSC_NULLPTR, &min);
+  Real max{};
+  Real min{};
+  VecMax(x, nullptr, &max);
+  VecMin(x, nullptr, &min);
   return std::isfinite(min) and std::isfinite(max);
 }
 /* -------------------------------------------------------------------------- */
@@ -290,7 +291,7 @@ void SolverVectorPETSc::saveVector(const std::string & filename) const {
     file.replace_extension(".mtx");
   }
 
-  // // open and set the properties of the stream
+  // open and set the properties of the stream
   std::ofstream outfile;
   // auto range = arange(this->localSize());
   // auto size = std::count_if(range.begin(), range.end(), [&](auto n) {
@@ -302,9 +303,9 @@ void SolverVectorPETSc::saveVector(const std::string & filename) const {
   outfile << "%%MatrixMarket matrix coordinate real general\n"
           << this->size() << " 1 " << this->localSize() << "\n";
   // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
-  Int start;
-  const Real * array;
-  VecGetOwnershipRange(x, &start, PETSC_NULLPTR);
+  Int start{};
+  const Real * array{};
+  VecGetOwnershipRange(x, &start, nullptr);
   VecGetArrayRead(x, &array);
   // const Array<Real> & vector = *this;
   // ArrayPrinter<Array<Real>> printer(vector);

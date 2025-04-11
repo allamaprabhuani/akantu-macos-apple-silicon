@@ -22,6 +22,7 @@
 #include "dof_manager_petsc.hh"
 #include "solver_vector.hh"
 /* -------------------------------------------------------------------------- */
+#include <petscsys.h>
 #include <petscvec.h>
 /* -------------------------------------------------------------------------- */
 
@@ -36,31 +37,31 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 namespace internal {
-  /* ------------------------------------------------------------------------ */
-  class PETScVector {
-  public:
-    virtual ~PETScVector() = default;
+/* ------------------------------------------------------------------------ */
+class PETScVector {
+public:
+  virtual ~PETScVector() = default;
 
-    operator Vec &() { return x; }
-    operator const Vec &() const { return x; }
+  operator Vec &() { return x; }
+  operator const Vec &() const { return x; }
 
-    Int size() const {
-      PetscInt n;
-      VecGetSize(x, &n);
-      return n;
-    }
-    Int local_size() const {
-      PetscInt n;
-      VecGetLocalSize(x, &n);
-      return n;
-    }
+  Int size() const {
+    PetscInt n;
+    VecGetSize(x, &n);
+    return n;
+  }
+  Int local_size() const {
+    PetscInt n;
+    VecGetLocalSize(x, &n);
+    return n;
+  }
 
-    AKANTU_GET_MACRO_NOT_CONST(Vec, x, auto &);
-    AKANTU_GET_MACRO(Vec, x, const auto &);
+  AKANTU_GET_MACRO_NOT_CONST(Vec, x, auto &);
+  AKANTU_GET_MACRO(Vec, x, const auto &);
 
-  protected:
-    Vec x{nullptr};
-  };
+protected:
+  Vec x{nullptr};
+};
 
 } // namespace internal
 
@@ -124,82 +125,105 @@ protected:
 
 /* -------------------------------------------------------------------------- */
 namespace internal {
-  /* ------------------------------------------------------------------------ */
-  template <class Array> class PETScWrapedVector : public PETScVector {
-  public:
-    PETScWrapedVector(Array && array) : array(array) {
-      VecCreateSeqWithArray(PETSC_COMM_SELF, 1, array.size(), array.data(), &x);
-    }
-
-    ~PETScWrapedVector() override { VecDestroy(&x); }
-
-  private:
-    Array array;
-  };
-
-  /* ------------------------------------------------------------------------ */
-  template <bool read_only> class PETScLocalVector : public PETScVector {
-  public:
-    PETScLocalVector(const Vec & g) : g(g) {
-      VecCreateLocalVector(g, &x);
-      VecGetLocalVectorRead(g, x);
-    }
-    PETScLocalVector(const SolverVectorPETSc & g)
-        : PETScLocalVector(g.getVec()) {}
-    ~PETScLocalVector() override {
-      VecRestoreLocalVectorRead(g, x);
-      VecDestroy(&x);
-    }
-
-  private:
-    const Vec & g;
-  };
-
-  template <> class PETScLocalVector<false> : public PETScVector {
-  public:
-    PETScLocalVector(Vec & g) : g(g) {
-      VecCreateLocalVector(g, &x);
-      VecGetLocalVectorRead(g, x);
-    }
-    PETScLocalVector(SolverVectorPETSc & g) : PETScLocalVector(g.getVec()) {}
-    ~PETScLocalVector() override {
-      VecRestoreLocalVectorRead(g, x);
-      VecDestroy(&x);
-    }
-
-  private:
-    Vec & g;
-  };
-
-  /* ------------------------------------------------------------------------ */
-  // concepts
-  template <typename V>
-  concept SolverVectorType =
-      std::is_base_of<SolverVector, std::decay_t<V>>::value;
-
-  template <typename V>
-  concept PETScVectorType = std::is_same<Vec, std::decay_t<V>>::value;
-
-  /* ------------------------------------------------------------------------ */
-
-  template <class Array>
-  decltype(auto) make_petsc_wraped_vector(Array && array) {
-    return PETScWrapedVector<Array>(std::forward<Array>(array));
+/* ------------------------------------------------------------------------ */
+template <class Array> class PETScWrapedVector : public PETScVector {
+public:
+  PETScWrapedVector(Array && array) : array(array) {
+    VecCreateSeqWithArray(PETSC_COMM_SELF, 1, array.size(), array.data(), &x);
   }
 
-  template <PETScVectorType V>
-  decltype(auto) make_petsc_local_vector(V && vec) {
-    constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
-    return PETScLocalVector<read_only>(vec);
+  ~PETScWrapedVector() override { VecDestroy(&x); }
+
+private:
+  Array array;
+};
+
+/* ------------------------------------------------------------------------ */
+template <bool read_only> class PETScLocalVector : public PETScVector {
+public:
+  PETScLocalVector(const Vec & g) : g(g) {
+#if PETSC_VERSION_GE(3, 18, 0)
+    VecCreateLocalVector(g, &x);
+#else
+    VecType roottype{};
+    PetscInt n{};
+
+    VecCreate(PETSC_COMM_SELF, &x);
+    VecGetLocalSize(g, &n);
+    VecSetSizes(x, n, n);
+    VecGetBlockSize(g, &n);
+    VecSetBlockSize(x, n);
+    VecGetType(g, &roottype);
+    VecSetType(g, roottype);
+#endif
+    VecGetLocalVectorRead(g, x);
+  }
+  PETScLocalVector(const SolverVectorPETSc & g)
+      : PETScLocalVector(g.getVec()) {}
+  ~PETScLocalVector() override {
+    VecRestoreLocalVectorRead(g, x);
+    VecDestroy(&x);
   }
 
-  template <SolverVectorType V>
-  decltype(auto) make_petsc_local_vector(V && vec) {
-    constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
-    return PETScLocalVector<read_only>(
-        dynamic_cast<std::conditional_t<read_only, const SolverVectorPETSc,
-                                        SolverVectorPETSc> &>(vec));
+private:
+  const Vec & g;
+};
+
+template <> class PETScLocalVector<false> : public PETScVector {
+public:
+  PETScLocalVector(Vec & g) : g(g) {
+#if PETSC_VERSION_GE(3, 18, 0)
+    VecCreateLocalVector(g, &x);
+#else
+    VecType roottype{};
+    PetscInt n{};
+
+    VecCreate(PETSC_COMM_SELF, &x);
+    VecGetLocalSize(g, &n);
+    VecSetSizes(x, n, n);
+    VecGetBlockSize(g, &n);
+    VecSetBlockSize(x, n);
+    VecGetType(g, &roottype);
+    VecSetType(g, roottype);
+#endif
+    VecGetLocalVectorRead(g, x);
   }
+  PETScLocalVector(SolverVectorPETSc & g) : PETScLocalVector(g.getVec()) {}
+  ~PETScLocalVector() override {
+    VecRestoreLocalVectorRead(g, x);
+    VecDestroy(&x);
+  }
+
+private:
+  Vec & g;
+};
+
+/* ------------------------------------------------------------------------ */
+// concepts
+template <typename V>
+concept SolverVectorType =
+    std::is_base_of<SolverVector, std::decay_t<V>>::value;
+
+template <typename V>
+concept PETScVectorType = std::is_same<Vec, std::decay_t<V>>::value;
+
+/* ------------------------------------------------------------------------ */
+
+template <class Array> decltype(auto) make_petsc_wraped_vector(Array && array) {
+  return PETScWrapedVector<Array>(std::forward<Array>(array));
+}
+
+template <PETScVectorType V> decltype(auto) make_petsc_local_vector(V && vec) {
+  constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
+  return PETScLocalVector<read_only>(vec);
+}
+
+template <SolverVectorType V> decltype(auto) make_petsc_local_vector(V && vec) {
+  constexpr auto read_only = std::is_const<std::remove_reference_t<V>>::value;
+  return PETScLocalVector<read_only>(
+      dynamic_cast<std::conditional_t<read_only, const SolverVectorPETSc,
+                                      SolverVectorPETSc> &>(vec));
+}
 
 } // namespace internal
 
