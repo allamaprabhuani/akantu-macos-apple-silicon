@@ -48,7 +48,7 @@ public:
                             GhostType ghost_type = _not_ghost) override;
 
   /// get mass density degraded by damage
-  Vector<Real> getRho(const Element & element) const override;
+  void getRho(Ref<Vector<Real>> rhos, const Element & element) const override;
 
   bool hasMassMatrixChanged() override { return degrade_mass; };
 

@@ -21,7 +21,6 @@
 #include "material_phasefield.hh"
 #include "solid_mechanics_model.hh"
 #include <algorithm>
-#include <iostream>
 
 #ifndef AKANTU_MATERIAL_PHASEFIELD_INLINE_IMPL_HH_
 #define AKANTU_MATERIAL_PHASEFIELD_INLINE_IMPL_HH_
@@ -72,29 +71,36 @@ MaterialPhaseField<dim>::computeEffectiveDamageOnQuad(Args && args) {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-inline Vector<Real>
-MaterialPhaseField<dim>::getRho(const Element & element) const {
-  Vector<Real> rhos = Parent::getRho(element);
+inline void MaterialPhaseField<dim>::getRho(Ref<Vector<Real>> rhos,
+                                            const Element & element) const {
+  Parent::getRho(rhos, element);
 
   if (not degrade_mass) {
-    return rhos;
+    return;
   }
 
   auto damage_it = this->damage(element.type, element.ghost_type).begin();
 
   auto & fem = this->getFEEngine();
-  UInt nb_quadrature_points =
+  auto nb_quadrature_points =
       fem.getNbIntegrationPoints(element.type, element.ghost_type);
 
+  auto ratio = rhos.size() / nb_quadrature_points;
   damage_it += element.element * nb_quadrature_points;
+  auto damage_end = damage_it + nb_quadrature_points;
 
-  Real rho_base = Parent::getRho();
-  for (auto & rho : rhos) {
-    rho *= (1 - *damage_it) * (1 - *damage_it) + eta;
-    rho = std::min(rho_base, rho);
-    ++damage_it;
+  auto rho_base = Parent::getRho();
+  for (auto && [rho, d] :
+       zip(MatrixProxy<Real>(rhos.data(), rhos.size() / ratio,
+                             nb_quadrature_points)
+               .colwise(),
+           range(damage_it, damage_end))) {
+    rho *= (1 - d) * (1 - d) + eta;
   }
-  return rhos;
+
+  for (auto & r : rhos) {
+    r = std::min(rho_base, r);
+  }
 }
 
 /* -------------------------------------------------------------------------- */

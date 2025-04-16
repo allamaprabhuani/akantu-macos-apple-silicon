@@ -25,7 +25,6 @@
 /* -------------------------------------------------------------------------- */
 #include <cstdlib>
 #include <gtest/gtest.h>
-#include <memory>
 /* -------------------------------------------------------------------------- */
 
 using namespace akantu;
@@ -513,6 +512,26 @@ TEST_F(TensorFixture, MatrixIteratorZip) {
   }
 }
 
+TEST_F(TensorFixture, VectorViseIteratorZip) {
+  Matrix<double> m1(mref);
+  Matrix<double> m2(mref);
+
+  for (auto && [col1, col2] : zip(m1.colwise(), m2.colwise())) {
+    auto comp = (col1 - col2).lpNorm<Eigen::Infinity>();
+    EXPECT_DOUBLE_EQ(0., comp);
+  }
+}
+
+TEST_F(TensorFixture, VectorIteratorZip) {
+  Matrix<double> m1(mref);
+  Matrix<double> m2(mref);
+
+  for (auto && [col1, col2] : zip(m1.col(0), m2.col(0))) {
+    auto comp = (col1 - col2);
+    EXPECT_DOUBLE_EQ(0., comp);
+  }
+}
+
 TEST_F(TensorFixture, MatrixEigs) {
   Matrix<double, 4, 4> A{
       {0, 1., 0, 0}, {1., 0, 0, 0}, {0, 1., 0, 1.}, {0, 0, 4., 0}};
@@ -526,23 +545,6 @@ TEST_F(TensorFixture, MatrixEigs) {
   Vector<double> eigs_ref{2, 1., -1., -2};
 
   auto Av = (A * v).eval();
-
-  // Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
-  // perm(lambda.size()); perm.setIdentity();
-
-  // std::sort(perm.indices().data(),
-  //           perm.indices().data() + perm.indices().size(),
-  //           [&lambda](const Eigen::Index & a, const Eigen::Index & b) {
-  //             return (lambda(a) - lambda(b)) > 0;
-  //           });
-
-  // std::cout << v << std::endl;
-  // std::cout << lambda << std::endl;
-
-  // std::cout << v * perm << std::endl;
-  // std::cout << perm.transpose() * lambda << std::endl;
-
-  // std::cout << (Av(0) - lambda(0) * v(0)).eval() << std::endl;
 
   for (int i = 0; i < 4; ++i) {
     EXPECT_NEAR(eigs_ref(i), lambda(i), 1e-14);

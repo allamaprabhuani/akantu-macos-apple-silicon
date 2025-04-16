@@ -219,14 +219,9 @@ inline void Material::unpackData(CommunicationBuffer & buffer,
 
 /* -------------------------------------------------------------------------- */
 /// return rho per quad point of element
-inline Vector<Real> Material::getRho(const Element & element) const {
-  auto & fem = getFEEngine();
-  auto nb_quadrature_points =
-      fem.getNbIntegrationPoints(element.type, element.ghost_type);
-
-  Vector<Real> rhos(nb_quadrature_points);
+inline void Material::getRho(Ref<Vector<Real>> rhos,
+                             const Element & /*element*/) const {
   rhos.set(rho);
-  return rhos;
 }
 
 } // namespace akantu

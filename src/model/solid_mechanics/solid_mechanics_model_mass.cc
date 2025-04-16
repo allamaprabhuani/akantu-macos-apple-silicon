@@ -31,16 +31,18 @@ namespace akantu {
 class ComputeRhoFunctor {
 public:
   explicit ComputeRhoFunctor(const SolidMechanicsModel & model)
-      : model(model){};
+      : model(model) {};
 
   void operator()(Matrix<Real> & rho, const Element & element) {
     // rho (N DOFs x N Quads)
     Element mat_element = element;
     mat_element.element = model.getConstitutiveLawLocalNumbering()(element);
 
-    auto && mat_rho = model.getConstitutiveLaw(element).getRho(mat_element);
-    for (auto rho_row : rho.rowwise()) {
-      rho_row = mat_rho;
+    Vector<Real> rho_tmp(rho.cols());
+    const auto & material = model.getConstitutiveLaw(element);
+    for (auto && rho_row : rho.rowwise()) {
+      material.getRho(rho_tmp, mat_element);
+      rho_row = rho_tmp;
     }
   }
 

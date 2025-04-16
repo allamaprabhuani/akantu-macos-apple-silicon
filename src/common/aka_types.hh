@@ -171,6 +171,19 @@ using enable_if_tensors_n = std::enable_if<
 template <std::size_t n, typename T = void, typename... Ts>
 using enable_if_tensors_n_t = typename enable_if_tensors_n<n, T, Ts...>::type;
 
+template <typename T> struct size_type<akantu::Vector<T>> {
+  using type = ::akantu::Int;
+};
+
+template <typename T> struct size_type<Eigen::Ref<akantu::Vector<T>>> {
+  using type = ::akantu::Int;
+};
+
+template <typename ExpressionType, int Direction>
+struct size_type<Eigen::VectorwiseOp<ExpressionType, Direction>> {
+  using type = ::akantu::Int;
+};
+
 } // namespace aka
 
 namespace akantu { // fwd declaration
@@ -191,105 +204,104 @@ class ArrayBase;
 
 /* -------------------------------------------------------------------------- */
 namespace details {
-  template <typename T> struct MapPlainObjectType {
-    using type = T;
-  };
+template <typename T> struct MapPlainObjectType {
+  using type = T;
+};
 
-  template <typename PlainObjectType, int MapOptions, typename StrideType>
-  struct MapPlainObjectType<
-      Eigen::Map<PlainObjectType, MapOptions, StrideType>> {
-    using type = PlainObjectType;
-  };
+template <typename PlainObjectType, int MapOptions, typename StrideType>
+struct MapPlainObjectType<Eigen::Map<PlainObjectType, MapOptions, StrideType>> {
+  using type = PlainObjectType;
+};
 
-  template <typename T>
-  using MapPlainObjectType_t = typename MapPlainObjectType<T>::type;
+template <typename T>
+using MapPlainObjectType_t = typename MapPlainObjectType<T>::type;
 
-  template <typename Scalar, Idx...> struct EigenMatrixViewHelper {};
+template <typename Scalar, Idx...> struct EigenMatrixViewHelper {};
 
-  template <typename Scalar, Idx RowsAtCompileTime>
-  struct EigenMatrixViewHelper<Scalar, RowsAtCompileTime> {
-    using type = Eigen::Matrix<Scalar, RowsAtCompileTime, 1>;
-  };
+template <typename Scalar, Idx RowsAtCompileTime>
+struct EigenMatrixViewHelper<Scalar, RowsAtCompileTime> {
+  using type = Eigen::Matrix<Scalar, RowsAtCompileTime, 1>;
+};
 
-  template <typename Scalar, Idx RowsAtCompileTime, Idx ColsAtCompileTime>
-  struct EigenMatrixViewHelper<Scalar, RowsAtCompileTime, ColsAtCompileTime> {
-    using type = Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
-  };
+template <typename Scalar, Idx RowsAtCompileTime, Idx ColsAtCompileTime>
+struct EigenMatrixViewHelper<Scalar, RowsAtCompileTime, ColsAtCompileTime> {
+  using type = Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
+};
 
-  template <typename Scalar, Idx... sizes>
-  using EigenMatrixViewHelper_t =
-      typename EigenMatrixViewHelper<Scalar, sizes...>::type;
+template <typename Scalar, Idx... sizes>
+using EigenMatrixViewHelper_t =
+    typename EigenMatrixViewHelper<Scalar, sizes...>::type;
 
-  template <typename Array, Idx... sizes> class EigenView {
-    static_assert(sizeof...(sizes) == 1 or sizeof...(sizes) == 2,
-                  "Eigen only supports Vector and Matrices");
+template <typename Array, Idx... sizes> class EigenView {
+  static_assert(sizeof...(sizes) == 1 or sizeof...(sizes) == 2,
+                "Eigen only supports Vector and Matrices");
 
-  private:
-    template <
-        class A = Array,
-        std::enable_if_t<aka::is_array<std::decay_t<A>>::value> * = nullptr>
-    auto array_size() const {
-      return array.get().size() * array.get().getNbComponent();
-    }
+private:
+  template <class A = Array,
+            std::enable_if_t<aka::is_array<std::decay_t<A>>::value> * = nullptr>
+  auto array_size() const {
+    return array.get().size() * array.get().getNbComponent();
+  }
 
-    template <
-        class A = Array,
-        std::enable_if_t<not aka::is_array<std::decay_t<A>>::value> * = nullptr>
-    auto array_size() const {
-      return array.get().size();
-    }
+  template <
+      class A = Array,
+      std::enable_if_t<not aka::is_array<std::decay_t<A>>::value> * = nullptr>
+  auto array_size() const {
+    return array.get().size();
+  }
 
-    using ArrayRef_t = decltype(std::ref(std::declval<Array>()));
+  using ArrayRef_t = decltype(std::ref(std::declval<Array>()));
 
-  public:
-    using size_type = typename std::decay_t<Array>::size_type;
-    using value_type = typename std::decay_t<Array>::value_type;
+public:
+  using size_type = typename std::decay_t<Array>::size_type;
+  using value_type = typename std::decay_t<Array>::value_type;
 
-    EigenView(Array && array, decltype(sizes)... sizes_) // NOLINT
-        : array(std::ref(array)), sizes_(sizes_...) {}
+  EigenView(Array && array, decltype(sizes)... sizes_) // NOLINT
+      : array(std::ref(array)), sizes_(sizes_...) {}
 
-    EigenView(Array && array) : array(std::ref(array)), sizes_(sizes...) {} // NOLINT
+  EigenView(Array && array)
+      : array(std::ref(array)), sizes_(sizes...) {} // NOLINT
 
-    EigenView(const EigenView & other) = default;
-    EigenView(EigenView && other) noexcept = default;
-    ~EigenView() = default;
+  EigenView(const EigenView & other) = default;
+  EigenView(EigenView && other) noexcept = default;
+  ~EigenView() = default;
 
-    auto operator=(const EigenView & other) -> EigenView & = default;
-    auto operator=(EigenView && other) noexcept -> EigenView & = default;
+  auto operator=(const EigenView & other) -> EigenView & = default;
+  auto operator=(EigenView && other) noexcept -> EigenView & = default;
 
-    template <typename A = Array, std::enable_if_t<not std::is_const_v<
-                                      std::remove_reference_t<A>>> * = nullptr>
-    decltype(auto) begin() {
-      return aka::make_from_tuple<::akantu::view_iterator<
-          Eigen::Map<EigenMatrixViewHelper_t<value_type, sizes...>>>>(
-          std::tuple_cat(std::make_tuple(array.get().data()), sizes_));
-    }
+  template <typename A = Array, std::enable_if_t<not std::is_const_v<
+                                    std::remove_reference_t<A>>> * = nullptr>
+  decltype(auto) begin() {
+    return aka::make_from_tuple<::akantu::view_iterator<
+        Eigen::Map<EigenMatrixViewHelper_t<value_type, sizes...>>>>(
+        std::tuple_cat(std::make_tuple(array.get().data()), sizes_));
+  }
 
-    template <typename A = Array, std::enable_if_t<not std::is_const_v<
-                                      std::remove_reference_t<A>>> * = nullptr>
-    decltype(auto) end() {
-      return aka::make_from_tuple<::akantu::view_iterator<
-          Eigen::Map<EigenMatrixViewHelper_t<value_type, sizes...>>>>(
-          std::tuple_cat(std::make_tuple(array.get().data() + array_size()),
-                         sizes_));
-    }
+  template <typename A = Array, std::enable_if_t<not std::is_const_v<
+                                    std::remove_reference_t<A>>> * = nullptr>
+  decltype(auto) end() {
+    return aka::make_from_tuple<::akantu::view_iterator<
+        Eigen::Map<EigenMatrixViewHelper_t<value_type, sizes...>>>>(
+        std::tuple_cat(std::make_tuple(array.get().data() + array_size()),
+                       sizes_));
+  }
 
-    decltype(auto) begin() const {
-      return aka::make_from_tuple<::akantu::view_iterator<
-          Eigen::Map<const EigenMatrixViewHelper_t<value_type, sizes...>>>>(
-          std::tuple_cat(std::make_tuple(array.get().data()), sizes_));
-    }
-    decltype(auto) end() const {
-      return aka::make_from_tuple<::akantu::view_iterator<
-          Eigen::Map<const EigenMatrixViewHelper_t<value_type, sizes...>>>>(
-          std::tuple_cat(std::make_tuple(array.get().data() + array_size()),
-                         sizes_));
-    }
+  decltype(auto) begin() const {
+    return aka::make_from_tuple<::akantu::view_iterator<
+        Eigen::Map<const EigenMatrixViewHelper_t<value_type, sizes...>>>>(
+        std::tuple_cat(std::make_tuple(array.get().data()), sizes_));
+  }
+  decltype(auto) end() const {
+    return aka::make_from_tuple<::akantu::view_iterator<
+        Eigen::Map<const EigenMatrixViewHelper_t<value_type, sizes...>>>>(
+        std::tuple_cat(std::make_tuple(array.get().data() + array_size()),
+                       sizes_));
+  }
 
-  private:
-    ArrayRef_t array;
-    std::tuple<decltype(sizes)...> sizes_;
-  };
+private:
+  ArrayRef_t array;
+  std::tuple<decltype(sizes)...> sizes_;
+};
 
 } // namespace details
 

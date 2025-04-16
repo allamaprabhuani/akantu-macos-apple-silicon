@@ -83,12 +83,13 @@ void MaterialPhaseFieldAnisotropic<dim>::computeTangentModuliOnQuad(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-inline Vector<Real>
-MaterialPhaseFieldAnisotropic<dim>::getRho(const Element & element) const {
-  Vector<Real> rhos = Parent::getRho(element);
+inline void
+MaterialPhaseFieldAnisotropic<dim>::getRho(Ref<Vector<Real>> rhos,
+                                           const Element & element) const {
+  Parent::getRho(rhos, element);
 
   if (not degrade_mass) {
-    return rhos;
+    return;
   }
 
   auto damage_it = this->damage(element.type, element.ghost_type).begin();
@@ -97,25 +98,34 @@ MaterialPhaseFieldAnisotropic<dim>::getRho(const Element & element) const {
       make_view<dim, dim>(this->gradu(element.type, element.ghost_type));
 
   auto & fem = this->getFEEngine();
-  UInt nb_quadrature_points =
+  auto nb_quadrature_points =
       fem.getNbIntegrationPoints(element.type, element.ghost_type);
 
   auto gradu_it = gradu_view.begin() + element.element * nb_quadrature_points;
   auto gradu_end = gradu_it + nb_quadrature_points;
 
   damage_it += element.element * nb_quadrature_points;
+  auto damage_end = damage_it + nb_quadrature_points;
+
+  auto ratio = rhos.size() / nb_quadrature_points;
 
   Real rho_base = Parent::getRho();
-  for (auto & rho : rhos) {
-    Real trace = gradu_it->trace();
+
+  for (auto && [rho, d, gradu] :
+       zip(MatrixProxy<Real>(rhos.data(), rhos.size() / ratio,
+                             nb_quadrature_points)
+               .colwise(),
+           range(damage_it, damage_end), range(gradu_it, gradu_end))) {
+
+    Real trace = gradu.trace();
     if (trace > 0) {
-      rho *= (1 - *damage_it) * (1 - *damage_it) + eta;
-      rho = std::min(rho_base, rho);
+      rho *= (1 - d) * (1 - d) + eta;
     }
-    ++damage_it;
-    ++gradu_it;
   }
-  return rhos;
+
+  for (auto & r : rhos) {
+    r = std::min(rho_base, r);
+  }
 }
 /* -------------------------------------------------------------------------- */
 template <Int dim>

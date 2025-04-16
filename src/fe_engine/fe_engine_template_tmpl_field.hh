@@ -19,7 +19,7 @@
  */
 
 /* -------------------------------------------------------------------------- */
-//#include "fe_engine_template.hh"
+// #include "fe_engine_template.hh"
 /* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_FE_ENGINE_TEMPLATE_TMPL_FIELD_HH_
@@ -30,30 +30,26 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 /* Matrix lumping functions                                                   */
 /* -------------------------------------------------------------------------- */
-namespace fe_engine {
-  namespace details {
-    namespace {
-      template <class Functor>
-      void fillField(const Functor & field_funct, Array<Real> & field,
-                     Int nb_element, Int nb_integration_points,
-                     ElementType type, GhostType ghost_type) {
-        auto nb_degree_of_freedom = field.getNbComponent();
-        field.resize(nb_integration_points * nb_element);
+namespace fe_engine::details {
+template <class Functor>
+void fillField(const Functor & field_funct, Array<Real> & field, Int nb_element,
+               Int nb_integration_points, ElementType type,
+               GhostType ghost_type) {
+  auto nb_degree_of_freedom = field.getNbComponent();
+  field.resize(nb_integration_points * nb_element);
 
-        Matrix<Real> mat(nb_degree_of_freedom, nb_integration_points);
+  Matrix<Real> mat(nb_degree_of_freedom, nb_integration_points);
 
-        Element el{type, 0, ghost_type};
-        for (auto && data : enumerate(make_view(field, nb_degree_of_freedom,
-                                                nb_integration_points))) {
-          el.element = std::get<0>(data);
-          mat.zero();
-          field_funct(mat, el);
-          std::get<1>(data) = mat;
-        }
-      }
-    } // namespace
-  }   // namespace details
-} // namespace fe_engine
+  Element el{type, 0, ghost_type};
+  for (auto && [e, f] : enumerate(
+           make_view(field, nb_degree_of_freedom, nb_integration_points))) {
+    el.element = e;
+    mat.zero();
+    field_funct(mat, el);
+    f = mat;
+  }
+}
+} // namespace fe_engine::details
 
 /* -------------------------------------------------------------------------- */
 template <template <ElementKind, class> class I, template <ElementKind> class S,
@@ -271,71 +267,69 @@ void FEEngineTemplate<I, S, kind, IOF>::assembleFieldMatrixImpl(
 }
 
 namespace fe_engine {
-  namespace details {
-    template <ElementKind kind> struct ShapesForMassHelper {
-      template <ElementType type, class ShapeFunctions>
-      static auto getShapes(ShapeFunctions & shape_functions,
-                            const Matrix<Real> & integration_points,
-                            const Array<Real> & nodes,
-                            Int & nb_degree_of_freedom, Int nb_element,
-                            GhostType ghost_type) {
+namespace details {
+template <ElementKind kind> struct ShapesForMassHelper {
+  template <ElementType type, class ShapeFunctions>
+  static auto getShapes(ShapeFunctions & shape_functions,
+                        const Matrix<Real> & integration_points,
+                        const Array<Real> & nodes, Int & nb_degree_of_freedom,
+                        Int nb_element, GhostType ghost_type) {
 
-        auto shapes_size = ElementClass<type>::getShapeSize();
-        Array<Real> shapes(0, shapes_size);
+    auto shapes_size = ElementClass<type>::getShapeSize();
+    Array<Real> shapes(0, shapes_size);
 
-        shape_functions.template computeShapesOnIntegrationPoints<type>(
-            nodes, integration_points, shapes, ghost_type);
+    shape_functions.template computeShapesOnIntegrationPoints<type>(
+        nodes, integration_points, shapes, ghost_type);
 
-        auto nb_integration_points = integration_points.cols();
-        auto vect_size = nb_integration_points * nb_element;
-        auto lmat_size = nb_degree_of_freedom * shapes_size;
+    auto nb_integration_points = integration_points.cols();
+    auto vect_size = nb_integration_points * nb_element;
+    auto lmat_size = nb_degree_of_freedom * shapes_size;
 
-        // Extending the shape functions
-        /// \todo move this in the shape functions as Voigt format shapes to
-        /// have the code in common with the structural elements
-        auto shapes_voigt = std::make_unique<Array<Real>>(
-            vect_size, lmat_size * nb_degree_of_freedom, 0.);
-        auto mshapes_it = shapes_voigt->begin(nb_degree_of_freedom, lmat_size);
-        auto shapes_it = shapes.begin(shapes_size);
+    // Extending the shape functions
+    /// \todo move this in the shape functions as Voigt format shapes to
+    /// have the code in common with the structural elements
+    auto shapes_voigt = std::make_unique<Array<Real>>(
+        vect_size, lmat_size * nb_degree_of_freedom, 0.);
+    auto mshapes_it = shapes_voigt->begin(nb_degree_of_freedom, lmat_size);
+    auto shapes_it = shapes.begin(shapes_size);
 
-        for (Int q = 0; q < vect_size; ++q, ++mshapes_it, ++shapes_it) {
-          for (Int d = 0; d < nb_degree_of_freedom; ++d) {
-            for (Int s = 0; s < shapes_size; ++s) {
-              (*mshapes_it)(d, s * nb_degree_of_freedom + d) = (*shapes_it)(s);
-            }
-          }
+    for (Int q = 0; q < vect_size; ++q, ++mshapes_it, ++shapes_it) {
+      for (Int d = 0; d < nb_degree_of_freedom; ++d) {
+        for (Int s = 0; s < shapes_size; ++s) {
+          (*mshapes_it)(d, s * nb_degree_of_freedom + d) = (*shapes_it)(s);
         }
-
-        return shapes_voigt;
       }
-    };
+    }
+
+    return shapes_voigt;
+  }
+};
 
 #if defined(AKANTU_STRUCTURAL_MECHANICS)
-    template <> struct ShapesForMassHelper<_ek_structural> {
-      template <ElementType type, class ShapeFunctions>
-      static auto getShapes(ShapeFunctions & shape_functions,
-                            const Matrix<Real> & integration_points,
-                            const Array<Real> & nodes,
-                            Int & nb_degree_of_freedom, Int /*nb_element*/,
-                            GhostType ghost_type) {
-        static_assert(ElementClass<type>::getKind() == _ek_structural,
-                      "getShapes for structural elements called with non "
-                      "strutral element type");
+template <> struct ShapesForMassHelper<_ek_structural> {
+  template <ElementType type, class ShapeFunctions>
+  static auto getShapes(ShapeFunctions & shape_functions,
+                        const Matrix<Real> & integration_points,
+                        const Array<Real> & nodes, Int & nb_degree_of_freedom,
+                        Int /*nb_element*/, GhostType ghost_type) {
+    static_assert(ElementClass<type>::getKind() == _ek_structural,
+                  "getShapes for structural elements called with non "
+                  "strutral element type");
 
-        auto nb_unknown = ElementClass<type>::getNbStressComponents();
-        auto nb_degree_of_freedom_ = ElementClass<type>::getNbDegreeOfFreedom();
-        auto nb_nodes_per_element = ElementClass<type>::getNbNodesPerElement();
-        auto shapes = std::make_unique<Array<Real>>(
-            0, nb_unknown * nb_nodes_per_element * nb_degree_of_freedom_);
-        nb_degree_of_freedom = nb_unknown;
-        shape_functions.template computeShapesMassOnIntegrationPoints<type>(
-            nodes, integration_points, *shapes, ghost_type);
+    auto nb_unknown = ElementClass<type>::getNbStressComponents();
+    auto nb_degree_of_freedom_ = ElementClass<type>::getNbDegreeOfFreedom();
+    auto nb_nodes_per_element = ElementClass<type>::getNbNodesPerElement();
+    auto shapes = std::make_unique<Array<Real>>(
+        0, nb_unknown * nb_nodes_per_element * nb_degree_of_freedom_);
+    nb_degree_of_freedom = nb_unknown;
+    shape_functions.template computeShapesMassOnIntegrationPoints<type>(
+        nodes, integration_points, *shapes, ghost_type);
 
-        return shapes;
-      }
-    };
+    return shapes;
+  }
+};
 #endif
-  } // namespace details
+} // namespace details
 } // namespace fe_engine
   //
 /* -------------------------------------------------------------------------- */
@@ -380,14 +374,10 @@ void FEEngineTemplate<I, S, kind, IntegrationOrderFunctor>::assembleFieldMatrix(
   Array<Real> local_mat(vect_size, lmat_size * lmat_size);
 
   // computing \rho * N
-  for (auto && data :
+  for (auto && [mat, N, rho] :
        zip(make_view(local_mat, lmat_size, lmat_size),
            make_view(*shapes_voigt, nb_degree_of_freedom, lmat_size),
            make_view(field, nb_degree_of_freedom))) {
-    const auto & rho = std::get<2>(data);
-    const auto & N = std::get<1>(data);
-    auto & mat = std::get<0>(data);
-
     Matrix<Real> Nt = N.transpose();
     for (Int d = 0; d < Nt.cols(); ++d) {
       Nt(d) *= rho(d);
