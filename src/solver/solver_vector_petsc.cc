@@ -49,8 +49,8 @@ SolverVectorPETSc::SolverVectorPETSc(DOFManagerPETSc & dof_manager,
   VecCreate(mpi_comm, &x);
   detail::PETScSetName(x, id);
 
-  dof_manager.setSolverVectorDataForParallelism(*this);
   VecSetFromOptions(x);
+  dof_manager.setSolverVectorDataForParallelism(*this);
 }
 
 /* -------------------------------------------------------------------------- */
