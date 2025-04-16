@@ -203,7 +203,11 @@ void DOFManagerPETSc::setSolverVectorDataForParallelism(
   auto system_size = this->getSystemSize();
   VecSetSizes(x, nb_local_dofs, system_size);
 
-  VecMPISetGhost(x, ghost_idx.size(), ghost_idx.data());
+  VecType vec_type{};
+  VecGetType(x, &vec_type);
+  if (std::string(vec_type) == std::string(VECMPI)) {
+    VecMPISetGhost(x, ghost_idx.size(), ghost_idx.data());
+  }
   VecSetLocalToGlobalMapping(x, is_ltog_map);
 }
 
