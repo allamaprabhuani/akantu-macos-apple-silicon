@@ -188,6 +188,7 @@ void DOFManager::splitSolutionPerDOFs() {
   for (auto && [name, dof_data] : this->dofs) {
     dof_data->solution.resize(dof_data->dof->size() *
                               dof_data->dof->getNbComponent());
+    dof_data->solution.zero();
     this->getSolutionPerDOFs(name, dof_data->solution);
   }
 }

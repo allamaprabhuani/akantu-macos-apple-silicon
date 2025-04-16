@@ -242,16 +242,16 @@ void DOFManagerPETSc::setISLocalToGlobalMapping() {
   VecType vec_type{};
   VecGetType(x, &vec_type);
   if (std::string(vec_type) == std::string(VECMPI)) {
-    std::vector<Int> app_ghosts;
+    ghost_idx.clear();
     for (auto lidx : filter_if(arange(local_system_size), [&](auto lidx) {
            return this->isSlaveDOF(lidx);
          })) {
-      app_ghosts.push_back(this->localToGlobalEquationNumber(lidx));
+      ghost_idx.push_back(this->localToGlobalEquationNumber(lidx));
     }
 
-    auto nghosts = PetscInt(app_ghosts.size());
+    auto nghosts = PetscInt(ghost_idx.size());
     ghost_idx.resize(nghosts);
-    AOApplicationToPetsc(ao, nghosts, app_ghosts.data());
+    AOApplicationToPetsc(ao, nghosts, ghost_idx.data());
 
     VecMPISetGhost(x, nghosts, ghost_idx.data());
   } else {
