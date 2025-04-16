@@ -19,6 +19,7 @@
  */
 
 /* -------------------------------------------------------------------------- */
+#include "parsable_petsc.hh"
 #include "sparse_solver.hh"
 /* -------------------------------------------------------------------------- */
 #include <petscksp.h>
@@ -34,8 +35,7 @@ class DOFManagerPETSc;
 
 namespace akantu {
 
-class SparseSolverPETSc : public SparseSolver {
-
+class SparseSolverPETSc : public ParsablePETSc<SparseSolver, KSP> {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -54,18 +54,11 @@ public:
   virtual void setOperators();
   void solve() override;
 
-  void set(const std::string & name, std::any value) override;
-  void parseSection(const ParserSection & section) override;
-  void updateInternalParameters() override;
-
   void initialize() override;
 
 private:
   /// PETSc linear solver
   KSP ksp;
-
-  /// options to pass to petsc
-  std::string petsc_options;
 };
 
 } // namespace akantu

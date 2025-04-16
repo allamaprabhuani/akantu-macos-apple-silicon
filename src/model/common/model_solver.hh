@@ -21,11 +21,10 @@
 /* -------------------------------------------------------------------------- */
 #include "aka_common.hh"
 #include "integration_scheme.hh"
+#include "non_linear_solver.hh"
 #include "parsable.hh"
 #include "solver_callback.hh"
 #include "synchronizer_registry.hh"
-/* -------------------------------------------------------------------------- */
-#include <set>
 /* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_MODEL_SOLVER_HH_
@@ -35,7 +34,6 @@ namespace akantu {
 class Mesh;
 class DOFManager;
 class TimeStepSolver;
-class NonLinearSolver;
 struct ModelSolverOptions;
 } // namespace akantu
 
@@ -185,7 +183,7 @@ struct ModelSolverOptions {
 };
 
 namespace detail {
-  const inline ModelSolverOptions _default_solver_options;
+const inline ModelSolverOptions _default_solver_options;
 }
 
 } // namespace akantu

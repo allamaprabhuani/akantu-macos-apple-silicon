@@ -82,6 +82,7 @@ void Parsable::parseSection(const ParserSection & section) {
   for (; sit != section.getSubSections().second; ++sit) {
     parseSubSection(*sit);
   }
+
   updateInternalParameters();
 }
 

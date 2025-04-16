@@ -66,10 +66,10 @@ public:
 
   virtual ~Parameter() = default;
   /* ------------------------------------------------------------------------ */
-  bool isInternal() const;
-  bool isWritable() const;
-  bool isReadable() const;
-  bool isParsable() const;
+  [[nodiscard]] bool isInternal() const;
+  [[nodiscard]] bool isWritable() const;
+  [[nodiscard]] bool isReadable() const;
+  [[nodiscard]] bool isParsable() const;
 
   void setAccessType(ParameterAccessType ptype);
 
@@ -85,7 +85,7 @@ public:
   /* ------------------------------------------------------------------------ */
   virtual void printself(std::ostream & stream) const;
 
-  virtual const std::type_info & type() const = 0;
+  [[nodiscard]] virtual const std::type_info & type() const = 0;
 
 protected:
   /// Returns const instance of templated sub-class ParameterTyped
@@ -122,7 +122,7 @@ public:
   void set(std::any value) override;
   void setAuto(const ParserParameter & value) override;
   T & getTyped();
-  const T & getTyped() const;
+  [[nodiscard]] const T & getTyped() const;
 
   void printself(std::ostream & stream) const override;
 
@@ -171,13 +171,14 @@ public:
   virtual void set(const std::string & name, std::any value);
 
   /// Get value of a parameter
-  inline const Parameter & get(const std::string & name) const;
+  [[nodiscard]] inline const Parameter & get(const std::string & name) const;
 
   /// Get value of a parameter
   inline Parameter & get(const std::string & name);
 
   std::vector<ID> listParameters() const {
     std::vector<ID> params;
+    params.reserve(this->params.size());
     for (const auto & pair : this->params) {
       params.push_back(pair.first);
     }
@@ -186,21 +187,20 @@ public:
 
   bool hasParameter(const std::string & name) {
     auto it = params.find(name);
-    if (it != params.end())
-      return true;
-    return false;
+    return (it != params.end());
   }
 
   std::vector<ID> listSubRegisteries() const {
     std::vector<ID> subs;
+    subs.reserve(this->sub_registries.size());
     for (const auto & pair : this->sub_registries) {
       subs.push_back(pair.first);
     }
     return subs;
   }
 
-protected:
-  template <typename T> T & get_(const std::string & name);
+  // protected:
+  //   template <typename T> T & get_(const std::string & name);
 
 protected:
   void setParameterAccessType(const std::string & name,

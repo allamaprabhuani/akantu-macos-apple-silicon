@@ -31,10 +31,15 @@
 
 namespace akantu {
 
+/* -------------------------------------------------------------------------- */
 NonLinearSolverPETSc::NonLinearSolverPETSc(
     DOFManagerPETSc & dof_manager, const ModelSolverOptions & solver_options,
     const ID & id)
-    : NonLinearSolver(dof_manager, solver_options, id) {
+    : ParsablePETSc<NonLinearSolver, SNES>(snes, SNESSetFromOptions,
+                                           dof_manager, solver_options, id) {
+
+  petsc_its.resize(petsc_na);
+  petsc_a.resize(petsc_na);
 
   if (solver_options.sparse_solver_type != SparseSolverType::_petsc)
     AKANTU_EXCEPTION(
@@ -188,7 +193,6 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
 
 /* -------------------------------------------------------------------------- */
 void NonLinearSolverPETSc::updateInternalParameters() {
-
   std::map<ID, ID> akantu_to_petsc_option = {{"max_iterations", "snes_max_it"},
                                              {"threshold", "snes_stol"}};
 
@@ -198,17 +202,16 @@ void NonLinearSolverPETSc::updateInternalParameters() {
                          value.to_string().c_str());
   }
   SNESSetFromOptions(snes);
-  PetscOptionsClear(nullptr);
 }
+
 /* -------------------------------------------------------------------------- */
 void NonLinearSolverPETSc::parseSection(const ParserSection & section) {
   auto parameters = section.getParameters();
   for (auto && param : range(parameters.first, parameters.second)) {
-    PetscOptionsSetValue(nullptr, param.getName().c_str(),
+    PetscOptionsSetValue(nullptr, ("-" + param.getName()).c_str(),
                          param.getValue().c_str());
   }
   SNESSetFromOptions(snes);
-  PetscOptionsClear(nullptr);
 }
 /* -------------------------------------------------------------------------- */
 

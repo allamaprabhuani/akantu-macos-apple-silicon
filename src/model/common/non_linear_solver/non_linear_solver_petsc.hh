@@ -20,6 +20,7 @@
 
 /* -------------------------------------------------------------------------- */
 #include "non_linear_solver.hh"
+#include "parsable_petsc.hh"
 #include "solver_vector_petsc.hh"
 /* -------------------------------------------------------------------------- */
 #include <petscsnes.h>
@@ -35,7 +36,7 @@ class SolverVectorPETSc;
 
 namespace akantu {
 
-class NonLinearSolverPETSc : public NonLinearSolver {
+class NonLinearSolverPETSc : public ParsablePETSc<NonLinearSolver, SNES> {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -73,34 +74,38 @@ protected:
   void restoreSolution();
 
   /// PETSc non linear solver
-  SNES snes;
-  SNESConvergedReason reason;
+  SNES snes{};
+  SNESConvergedReason reason{};
 
   SolverCallback * callback{nullptr};
 
   std::unique_ptr<SolverVectorPETSc> x;
 
   Int n_iter{0};
-  Int max_iterations;
+  Int max_iterations{};
   /// Type of convergence criteria
-  SolveConvergenceCriteria convergence_criteria_type;
+  SolveConvergenceCriteria convergence_criteria_type{};
   /// convergence threshold
-  Real convergence_criteria;
+  Real convergence_criteria{};
+
+  PetscInt petsc_na{1000};
+  Array<PetscInt> petsc_its;
+  Array<PetscReal> petsc_a;
 };
 
 namespace debug {
-  class SNESNotConvergedException : public NLSNotConvergedException {
-  public:
-    SNESNotConvergedException(SNESConvergedReason reason, Int niter, Real error,
-                              Real absolute_tolerance, Real relative_tolerance,
-                              Int max_iterations)
-        : NLSNotConvergedException(relative_tolerance, niter, error),
-          reason(reason), absolute_tolerance(absolute_tolerance),
-          max_iterations(max_iterations) {}
-    SNESConvergedReason reason;
-    Real absolute_tolerance;
-    Int max_iterations;
-  };
+class SNESNotConvergedException : public NLSNotConvergedException {
+public:
+  SNESNotConvergedException(SNESConvergedReason reason, Int niter, Real error,
+                            Real absolute_tolerance, Real relative_tolerance,
+                            Int max_iterations)
+      : NLSNotConvergedException(relative_tolerance, niter, error),
+        reason(reason), absolute_tolerance(absolute_tolerance),
+        max_iterations(max_iterations) {}
+  SNESConvergedReason reason{};
+  Real absolute_tolerance{};
+  Int max_iterations{};
+};
 } // namespace debug
 
 } // namespace akantu

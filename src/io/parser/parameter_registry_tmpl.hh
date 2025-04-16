@@ -208,6 +208,7 @@ public:
   void set(std::any value) override {
     param = std::any_cast<Eigen::Matrix<T, m, n>>(value);
   }
+
   void setAuto(const ParserParameter & value) override {
     Parameter::setAuto(value);
     if constexpr (n == 1) {
@@ -355,16 +356,14 @@ private:
   std::set<T> & param;
 };
 
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 template <>
 inline void ParameterTyped<bool>::printself(std::ostream & stream) const {
   Parameter::printself(stream);
   stream << std::boolalpha << param << "\n";
 }
 
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 template <typename T>
 void ParameterRegistry::registerParam(const std::string & name, T & variable,
                                       ParameterAccessType type,
@@ -379,8 +378,7 @@ void ParameterRegistry::registerParam(const std::string & name, T & variable,
   params[name] = std::move(param);
 }
 
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 template <typename T>
 void ParameterRegistry::registerParam(const std::string & name, T & variable,
                                       const T & default_value,
@@ -390,30 +388,29 @@ void ParameterRegistry::registerParam(const std::string & name, T & variable,
   registerParam(name, variable, type, description);
 }
 
-/* --------------------------------------------------------------------------
- */
-template <typename T> T & ParameterRegistry::get_(const std::string & name) {
-  auto it = params.find(name);
-  if (it == params.end()) {
-    if (consisder_sub) {
-      for (auto && [_, registery] : sub_registries) {
-        try {
-          return registery.get().template get_<T>(name);
-        } catch (...) {
-        }
-      }
-    }
+/* -------------------------------------------------------------------------- */
+// template <typename T> T & ParameterRegistry::get_(const std::string & name) {
+//   auto it = params.find(name);
+//   if (it == params.end()) {
+//     if (consisder_sub) {
+//       for (auto && [_, registery] : sub_registries) {
+//         try {
+//           return registery.get().template get_<T>(name);
+//         } catch (...) {
+//         }
+//       }
+//     }
 
-    // nothing was found not even in sub registries
-    AKANTU_CUSTOM_EXCEPTION(debug::ParameterUnexistingException(name, *this));
-  }
+//     // nothing was found not even in sub registries
+//     AKANTU_CUSTOM_EXCEPTION(debug::ParameterUnexistingException(name,
+//     *this));
+//   }
 
-  Parameter & param = *(it->second);
-  return param.get<T>();
-}
+//   Parameter & param = *(it->second);
+//   return param.get<T>();
+// }
 
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 const Parameter & ParameterRegistry::get(const std::string & name) const {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -434,8 +431,7 @@ const Parameter & ParameterRegistry::get(const std::string & name) const {
   return param;
 }
 
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 Parameter & ParameterRegistry::get(const std::string & name) {
   auto it = params.find(name);
   if (it == params.end()) {
@@ -456,8 +452,7 @@ Parameter & ParameterRegistry::get(const std::string & name) {
   return param;
 }
 
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 namespace details {
 template <class T, class R, class Enable = void> struct CastHelper {
   static R convert(const T & /*unused*/) { throw std::bad_cast(); }

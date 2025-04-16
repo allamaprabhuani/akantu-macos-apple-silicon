@@ -34,7 +34,8 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 SparseSolverPETSc::SparseSolverPETSc(DOFManager & dof_manager,
                                      const ID & matrix_id, const ID & id)
-    : SparseSolver(dof_manager, matrix_id, id) {
+    : ParsablePETSc<SparseSolver, KSP>(ksp, KSPSetFromOptions, dof_manager,
+                                       matrix_id, id) {
   auto && mpi_comm = getDOFManager().getMPIComm();
 
   /// create a solver context
@@ -42,16 +43,17 @@ SparseSolverPETSc::SparseSolverPETSc(DOFManager & dof_manager,
 }
 /* -------------------------------------------------------------------------- */
 void SparseSolverPETSc::initialize() {}
+
 /* -------------------------------------------------------------------------- */
 SparseSolverPETSc::~SparseSolverPETSc() { KSPDestroy(&ksp); }
 
 /* -------------------------------------------------------------------------- */
 void SparseSolverPETSc::setOperators() {
-
   auto && matrix = getDOFManager().getMatrix(matrix_id);
+
   // set the matrix that defines the linear system and the matrix for
-// preconditioning (here they are the same)
-#if PETSC_VERSION_MAJOR >= 3 && PETSC_VERSION_MINOR >= 5
+  // preconditioning (here they are the same)
+#if PETSC_VERSION_GE(3, 5, 0)
   KSPSetOperators(ksp, matrix.getMat(), matrix.getMat());
 #else
   KSPSetOperators(ksp, matrix.getMat(), matrix.getMat(), SAME_NONZERO_PATTERN);
@@ -66,17 +68,13 @@ void SparseSolverPETSc::setOperators() {
   // => uncommenting this line breaks test_phase_solid_coupling.cc when using a
   // sparse_petsc_solver
   // KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
-  KSPSetFromOptions(ksp);
   try {
     KSPSetUp(ksp);
   } catch (std::exception & e) {
-    AKANTU_EXCEPTION("KSP(PETSc sparse solver) initialization failed: is your "
-                     "matrix singular ?"
-                     << std::endl
+    AKANTU_EXCEPTION("PETSc KSP sparse solver initialization failed: is your "
+                     "matrix singular ?\n"
                      << e.what());
   }
-
-  AKANTU_DEBUG_OUT();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -84,60 +82,16 @@ void SparseSolverPETSc::solve() {
   Vec & rhs(getDOFManager()._getResidual());
   Vec & solution(getDOFManager()._getSolution());
 
-  // auto && matrix = getDOFManager().getMatrix(matrix_id);
-
   this->setOperators();
-  // MatView(matrix.getMat(), PETSC_VIEWER_STDOUT_WORLD);
-  // VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
 
   KSPSolve(ksp, rhs, solution);
-  // VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
 
   this->dof_manager.splitSolutionPerDOFs();
 }
 
 /* -------------------------------------------------------------------------- */
-
 DOFManagerPETSc & SparseSolverPETSc::getDOFManager() {
   return aka::as_type<DOFManagerPETSc &>(this->dof_manager);
-}
-
-/* -------------------------------------------------------------------------- */
-void SparseSolverPETSc::updateInternalParameters() {
-
-  PetscOptionsInsertString(nullptr, petsc_options.c_str());
-  KSPSetFromOptions(ksp);
-  PetscOptionsClear(nullptr);
-}
-
-/* -------------------------------------------------------------------------- */
-void SparseSolverPETSc::parseSection(const ParserSection & section) {
-  auto parameters = section.getParameters();
-  for (auto && param : range(parameters.first, parameters.second)) {
-    PetscOptionsSetValue(nullptr, param.getName().c_str(),
-                         param.getValue().c_str());
-  }
-  KSPSetFromOptions(ksp);
-  PetscOptionsClear(nullptr);
-}
-/* -------------------------------------------------------------------------- */
-
-void SparseSolverPETSc::set(const std::string & name, std::any value) {
-  if (this->hasParameter(name)) {
-    SparseSolver::set(name, value);
-  } else {
-    try {
-      // PetscOptionsView(nullptr, PETSC_VIEWER_STDOUT_WORLD);
-      std::string option = std::any_cast<const char *>(value);
-      // std::cout << name << ": " << option << std::endl;
-      PetscOptionsSetValue(nullptr, ("-" + name).c_str(), option.c_str());
-      KSPSetFromOptions(ksp);
-      // PetscOptionsClear(nullptr);
-    } catch (std::bad_any_cast & c) {
-      std::cout << c.what() << std::endl;
-      std::cout << value.type().name() << std::endl;
-    }
-  }
 }
 
 } // namespace akantu

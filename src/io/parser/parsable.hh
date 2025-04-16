@@ -51,10 +51,12 @@ public:
 private:
   ParserType section_type;
   /// ID of parsable object
-  ID pid;
   using SubSectionKey = std::pair<ParserType, std::string>;
   /// Subsections map
   std::map<SubSectionKey, std::reference_wrapper<Parsable>> sub_sections;
+
+protected:
+  ID pid;
 };
 
 } // namespace akantu
