@@ -317,6 +317,7 @@ void DOFManagerPETSc::assembleToGlobalArray(
 
   g.addValuesLocal(dof_data.local_equation_number_petsc, array_to_assemble,
                    scale_factor);
+  g.applyModifications();
 }
 
 /* -------------------------------------------------------------------------- */

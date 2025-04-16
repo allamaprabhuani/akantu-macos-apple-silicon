@@ -91,7 +91,7 @@ public:
   SolverVectorPETSc & operator=(const SolverVectorPETSc & y);
 
   /// get values using processors global indexes
-  void getValues(const Array<Int> & idx, Array<Real> & values) const;
+  void getValues(const Array<Int> & gidx, Array<Real> & values) const;
 
   /// get values using processors local indexes
   void getValuesLocal(const Array<Int> & idx, Array<Real> & values) const;
@@ -114,9 +114,10 @@ public:
 
   void saveVector(const std::string & filename) const override;
 
-protected:
   void applyModifications();
-  void updateGhost();
+
+protected:
+  void updateGhost() const;
 
 protected:
   // used for the conversion operator

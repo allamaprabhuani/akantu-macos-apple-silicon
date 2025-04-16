@@ -116,24 +116,24 @@ void SolverVectorPETSc::set(Real val) {
 void SolverVectorPETSc::applyModifications() {
   VecAssemblyBegin(x);
   VecAssemblyEnd(x);
-  updateGhost();
+  // updateGhost();
 }
 
 /* -------------------------------------------------------------------------- */
-void SolverVectorPETSc::updateGhost() {
-  Vec x_ghosted{nullptr};
-  VecGhostGetLocalForm(x, &x_ghosted);
-  if (x_ghosted != nullptr) {
-    VecGhostUpdateBegin(x, INSERT_VALUES, SCATTER_FORWARD);
-    VecGhostUpdateEnd(x, INSERT_VALUES, SCATTER_FORWARD);
-  }
-  VecGhostRestoreLocalForm(x, &x_ghosted);
+void SolverVectorPETSc::updateGhost() const {
+  // Vec x_ghosted{nullptr};
+  // VecGhostGetLocalForm(x, &x_ghosted);
+  // if (x_ghosted != nullptr) {
+  VecGhostUpdateBegin(x, INSERT_VALUES, SCATTER_FORWARD);
+  VecGhostUpdateEnd(x, INSERT_VALUES, SCATTER_FORWARD);
+  //}
+  // VecGhostRestoreLocalForm(x, &x_ghosted);
 }
 
 /* -------------------------------------------------------------------------- */
-void SolverVectorPETSc::getValues(const Array<Int> & idx,
+void SolverVectorPETSc::getValues(const Array<Int> & gidx,
                                   Array<Real> & values) const {
-  if (idx.empty()) {
+  if (gidx.empty()) {
     return;
   }
 
@@ -141,9 +141,9 @@ void SolverVectorPETSc::getValues(const Array<Int> & idx,
   VecGetLocalToGlobalMapping(x, &is_ltog_map);
 
   PetscInt n;
-  Array<PetscInt> lidx(idx.size());
-  ISGlobalToLocalMappingApply(is_ltog_map, IS_GTOLM_MASK, idx.size(),
-                              idx.data(), &n, lidx.data());
+  Array<PetscInt> lidx(gidx.size());
+  ISGlobalToLocalMappingApply(is_ltog_map, IS_GTOLM_MASK, gidx.size(),
+                              gidx.data(), &n, lidx.data());
 
   getValuesLocal(lidx, values);
 }
@@ -158,18 +158,19 @@ void SolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
   VecGhostGetLocalForm(x, &x_ghosted);
 
   if (x_ghosted == nullptr) {
-    const PetscScalar * array{nullptr};
-    VecGetArrayRead(x, &array);
+    Vec x_local{};
+    VecCreateLocalVector(x, &x_local);
+    VecGetLocalVector(x, x_local);
 
-    for (auto && [i, value] : zip(idx, make_view(values))) {
-      if (i != -1) {
-        value = array[i];
-      }
-    }
+    VecSetOption(x_local, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+    VecGetValues(x_local, idx.size(), idx.data(), values.data());
 
-    VecRestoreArrayRead(x, &array);
+    VecRestoreLocalVector(x, x_local);
+    VecDestroy(&x_local);
     return;
   }
+
+  updateGhost();
 
   VecSetOption(x_ghosted, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecGetValues(x_ghosted, idx.size(), idx.data(), values.data());
@@ -190,42 +191,33 @@ void SolverVectorPETSc::addValues(const Array<Int> & gidx,
 
   VecSetOption(x, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetValues(x, gidx.size(), gidx.data(), to_add, ADD_VALUES);
-  // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
-  applyModifications();
-  // VecView(x, PETSC_VIEWER_STDOUT_WORLD);
 }
 
 /* -------------------------------------------------------------------------- */
 void SolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
                                        const Array<Real> & values,
                                        Real scale_factor) {
+  const auto * to_add = values.data();
+  Array<Real> scaled_array;
+  if (scale_factor != 1.) {
+    scaled_array.copy(values, false);
+    scaled_array *= scale_factor;
+    to_add = scaled_array.data();
+  }
+
   Vec x_ghosted{nullptr};
   VecGhostGetLocalForm(x, &x_ghosted);
 
   if (x_ghosted == nullptr) {
-    const auto * to_add = values.data();
-    Array<Real> scaled_array;
-    if (scale_factor != 1.) {
-      scaled_array.copy(values, false);
-      scaled_array *= scale_factor;
-      to_add = scaled_array.data();
-    }
-
     VecSetOption(x, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
     VecSetValuesLocal(x, lidx.size(), lidx.data(), to_add, ADD_VALUES);
-    applyModifications();
     return;
   }
 
+  VecSetOption(x_ghosted, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+  VecSetValuesLocal(x_ghosted, lidx.size(), lidx.data(), to_add, ADD_VALUES);
+
   VecGhostRestoreLocalForm(x, &x_ghosted);
-
-  ISLocalToGlobalMapping is_ltog_map{nullptr};
-  VecGetLocalToGlobalMapping(x, &is_ltog_map);
-
-  Array<Int> gidx(lidx.size());
-  ISLocalToGlobalMappingApply(is_ltog_map, lidx.size(), lidx.data(),
-                              gidx.data());
-  addValues(gidx, values, scale_factor);
 }
 
 /* -------------------------------------------------------------------------- */
