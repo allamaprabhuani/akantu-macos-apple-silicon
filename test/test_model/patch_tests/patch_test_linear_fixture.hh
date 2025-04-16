@@ -23,6 +23,9 @@
 #include "mesh_utils.hh"
 #include "model.hh"
 #include "non_linear_solver_newton_raphson.hh"
+#if defined(AKANTU_USE_PETSC)
+#include "non_linear_solver_petsc.hh"
+#endif
 #include "sparse_solver.hh"
 #include "test_gtest_utils.hh"
 /* -------------------------------------------------------------------------- */
@@ -90,6 +93,10 @@ public:
                 .getSparseSolver();
         sparse_solver.set("pc_type", "cholesky");
         sparse_solver.set("ksp_rtol", "1e-30");
+      } else if (aka::is_of_type<NonLinearSolverPETSc>(solver)) {
+        auto & psolver = aka::as_type<NonLinearSolverPETSc>(solver);
+        // solver.set("pc_type", "cholesky");
+        psolver.set("snes_atol", "1e-16");
       }
     }
 #endif
