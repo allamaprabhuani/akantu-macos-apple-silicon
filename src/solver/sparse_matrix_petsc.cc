@@ -178,7 +178,7 @@ void SparseMatrixPETSc::endAssembly() {
 void SparseMatrixPETSc::copyProfile(const SparseMatrix & other) {
   const auto & A = aka::as_type<SparseMatrixPETSc>(other);
 
-  MatDestroy(&mat);
+  // MatDestroy(&mat);
   MatDuplicate(A.mat, MAT_DO_NOT_COPY_VALUES, &mat);
   detail::PETScSetName(mat, id);
   this->zero();
