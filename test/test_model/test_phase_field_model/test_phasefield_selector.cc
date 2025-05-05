@@ -20,7 +20,7 @@
 
 #include "aka_common.hh"
 #include "phase_field_model.hh"
-#include "phasefield_exponential.hh"
+#include "phasefield_quadratic.hh"
 
 using namespace akantu;
 

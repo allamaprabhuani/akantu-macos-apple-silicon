@@ -17,7 +17,7 @@ model phase_field_model [
        l0 = 1. 
        Plane_Stress = false
        isotropic = true
-       non_linear = false
+       irreversibility_type = tao
 			 irreversibility_tol = 0.001
 			 recovery_tol = 0.001
 	   ]	

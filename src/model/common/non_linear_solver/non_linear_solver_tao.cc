@@ -192,9 +192,6 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
   rhs.zero();
 
   auto & J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
-  // Mat _J{};
-  // MatCreate(PETSC_COMM_WORLD, &_J);
-  // MatDuplicate(J, MAT_COPY_VALUES, &_J);
 
 #if PETSC_VERSION_GE(3, 17, 0)
   TaoSetSolution(tao, x);
@@ -215,10 +212,6 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
   TaoSolve(tao);
   TaoGetConvergedReason(tao, &reason);
   TaoGetIterationNumber(tao, &n_iter);
-
-  // if (_J != nullptr) {
-  //   MatDestroy(&_J);
-  // }
 
   // access the model solution counter part: only for debug
   // auto & model_x = this->dof_manager.getDOFs("displacement");

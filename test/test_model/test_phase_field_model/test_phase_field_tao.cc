@@ -25,7 +25,7 @@ void computeDamageOnQuadPoints(SolidMechanicsModel &, PhaseFieldModel &,
 void gradUToEpsilon(const Matrix<Real> &, Matrix<Real> &);
 /* -------------------------------------------------------------------------- */
 
-int main(int argc, char *argv[]) {
+int main(int argc, char * argv[]) {
   std::ofstream os("data.csv");
   os << "#strain stress damage analytical_sigma analytical_damage error_stress "
         "error_damage error_energy"
@@ -39,25 +39,25 @@ int main(int argc, char *argv[]) {
   SolidMechanicsModel model(mesh);
   model.initFull(_analysis_method = _static);
 
-  auto &solver = model.getNonLinearSolver("static");
+  auto & solver = model.getNonLinearSolver("static");
   solver.set("max_iterations", 100);
   solver.set("threshold", 1e-9);
   solver.set("convergence_type", SolveConvergenceCriteria::_residual);
 
   PhaseFieldModel phase(mesh);
-  auto &&selector = std::make_shared<MeshDataPhaseFieldSelector<std::string>>(
+  auto && selector = std::make_shared<MeshDataPhaseFieldSelector<std::string>>(
       "physical_names", phase);
   phase.setPhaseFieldSelector(selector);
 
-  PetscOptionsSetValue(NULL, "-tao_type", "bqpip");
+  PetscOptionsSetValue(NULL, "-tao_type", "gpcg");
   PetscOptionsSetValue(NULL, "-tao_gatol", "1e-9");
   phase.initDOFManager("petsc");
-  auto &DOFManager = aka::as_type<DOFManagerPETSc>(phase.getDOFManager());
+  auto & DOFManager = aka::as_type<DOFManagerPETSc>(phase.getDOFManager());
   phase.initFull(_analysis_method = _static,
                  _solver_options = ModelSolverOptions{
                      .non_linear_solver_type = NonLinearSolverType::_petsc_tao,
                      .sparse_solver_type = SparseSolverType::_petsc});
-  auto &tao_solver =
+  auto & tao_solver =
       aka::as_type<NonLinearSolverTAO>(phase.getNonLinearSolver());
 
   model.setBaseName("phase_solid");
@@ -71,10 +71,8 @@ int main(int argc, char *argv[]) {
   Int nbSteps = 1000;
   Real increment = 1e-5;
 
-  auto &stress = model.getMaterial(0).getArray<Real>("stress", _quadrangle_4);
-  auto &damage = model.getMaterial(0).getArray<Real>("damage", _quadrangle_4);
-
-  Array<Real> dam_pre(phase.getDamage());
+  auto & stress = model.getMaterial(0).getArray<Real>("stress", _quadrangle_4);
+  auto & damage = model.getMaterial(0).getArray<Real>("damage", _quadrangle_4);
 
   SolverVectorPETSc lower_bound(DOFManager, "lower_bound");
   lower_bound.resize();
@@ -89,7 +87,7 @@ int main(int argc, char *argv[]) {
   Real analytical_sigma{0.};
   Real analytical_energy{0.};
 
-  auto &phasefield = phase.getPhaseField(0);
+  auto & phasefield = phase.getPhaseField(0);
 
   const Real E = phasefield.getParam("E");
   const Real nu = phasefield.getParam("nu");
@@ -117,8 +115,6 @@ int main(int argc, char *argv[]) {
     computeStrainOnQuadPoints(model, phase, _not_ghost);
 
     phase.solveStep();
-    phase.getDamage() -= dam_pre;
-    dam_pre = phase.getDamage();
     computeDamageOnQuadPoints(model, phase, _not_ghost);
 
     model.assembleInternalForces();
@@ -172,11 +168,11 @@ int main(int argc, char *argv[]) {
 }
 
 /* -------------------------------------------------------------------------- */
-void applyDisplacement(SolidMechanicsModel &model, Real &increment) {
-  auto &displacement = model.getDisplacement();
+void applyDisplacement(SolidMechanicsModel & model, Real & increment) {
+  auto & displacement = model.getDisplacement();
 
-  auto &positions = model.getMesh().getNodes();
-  auto &blocked_dofs = model.getBlockedDOFs();
+  auto & positions = model.getMesh().getNodes();
+  auto & blocked_dofs = model.getBlockedDOFs();
 
   for (Int n = 0; n < model.getMesh().getNbNodes(); ++n) {
     if (positions(n, 1) == -0.5) {
@@ -194,9 +190,9 @@ void applyDisplacement(SolidMechanicsModel &model, Real &increment) {
 }
 
 /* -------------------------------------------------------------------------- */
-void computeStrainOnQuadPoints(SolidMechanicsModel &solid,
-                               PhaseFieldModel &phase, GhostType ghost_type) {
-  auto &mesh = solid.getMesh();
+void computeStrainOnQuadPoints(SolidMechanicsModel & solid,
+                               PhaseFieldModel & phase, GhostType ghost_type) {
+  auto & mesh = solid.getMesh();
 
   auto nb_materials = solid.getNbMaterials();
   auto nb_phasefields = phase.getNbPhaseFields();
@@ -206,26 +202,26 @@ void computeStrainOnQuadPoints(SolidMechanicsModel &solid,
       "The number of phasefields and materials should be equal");
 
   for (auto index : arange(nb_materials)) {
-    auto &material = solid.getMaterial(index);
+    auto & material = solid.getMaterial(index);
 
     for (auto index2 : arange(nb_phasefields)) {
-      auto &phasefield = phase.getPhaseField(index2);
+      auto & phasefield = phase.getPhaseField(index2);
 
       if (phasefield.getName() == material.getName()) {
-        auto &strain_on_qpoints = phasefield.getStrain();
-        auto &gradu_on_qpoints = material.getGradU();
+        auto & strain_on_qpoints = phasefield.getStrain();
+        auto & gradu_on_qpoints = material.getGradU();
 
-        for (const auto &type :
+        for (const auto & type :
              mesh.elementTypes(spatial_dimension, ghost_type)) {
-          auto &strain_on_qpoints_vect = strain_on_qpoints(type, ghost_type);
-          auto &gradu_on_qpoints_vect = gradu_on_qpoints(type, ghost_type);
-          for (auto &&values :
+          auto & strain_on_qpoints_vect = strain_on_qpoints(type, ghost_type);
+          auto & gradu_on_qpoints_vect = gradu_on_qpoints(type, ghost_type);
+          for (auto && values :
                zip(make_view(strain_on_qpoints_vect, spatial_dimension,
                              spatial_dimension),
                    make_view(gradu_on_qpoints_vect, spatial_dimension,
                              spatial_dimension))) {
-            auto &strain = std::get<0>(values);
-            auto &grad_u = std::get<1>(values);
+            auto & strain = std::get<0>(values);
+            auto & grad_u = std::get<1>(values);
             Material::gradUToEpsilon<spatial_dimension>(grad_u, strain);
           }
         }
@@ -237,10 +233,10 @@ void computeStrainOnQuadPoints(SolidMechanicsModel &solid,
 }
 
 /* -------------------------------------------------------------------------- */
-void computeDamageOnQuadPoints(SolidMechanicsModel &solid,
-                               PhaseFieldModel &phase, GhostType ghost_type) {
-  auto &fem = phase.getFEEngine();
-  auto &mesh = phase.getMesh();
+void computeDamageOnQuadPoints(SolidMechanicsModel & solid,
+                               PhaseFieldModel & phase, GhostType ghost_type) {
+  auto & fem = phase.getFEEngine();
+  auto & mesh = phase.getMesh();
 
   auto nb_materials = solid.getNbMaterials();
   auto nb_phasefields = phase.getNbPhaseFields();
@@ -250,44 +246,42 @@ void computeDamageOnQuadPoints(SolidMechanicsModel &solid,
       "The number of phasefields and materials should be equal");
 
   for (auto index : arange(nb_materials)) {
-    auto &material = solid.getMaterial(index);
+    auto & material = solid.getMaterial(index);
 
     for (auto index2 : arange(nb_phasefields)) {
-      auto &phasefield = phase.getPhaseField(index2);
+      auto & phasefield = phase.getPhaseField(index2);
 
       if (phasefield.getName() == material.getName()) {
         switch (spatial_dimension) {
-          case 1: {
-            auto &mat = dynamic_cast<MaterialDamage<1> &>(material);
-            auto &solid_damage = mat.getDamage();
+        case 1: {
+          auto & mat = dynamic_cast<MaterialDamage<1> &>(material);
+          auto & solid_damage = mat.getDamage();
 
-            for (const auto &type :
-                 mesh.elementTypes(spatial_dimension, ghost_type)) {
-              auto &damage_on_qpoints_vect = solid_damage(type, ghost_type);
+          for (const auto & type :
+               mesh.elementTypes(spatial_dimension, ghost_type)) {
+            auto & damage_on_qpoints_vect = solid_damage(type, ghost_type);
 
-              fem.interpolateOnIntegrationPoints(phase.getDamage(),
-                                                 damage_on_qpoints_vect, 1,
-                                                 type, ghost_type);
-            }
-
-            break;
+            fem.interpolateOnIntegrationPoints(
+                phase.getDamage(), damage_on_qpoints_vect, 1, type, ghost_type);
           }
-          case 2: {
-            auto &mat = dynamic_cast<MaterialDamage<2> &>(material);
-            auto &solid_damage = mat.getDamage();
 
-            for (const auto &type :
-                 mesh.elementTypes(spatial_dimension, ghost_type)) {
-              auto &damage_on_qpoints_vect = solid_damage(type, ghost_type);
+          break;
+        }
+        case 2: {
+          auto & mat = dynamic_cast<MaterialDamage<2> &>(material);
+          auto & solid_damage = mat.getDamage();
 
-              fem.interpolateOnIntegrationPoints(phase.getDamage(),
-                                                 damage_on_qpoints_vect, 1,
-                                                 type, ghost_type);
-            }
-            break;
+          for (const auto & type :
+               mesh.elementTypes(spatial_dimension, ghost_type)) {
+            auto & damage_on_qpoints_vect = solid_damage(type, ghost_type);
+
+            fem.interpolateOnIntegrationPoints(
+                phase.getDamage(), damage_on_qpoints_vect, 1, type, ghost_type);
           }
-          default:
-            break;
+          break;
+        }
+        default:
+          break;
         }
       }
     }
@@ -295,7 +289,7 @@ void computeDamageOnQuadPoints(SolidMechanicsModel &solid,
 }
 
 /* -------------------------------------------------------------------------- */
-void gradUToEpsilon(const Matrix<Real> &grad_u, Matrix<Real> &epsilon) {
+void gradUToEpsilon(const Matrix<Real> & grad_u, Matrix<Real> & epsilon) {
   for (Int i = 0; i < spatial_dimension; ++i) {
     for (Int j = 0; j < spatial_dimension; ++j)
       epsilon(i, j) = 0.5 * (grad_u(i, j) + grad_u(j, i));

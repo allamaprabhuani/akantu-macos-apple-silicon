@@ -16,7 +16,7 @@ material phasefield [
 
 
 
-phasefield exponential [
+phasefield quadratic [
   name = plate
   E = 210.0
   nu = 0.3
@@ -26,7 +26,7 @@ phasefield exponential [
 
 
 
-phasefield exponential [
+phasefield quadratic [
   name = rigid
   E = 21.0
   nu = 0.3

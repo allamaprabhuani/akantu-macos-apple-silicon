@@ -30,9 +30,9 @@
  */
 
 /* -------------------------------------------------------------------------- */
+#include "no_energy_split.hh"
 #include "phasefield.hh"
 #include "volumetric_deviatoric_split.hh"
-#include "no_energy_split.hh"
 /* -------------------------------------------------------------------------- */
 
 #ifndef __AKANTU_PHASEFIELD_QUADRATIC_HH__
@@ -40,7 +40,7 @@
 
 namespace akantu {
 
-template<Int dim> class PhaseFieldQuadratic : public PhaseField {
+template <Int dim> class PhaseFieldQuadratic : public PhaseField {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -65,14 +65,12 @@ protected:
   computeDissipatedEnergyByElement(ElementType type, Idx index,
                                    Vector<Real> & edis_on_quad_points) override;
 
-  void computePhiOnQuad(const Matrix<Real> & /*strain_quad*/,
-                        Real & /*phi_quad*/);
-
-  void computePhiIsotropicOnQuad(const Matrix<Real> & /*strain_quad*/,
-                                 Real & /*phi_quad*/);
-
   void computeDrivingForce(ElementType /*el_type*/,
                            GhostType /*ghost_type*/) override;
+
+  void computeResidual(ElementType /*el_type*/, GhostType /*ghost_type*/);
+
+  void applyPenalization(ElementType /*el_type*/, GhostType /*ghost_type*/);
 
   inline void computeDrivingForceOnQuad(const Real & /*phi_quad*/,
                                         Real & /*driving_force_quad*/);
