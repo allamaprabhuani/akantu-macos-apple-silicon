@@ -39,6 +39,7 @@ package_declare_sources(petsc
   solver/sparse_matrix_petsc.hh
   solver/sparse_solver_petsc.hh
   solver/sparse_solver_petsc.cc
+  io/parser/parsable_petsc.hh
 )
 
 package_declare_extra_files_to_package(PETSc

@@ -17,6 +17,7 @@ model phase_field_model [
        l0 = 1. 
        Plane_Stress = false
        isotropic = false
+       irreversibility_type = penalization
 			 irreversibility_tol = 1e-4
 	   ]	
 ]	

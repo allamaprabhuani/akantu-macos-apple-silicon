@@ -21,8 +21,11 @@
 /* -------------------------------------------------------------------------- */
 #include "phasefield.hh"
 #include "aka_common.hh"
+#include "no_energy_split.hh"
 #include "phase_field_model.hh"
 #include "random_internal_field.hh"
+#include "volumetric_deviatoric_split.hh"
+#include <string>
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
@@ -49,8 +52,8 @@ PhaseField::PhaseField(PhaseFieldModel & model, const ID & id,
       dissipated_energy(
           this->registerInternal("dissipated_energy", 1, fe_engine_id)) {
 
-        this->phi.setDefaultValue(0.);
-        this->damage_on_qpoints.setDefaultValue(0.);
+  this->phi.setDefaultValue(0.);
+  this->damage_on_qpoints.setDefaultValue(0.);
   this->phi.initializeHistory();
   this->damage_on_qpoints.initializeHistory();
 
@@ -63,17 +66,33 @@ PhaseField::PhaseField(PhaseFieldModel & model, const ID & id,
   this->registerParam("isotropic", isotropic, true,
                       _pat_parsable | _pat_readable,
                       "Use isotropic formulation");
+  this->registerParam("irreversibility_type", irreversibility_type,
+                      std::string("history"), _pat_parsable | _pat_readable,
+                      "Type of irreversibility");
   this->registerParam("Plane_Stress", plane_stress, false,
                       _pat_parsable | _pat_readable, "Is plane stress");
 }
 
 /* -------------------------------------------------------------------------- */
 void PhaseField::updateInternalParameters() {
-  this->lambda = this->nu * this->E / ((1 + this->nu) * (1 - 2 * this->nu));
-  if (this->plane_stress) {
-    this->lambda = this->nu * this->E / ((1 + this->nu) * (1 - this->nu));
+  lambda = nu * E / ((1 + nu) * (1 - 2 * nu));
+  if (plane_stress) {
+    lambda = nu * E / ((1 + nu) * (1 - nu));
   }
-  this->mu = this->E / (2 * (1 + this->nu));
+  mu = E / (2 * (1 + nu));
+
+  if (irreversibility_type == "history") {
+    use_history = true;
+  } else if (irreversibility_type == "penalization") {
+    use_penalization = true;
+    use_history = false;
+  } else if (irreversibility_type == "tao") {
+    use_tao = true;
+    use_history = false;
+  } else {
+    AKANTU_EXCEPTION("Unknown irreversibility type: " << irreversibility_type);
+  }
+
   Parent::updateInternalParameters();
 }
 

@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------- */
+#include "no_energy_split.hh"
 #include "phasefield.hh"
 #include "volumetric_deviatoric_split.hh"
-#include "no_energy_split.hh"
 #include <memory>
 /* -------------------------------------------------------------------------- */
 
@@ -37,14 +37,12 @@ protected:
   computeDissipatedEnergyByElement(ElementType type, Idx index,
                                    Vector<Real> & edis_on_quad_points) override;
 
-  void computePhiOnQuad(const Matrix<Real> & /*strain_quad*/,
-                        Real & /*phi_quad*/);
-
-  void computePhiIsotropicOnQuad(const Matrix<Real> & /*strain_quad*/,
-                                 Real & /*phi_quad*/);
-
   void computeDrivingForce(ElementType /*el_type*/,
                            GhostType /*ghost_type*/) override;
+
+  void computeResidual(ElementType /*el_type*/, GhostType /*ghost_type*/);
+
+  void applyPenalization(ElementType /*el_type*/, GhostType /*ghost_type*/);
 
   inline void computeDrivingForceOnQuad(const Real & /*phi_quad*/,
                                         Real & /*driving_force_quad*/,
@@ -55,7 +53,6 @@ protected:
 
   inline void
   computeDissipatedEnergyOnQuad(const Real & /*dam_quad*/,
-                                const Real & /*dam_prev_quad*/,
                                 const Vector<Real> & /*grad_d_quad */,
                                 Real & /*energy*/, Real & /*g_c_quad*/);
 
@@ -77,13 +74,8 @@ private:
   // recovery penalization parameter
   Real rho_rec;
 
-  // dimension to consider in deviatoric split
-  Int dev_dim;
-
   // energy split
   std::shared_ptr<EnergySplit> energy_split{nullptr};
-
-  bool non_linear;
 };
 
 } // namespace akantu

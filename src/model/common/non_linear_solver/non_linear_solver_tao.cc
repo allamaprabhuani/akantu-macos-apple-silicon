@@ -128,6 +128,8 @@ void NonLinearSolverTAO::assembleJacobian(Vec x, Mat J) {
   callback->assembleMatrix("J");
   auto & _J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
   if (_J.getMat() != J) {
+    // PetscPrint(_J);
+    // PetscPrint(J);
     MatCopy(_J, J, SAME_NONZERO_PATTERN);
   }
 }
@@ -141,21 +143,21 @@ void NonLinearSolverTAO::setBounds(const Vec lower_bound,
 /* -------------------------------------------------------------------------- */
 void NonLinearSolverTAO::computeObjectiveGradient(Vec x, PetscReal * obj,
                                                   Vec grad) {
-  auto & K = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
+  auto & J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
   auto & rhs = aka::as_type<SolverVectorPETSc>(dof_manager.getResidual());
 
   assembleResidual(x, rhs);
-  assembleJacobian(x, K);
-  SolverVectorPETSc Kx(x, aka::as_type<DOFManagerPETSc>(this->dof_manager),
+  callback->assembleMatrix("J");
+  SolverVectorPETSc Jx(x, aka::as_type<DOFManagerPETSc>(this->dof_manager),
                        this->id + ":Kx");
   Real fx{};
-  Real xKx{};
+  Real xJx{};
 
-  MatMult(K, x, Kx);
-  VecWAXPY(grad, 1, Kx, rhs);
+  MatMult(J, x, Jx);
+  VecWAXPY(grad, 1, Jx, rhs);
   VecDot(rhs, x, &fx);
-  VecDot(x, Kx, &xKx);
-  *obj = 0.5 * xKx + fx;
+  VecDot(x, Jx, &xJx);
+  *obj = 0.5 * xJx + fx;
 }
 
 /* -------------------------------------------------------------------------- */

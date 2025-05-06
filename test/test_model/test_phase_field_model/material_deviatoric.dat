@@ -9,7 +9,7 @@ model solid_mechanics_model [
 ]
 
 model phase_field_model [
-      phasefield exponential [
+      phasefield quadratic [
        name = plate
        E = 210.0
        nu = 0.3

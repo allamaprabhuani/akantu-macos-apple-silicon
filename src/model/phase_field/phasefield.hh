@@ -69,7 +69,6 @@ public:
 
   /// compute the driving force for this phasefield
   virtual void computeAllDrivingForces(GhostType ghost_type = _not_ghost);
-  
 
   /* ------------------------------------------------------------------------ */
   /* DataAccessor inherited members                                           */
@@ -118,6 +117,26 @@ protected:
     AKANTU_TO_IMPLEMENT();
   }
 
+  template <Int dim>
+  decltype(auto) getArguments(ElementType el_type, GhostType ghost_type) {
+    using namespace tuple;
+    return zip(
+        "phi"_n = phi(el_type, ghost_type),
+        "previous_phi"_n = phi.previous(el_type, ghost_type),
+        "strain"_n = make_view<dim, dim>(strain(el_type, ghost_type)),
+        "driving_force"_n = driving_force(el_type, ghost_type),
+        "damage_energy_density"_n = damage_energy_density(el_type, ghost_type),
+        "damage"_n = damage_on_qpoints(el_type, ghost_type),
+        "previous_damage"_n = damage_on_qpoints.previous(el_type, ghost_type),
+        "g_c"_n = g_c(el_type, ghost_type),
+        "gradd"_n = make_view<dim>(gradd(el_type, ghost_type)),
+        "driving_energy"_n =
+            make_view<dim>(driving_energy(el_type, ghost_type)),
+        "damage_energy"_n =
+            make_view<dim, dim>(damage_energy(el_type, ghost_type)),
+        "dissipated_energy"_n = dissipated_energy(el_type, ghost_type));
+  }
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
@@ -162,6 +181,18 @@ protected:
 
   /// Isotropic formulation
   bool isotropic{true};
+
+  /// Use history
+  bool use_history{true};
+
+  /// Use penalization
+  bool use_penalization{false};
+
+  /// Use TAO
+  bool use_tao{false};
+
+  /// Way of enforcing irreversibility
+  std::string irreversibility_type{"history"};
 
   /// Lame's first parameter
   Real lambda{0.};
@@ -210,17 +241,17 @@ protected:
 
 namespace akantu {
 namespace {
-  template <template <Int> class PF> bool instantiatePhaseField(const ID & id) {
-    return PhaseFieldFactory::getInstance().registerAllocator(
-        id, [](Int dim, const ID &, PhaseFieldModel & model, const ID & id) {
-          return tuple_dispatch<AllSpatialDimensions>(
-              [&](auto && _) -> std::unique_ptr<PhaseField> {
-                constexpr auto && dim_ = aka::decay_v<decltype(_)>;
-                return std::make_unique<PF<dim_>>(model, id);
-              },
-              dim);
-        });
-  }
+template <template <Int> class PF> bool instantiatePhaseField(const ID & id) {
+  return PhaseFieldFactory::getInstance().registerAllocator(
+      id, [](Int dim, const ID &, PhaseFieldModel & model, const ID & id) {
+        return tuple_dispatch<AllSpatialDimensions>(
+            [&](auto && _) -> std::unique_ptr<PhaseField> {
+              constexpr auto && dim_ = aka::decay_v<decltype(_)>;
+              return std::make_unique<PF<dim_>>(model, id);
+            },
+            dim);
+      });
+}
 } // namespace
 } // namespace akantu
 

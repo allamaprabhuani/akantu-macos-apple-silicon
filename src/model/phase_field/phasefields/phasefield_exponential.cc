@@ -21,7 +21,6 @@
 /* -------------------------------------------------------------------------- */
 #include "phasefield_exponential.hh"
 #include "aka_common.hh"
-#include <tuple>
 
 namespace akantu {
 
