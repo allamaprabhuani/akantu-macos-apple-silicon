@@ -37,6 +37,10 @@ NonLinearSolverPETSc::NonLinearSolverPETSc(
     const ID & id)
     : ParsablePETSc<NonLinearSolver, SNES>(snes, SNESSetFromOptions,
                                            dof_manager, solver_options, id) {
+  akantu_to_petsc_options = {
+      {"max_iterations", "snes_max_it"},
+      {"threshold", "snes_atol\", \"snes_rtol\" or \"snes_stol"},
+      {"convergence_type", "snes_atol\", \"snes_rtol\" or \"snes_stol"}};
 
   petsc_its.resize(petsc_na);
   petsc_a.resize(petsc_na);
@@ -44,6 +48,17 @@ NonLinearSolverPETSc::NonLinearSolverPETSc(
   if (solver_options.sparse_solver_type != SparseSolverType::_petsc)
     AKANTU_EXCEPTION(
         "petsc non linear solver works only with petsc sparse solver");
+
+  this->registerParam("n_iter", n_iter, _pat_readable, "Number of iterations");
+  this->registerParam("convergence_reason", reason_str, _pat_readable,
+                      "The convergence reason");
+  this->registerParam("funciton_norm", norm, _pat_readable,
+                      "Last computed norm of residual");
+  this->registerParam("solution_norm", xnorm, _pat_readable,
+                      "Last computed norm of solution");
+  this->registerParam("update_norm", ynorm, _pat_readable,
+                      "Last computed norm of update");
+  this->registerParam("error", error, _pat_readable, "Last reached error");
 
   this->has_internal_set_param = true;
 
@@ -54,19 +69,10 @@ NonLinearSolverPETSc::NonLinearSolverPETSc(
   auto && mpi_comm = dof_manager.getMPIComm();
 
   SNESCreate(mpi_comm, &snes);
+  detail::PETScSetName(snes, id);
 
   SNESSetType(snes, SNESNEWTONLS);
   SNESSetFromOptions(snes);
-
-  this->registerParam("max_iterations", max_iterations, 10, _pat_parsmod,
-                      "Max number of iterations");
-
-  this->registerParam("threshold", convergence_criteria, 1e-10, _pat_parsmod,
-                      "Threshold to consider results as converged");
-
-  this->registerParam("convergence_type", convergence_criteria_type,
-                      SolveConvergenceCriteria::_solution, _pat_parsmod,
-                      "Type of convergence criteria");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -161,16 +167,25 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
 
   SNESSetFunction(snes, rhs, NonLinearSolverPETSc::FormFunction, this);
   SNESSetJacobian(snes, J, J, NonLinearSolverPETSc::FormJacobian, this);
+  SNESSetConvergenceHistory(snes, petsc_a.data(), petsc_its.data(), petsc_na,
+                            PETSC_TRUE);
 
   callback.predictor();
 
   // SNESView(snes, PETSC_VIEWER_STDOUT_WORLD);
   SNESSolve(snes, nullptr, x);
-  SNESGetConvergedReason(snes, &reason);
-  SNESGetIterationNumber(snes, &n_iter);
 
-  // access the model solution counter part: only for debug
-  // auto & model_x = this->dof_manager.getDOFs("displacement");
+  // Helping to debug
+  SNESGetIterationNumber(snes, &n_iter);
+  SNESGetFunctionNorm(snes, &norm);
+  SNESGetSolutionNorm(snes, &xnorm);
+  SNESGetUpdateNorm(snes, &ynorm);
+  SNESGetConvergedReason(snes, &reason);
+  const char * reasonstr;
+  SNESGetConvergedReasonString(snes, &reasonstr);
+  reason_str = std::string(reasonstr);
+  error = petsc_a[n_iter] / petsc_a[0];
+
   dof_manager.splitSolutionPerDOFs();
   callback.restoreLastConvergedStep();
   callback.corrector();
@@ -186,33 +201,12 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
     PetscInt maxf;
 
     SNESGetTolerances(snes, &atol, &rtol, &stol, &maxit, &maxf);
-    AKANTU_CUSTOM_EXCEPTION(debug::SNESNotConvergedException(
-        this->reason, this->n_iter, stol, atol, rtol, maxit));
+    AKANTU_CUSTOM_EXCEPTION(
+        debug::SNESNotConvergedException(reason_str, n_iter, maxit, atol, rtol,
+                                         stol, norm, norm / petsc_a[0], ynorm));
   }
 }
 
-/* -------------------------------------------------------------------------- */
-void NonLinearSolverPETSc::updateInternalParameters() {
-  std::map<ID, ID> akantu_to_petsc_option = {{"max_iterations", "snes_max_it"},
-                                             {"threshold", "snes_stol"}};
-
-  for (auto && [param, param_akantu] : akantu_to_petsc_option) {
-    auto & value = this->get(param);
-    PetscOptionsSetValue(nullptr, ("-" + param_akantu).c_str(),
-                         value.to_string().c_str());
-  }
-  SNESSetFromOptions(snes);
-}
-
-/* -------------------------------------------------------------------------- */
-void NonLinearSolverPETSc::parseSection(const ParserSection & section) {
-  auto parameters = section.getParameters();
-  for (auto && param : range(parameters.first, parameters.second)) {
-    PetscOptionsSetValue(nullptr, ("-" + param.getName()).c_str(),
-                         param.getValue().c_str());
-  }
-  SNESSetFromOptions(snes);
-}
 /* -------------------------------------------------------------------------- */
 
 } // namespace akantu

@@ -55,8 +55,6 @@ public:
   /// the dof manager
   void solve(SolverCallback & callback) override;
 
-  /// parse the arguments from the input file
-  void parseSection(const ParserSection & section) override;
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
@@ -68,43 +66,57 @@ protected:
   void corrector(Vec x);
   void assembleResidual(Vec x, Vec f);
   void assembleJacobian(Vec x, Mat J);
-  void updateInternalParameters() override;
 
   void saveSolution();
   void restoreSolution();
 
+private:
   /// PETSc non linear solver
   SNES snes{};
-  SNESConvergedReason reason{};
 
   SolverCallback * callback{nullptr};
 
   std::unique_ptr<SolverVectorPETSc> x;
 
+  SNESConvergedReason reason{};
+  std::string reason_str{};
   Int n_iter{0};
-  Int max_iterations{};
-  /// Type of convergence criteria
-  SolveConvergenceCriteria convergence_criteria_type{};
-  /// convergence threshold
-  Real convergence_criteria{};
-
+  PetscReal norm{}, xnorm{}, ynorm{};
   PetscInt petsc_na{1000};
   Array<PetscInt> petsc_its;
   Array<PetscReal> petsc_a;
+  Real error{};
 };
 
 namespace debug {
 class SNESNotConvergedException : public NLSNotConvergedException {
 public:
-  SNESNotConvergedException(SNESConvergedReason reason, Int niter, Real error,
+  SNESNotConvergedException(std::string reason, Int niter, Int max_iterations,
                             Real absolute_tolerance, Real relative_tolerance,
-                            Int max_iterations)
-      : NLSNotConvergedException(relative_tolerance, niter, error),
-        reason(reason), absolute_tolerance(absolute_tolerance),
-        max_iterations(max_iterations) {}
-  SNESConvergedReason reason{};
-  Real absolute_tolerance{};
+                            Real solution_tolerance, Real absolute_norm,
+                            Real relative_norm, Real solution_norm)
+      : NLSNotConvergedException(relative_tolerance, niter, relative_norm),
+        reason(reason), max_iterations(max_iterations),
+        absolute_tolerance(absolute_tolerance),
+        relative_tolerance(relative_tolerance),
+        solution_tolerance(solution_tolerance), absolute_norm(absolute_norm),
+        relative_norm(relative_norm), solution_norm(solution_norm) {
+    std::stringstream sstr;
+    sstr << "The PETSc solver did not converge for the reason " << reason
+         << "\nLast norm:\n - atol " << absolute_tolerance << " <> "
+         << absolute_norm << "\n - rtol " << relative_tolerance << " <> "
+         << relative_norm << "\n - stol " << solution_tolerance << " <> "
+         << solution_norm;
+    this->_info = sstr.str();
+  }
+  std::string reason{};
   Int max_iterations{};
+  Real absolute_tolerance{};
+  Real relative_tolerance{};
+  Real solution_tolerance{};
+  Real absolute_norm{};
+  Real relative_norm{};
+  Real solution_norm{};
 };
 } // namespace debug
 

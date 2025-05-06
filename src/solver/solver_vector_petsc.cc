@@ -200,7 +200,7 @@ void SolverVectorPETSc::addValuesLocal(const Array<Int> & lidx,
   const auto * to_add = values.data();
   Array<Real> scaled_array;
   if (scale_factor != 1.) {
-    scaled_array.copy(values, false);
+    scaled_array.copy(values, true);
     scaled_array *= scale_factor;
     to_add = scaled_array.data();
   }

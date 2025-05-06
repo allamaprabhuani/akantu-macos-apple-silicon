@@ -45,12 +45,6 @@ public:
 
   /* ------------------------------------------------------------------------ */
   void updateInternalParameters() override {
-    for (auto && [akantu, petsc] : akantu_to_petsc_options) {
-      auto & value = this->get(akantu);
-      PetscOptionsSetValue(options, ("-" + petsc).c_str(),
-                           value.to_string().c_str());
-    }
-
     if (not petsc_object) {
       return;
     }
@@ -66,6 +60,11 @@ public:
 
   /* ------------------------------------------------------------------------ */
   void parseSection(const ParserSection & section) override {
+    auto && [params_begin, params_end] = section.getParameters();
+    for (auto && param : range(params_begin, params_end)) {
+      exceptIfWrongParameter(param);
+    }
+
     Parsable::parseSection(section);
 
     auto parameters = section.getParameters();
@@ -73,26 +72,51 @@ public:
       PetscOptionsSetValue(options, ("-" + param.getName()).c_str(),
                            param.getValue().c_str());
     }
+    updateInternalParameters();
   }
 
   /* ------------------------------------------------------------------------ */
   void set(const std::string & name, std::any value) override {
+    exceptIfWrongParameter(name);
+
     if (this->hasParameter(name)) {
       Parsable::set(name, value);
     } else {
-      try {
-        std::string option = std::any_cast<const char *>(value);
+      std::string option{};
+      if (value.type() == typeid(Real)) {
+        std::stringstream sstr;
+        sstr << std::any_cast<Real>(value);
+        option = sstr.str();
+      } else if (value.type() == typeid(Int)) {
+        option = std::to_string(std::any_cast<Int>(value));
+      } else if (value.type() == typeid(std::string)) {
+        option = std::any_cast<std::string>(value);
+      }
+
+      if (not option.empty()) {
         PetscOptionsSetValue(options, ("-" + name).c_str(), option.c_str());
-      } catch (std::bad_any_cast & c) {
-        AKANTU_DEBUG_WARNING("\"" << name
-                                  << "\" is not a known option of the object "
-                                  << this->pid);
       }
     }
     updateInternalParameters();
   }
 
 private:
+  void exceptIfWrongParameter(const std::string param) const {
+    if (auto it = akantu_to_petsc_options.find(param);
+        it != akantu_to_petsc_options.end()) {
+
+      const char * type{nullptr};
+      const char * name{nullptr};
+      auto object = reinterpret_cast<PetscObject>(petsc_object);
+      PetscObjectGetType(object, &type);
+      PetscObjectGetName(object, &name);
+      AKANTU_EXCEPTION(
+          "Cannot set the parameter \""
+          << it->first << "\" on object \"" << name << "\" of type \"" << type
+          << "\" use the PETSc option \"" << it->second << "\" instead.");
+    }
+  }
+
   PetscOptions options{};
   PETScType & petsc_object;
   std::function<PetscErrorCode(PETScType)> set_object_from_options;

@@ -94,9 +94,7 @@ public:
         sparse_solver.set("pc_type", "cholesky");
         sparse_solver.set("ksp_rtol", "1e-30");
       } else if (aka::is_of_type<NonLinearSolverPETSc>(solver)) {
-        auto & psolver = aka::as_type<NonLinearSolverPETSc>(solver);
-        // solver.set("pc_type", "cholesky");
-        psolver.set("snes_atol", "1e-16");
+        solver.set("snes_stol", 1e-10);
       }
     }
 #endif
@@ -156,12 +154,15 @@ public:
   void checkResults(presult_func_t && presult_func, const Result & results,
                     const DOFs & dofs) {
     Matrix<Real> presult = presult_func(prescribed_gradient(dofs));
-    for (auto & result : make_view(results, presult.rows(), presult.cols())) {
+    for (auto && [quad, result] :
+         enumerate(make_view(results, presult.rows(), presult.cols()))) {
       auto diff = result - presult;
       auto result_error = diff.template lpNorm<Eigen::Infinity>() /
                           presult.template lpNorm<Eigen::Infinity>();
 
-      EXPECT_NEAR(0, result_error, result_tolerance);
+      EXPECT_NEAR(0, result_error, result_tolerance)
+          << "Check failed on quardature point " << quad << " - got " << result
+          << " expected " << presult;
     }
   }
 

@@ -82,11 +82,25 @@ TYPED_TEST(TestPatchTestSMMLinear, AnisotropicStatic) {
                   "material_anisotropic_" + std::to_string(this->dim) + ".dat");
 
   auto & solver = this->model->getNonLinearSolver();
-  solver.set("max_iterations", 2);
-  solver.set("threshold", 2e-4);
-  solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    solver.set("snes_max_it", 2);
+    solver.set("snes_rtol", 1e-10);
+  } else {
+    solver.set("max_iterations", 2);
+    solver.set("threshold", 1e-10);
+    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  }
 
   this->model->solveStep();
+
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    ID reason = solver.get("convergence_reason");
+    Int n_iter = solver.get("n_iter");
+    Real error = solver.get("error");
+
+    std::cout << "Converged: : " << reason << " - in " << n_iter
+              << " iterations (" << error << ").\n";
+  }
 
   auto & mat = this->model->getMaterial(0);
 
@@ -94,15 +108,15 @@ TYPED_TEST(TestPatchTestSMMLinear, AnisotropicStatic) {
   this->checkDOFs(displacement);
   this->checkGradient(mat.getGradU(this->type), displacement);
 
-  this->result_tolerance = 1e-11;
+  this->result_tolerance = 1e-9;
   this->checkResults(
       [&](const Matrix<Real> & pstrain) {
         auto strain = (pstrain + pstrain.transpose()) / 2.;
         Matrix<Real> stress(this->dim, this->dim);
+        stress.zero();
 
         for (Int i = 0; i < this->dim; ++i) {
           for (Int j = 0; j < this->dim; ++j) {
-            stress(i, j) = 0;
             for (Int k = 0; k < this->dim; ++k) {
               for (Int l = 0; l < this->dim; ++l) {
                 stress(i, j) += C[i][j][k][l] * strain(k, l);

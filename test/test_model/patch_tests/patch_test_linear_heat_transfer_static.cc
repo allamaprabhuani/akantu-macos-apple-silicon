@@ -28,9 +28,14 @@ TYPED_TEST(TestPatchTestHTMLinear, Static) {
   this->initModel(_static, "heat_transfer_input.dat");
 
   auto & solver = this->model->getNonLinearSolver();
-  solver.set("max_iterations", 2);
-  solver.set("threshold", 2e-4);
-  solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    solver.set("snes_max_it", 2);
+    solver.set("snes_rtol", 2e-4);
+  } else {
+    solver.set("max_iterations", 2);
+    solver.set("threshold", 2e-4);
+    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  }
 
   this->model->solveStep();
   this->checkAll();

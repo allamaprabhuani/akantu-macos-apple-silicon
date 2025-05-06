@@ -37,7 +37,6 @@
 
 namespace akantu::detail {
 template <typename T> void PETScSetName(T t, const ID & id) {
-  // NOLINT(cppcoregui)
   PetscObjectSetName(reinterpret_cast<PetscObject>(t), id.c_str());
 }
 } // namespace akantu::detail

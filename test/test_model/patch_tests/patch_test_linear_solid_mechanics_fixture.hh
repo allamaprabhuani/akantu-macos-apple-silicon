@@ -86,10 +86,8 @@ public:
                 total_force.template lpNorm<Eigen::Infinity>() / force_norm_inf,
                 force_tol);
 
-    for (auto && tuple : zip(make_view(internal_forces, dim),
-                             make_view(external_forces, dim))) {
-      auto && f_int = std::get<0>(tuple);
-      auto && f_ext = std::get<1>(tuple);
+    for (auto && [f_int, f_ext] : zip(make_view(internal_forces, dim),
+                                      make_view(external_forces, dim))) {
       auto f = f_int + f_ext;
       EXPECT_NEAR(0, f.template lpNorm<Eigen::Infinity>() / force_norm_inf,
                   force_tol);
@@ -148,27 +146,42 @@ struct invalid_plan_stress<std::tuple<type, bool_c, DM>>
 using true_false =
     std::tuple<aka::bool_constant<true>, aka::bool_constant<false>>;
 
-template <NonLinearSolverType _nls_type, SparseSolverType _ss_type>
-struct TestSolverOptions {
-  static constexpr NonLinearSolverType nls_type = _nls_type;
-  static constexpr SparseSolverType ss_type = _ss_type;
+template <class NLS, class SST> struct TestSolverOptions {
+  static constexpr NonLinearSolverType nls_type = NLS::value;
+  static constexpr SparseSolverType ss_type = SST::value;
 };
 
+struct _non_linear_solver_auto
+    : public std::integral_constant<NonLinearSolverType,
+                                    NonLinearSolverType::_auto> {};
+struct _non_linear_solver_petsc
+    : public std::integral_constant<NonLinearSolverType,
+                                    NonLinearSolverType::_petsc_snes> {};
+
+struct _sparse_solver_eigen
+    : public std::integral_constant<SparseSolverType,
+                                    SparseSolverType::_eigen> {};
+struct _sparse_solver_mumps
+    : public std::integral_constant<SparseSolverType,
+                                    SparseSolverType::_mumps> {};
+struct _sparse_solver_petsc
+    : public std::integral_constant<SparseSolverType,
+                                    SparseSolverType::_petsc> {};
+
 using solver_options = std::tuple<
-    std::tuple<DOFManagerDefault, TestSolverOptions<NonLinearSolverType::_auto,
-                                                    SparseSolverType::_eigen>>
+    std::tuple<DOFManagerDefault,
+               TestSolverOptions<_non_linear_solver_auto, _sparse_solver_eigen>>
 #ifdef AKANTU_USE_MUMPS
     ,
-    std::tuple<DOFManagerDefault, TestSolverOptions<NonLinearSolverType::_auto,
-                                                    SparseSolverType::_mumps>>
+    std::tuple<DOFManagerDefault,
+               TestSolverOptions<_non_linear_solver_auto, _sparse_solver_mumps>>
 #endif
 #ifdef AKANTU_USE_PETSC
     ,
-    std::tuple<DOFManagerPETSc, TestSolverOptions<NonLinearSolverType::_auto,
-                                                  SparseSolverType::_petsc>>,
-    std::tuple<DOFManagerPETSc,
-               TestSolverOptions<NonLinearSolverType::_petsc_snes,
-                                 SparseSolverType::_petsc>>
+    std::tuple<DOFManagerPETSc, TestSolverOptions<_non_linear_solver_auto,
+                                                  _sparse_solver_petsc>>,
+    std::tuple<DOFManagerPETSc, TestSolverOptions<_non_linear_solver_petsc,
+                                                  _sparse_solver_petsc>>
 #endif
     >;
 template <typename T> using valid_types = aka::negation<invalid_plan_stress<T>>;

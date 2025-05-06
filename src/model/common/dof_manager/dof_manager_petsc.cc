@@ -90,6 +90,8 @@ private:
       cppargparse::ArgumentParser & argparser = getStaticArgumentParser();
       int & argc = argparser.getArgC();
       char **& argv = argparser.getArgV();
+
+      PETSc_call(PetscOptionsSetValue, nullptr, "-no_signal_handler", "true");
       PETSc_call(PetscInitialize, &argc, &argv, nullptr, nullptr);
 
       // remove the default PETSc signal handler

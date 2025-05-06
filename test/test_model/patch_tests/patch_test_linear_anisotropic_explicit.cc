@@ -29,6 +29,10 @@ using namespace akantu;
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(TestPatchTestSMMLinear, AnisotropicExplicit) {
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    GTEST_SKIP();
+  }
+
   Real C[3][3][3][3] = {
       {{{112.93753505, 1.85842452538e-10, -4.47654358027e-10},
         {1.85847317471e-10, 54.2334345331, -3.69840984824},

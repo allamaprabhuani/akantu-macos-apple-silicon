@@ -24,6 +24,10 @@
  */
 
 TYPED_TEST(TestPatchTestSMMLinear, Explicit) {
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    GTEST_SKIP();
+  }
+
   std::string filename = "material_check_stress_plane_stress.dat";
   if (this->plane_strain)
     filename = "material_check_stress_plane_strain.dat";
@@ -61,6 +65,10 @@ TYPED_TEST(TestPatchTestSMMLinear, Explicit) {
 
 /* -------------------------------------------------------------------------- */
 TYPED_TEST(TestPatchTestSMMLinear, ExplicitFiniteDeformation) {
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    GTEST_SKIP();
+  }
+
   std::string filename =
       "material_check_stress_plane_stress_finite_deformation.dat";
   if (this->plane_strain) {

@@ -37,10 +37,22 @@ TYPED_TEST(TestPatchTestSMMLinear, Implicit) {
   const auto & coordinates = this->mesh->getNodes();
   auto & displacement = this->model->getDisplacement();
   // set the position of all nodes to the static solution
-  for (auto && tuple : zip(make_view(coordinates, this->dim),
-                           make_view(displacement, this->dim))) {
-    this->setLinearDOF(std::get<1>(tuple), std::get<0>(tuple));
+  for (auto && [X, u] : zip(make_view(coordinates, this->dim),
+                            make_view(displacement, this->dim))) {
+    this->setLinearDOF(u, X);
   }
+
+  auto & solver = this->model->getNonLinearSolver();
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    solver.set("snes_max_it", 2);
+    solver.set("snes_rtol", 1e-10);
+    solver.set("snes_atol", 1e-5);
+  } else {
+    solver.set("max_iterations", 2);
+    solver.set("threshold", 1e-10);
+    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  }
+
   for (Int s = 0; s < 100; ++s) {
     this->model->solveStep();
   }
@@ -72,10 +84,14 @@ TYPED_TEST(TestPatchTestSMMLinear, Static) {
   this->initModel(_static, filename);
 
   auto & solver = this->model->getNonLinearSolver();
-  solver.set("max_iterations", 2);
-  solver.set("threshold", 2e-4);
-  solver.set("convergence_type", SolveConvergenceCriteria::_residual);
-
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    solver.set("snes_max_it", 2);
+    solver.set("snes_rtol", 1e-10);
+  } else {
+    solver.set("max_iterations", 2);
+    solver.set("threshold", 1e-10);
+    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  }
   this->model->solveStep();
 
   this->checkAll();
@@ -148,9 +164,15 @@ TYPED_TEST(TestPatchTestSMMLinear, StaticFiniteDeformation) {
   this->initModel(_static, filename);
 
   auto & solver = this->model->getNonLinearSolver();
-  solver.set("max_iterations", 2);
-  solver.set("threshold", 2e-4);
-  solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
+    solver.set("snes_max_it", 2);
+    solver.set("snes_rtol", 1e-10);
+    solver.set("snes_atol", 1e-10);
+  } else {
+    solver.set("max_iterations", 2);
+    solver.set("threshold", 1e-10);
+    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  }
 
   this->model->solveStep();
 
