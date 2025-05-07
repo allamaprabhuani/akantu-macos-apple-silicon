@@ -96,8 +96,8 @@ protected:
   /// flag do decide if one iteration only to be done
   bool linear{false};
 };
-/* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
 class NonLinearSolverLinear : public NonLinearSolverNewtonRaphson {
 public:
   NonLinearSolverLinear(DOFManager & dof_manager,
@@ -107,6 +107,20 @@ public:
     this->linear = true;
   }
 };
+
+namespace debug {
+class NLSNewtonRaphsonNotConvergedException : public NLSNotConvergedException {
+public:
+  NLSNewtonRaphsonNotConvergedException(
+      Real threshold, Int niter, Real error,
+      SolveConvergenceCriteria convergence_type)
+      : NLSNotConvergedException(threshold, niter, error),
+        convergence_type(convergence_type) {
+    _info = _info + " - convergence type: " + std::to_string(convergence_type);
+  }
+  SolveConvergenceCriteria convergence_type;
+};
+} // namespace debug
 
 } // namespace akantu
 

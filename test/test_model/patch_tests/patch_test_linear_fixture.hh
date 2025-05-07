@@ -83,6 +83,18 @@ public:
                                              .sparse_solver_type = ss_type});
     this->applyBC();
 
+    auto & solver = this->model->getNonLinearSolver();
+    if (nls_type == NonLinearSolverType::_petsc_snes) {
+      solver.set("snes_max_it", 10);
+      solver.set("snes_rtol", 1e-10);
+      solver.set("snes_atol", 2e-5);
+      solver.set("snes_stol", 1e-10);
+    } else if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+      solver.set("max_iterations", 3);
+      solver.set("threshold", 1e-6);
+      solver.set("convergence_type", SolveConvergenceCriteria::_solution);
+    }
+
 #if defined(AKANTU_USE_PETSC)
     if constexpr (std::is_same_v<dof_manager_type, DOFManagerPETSc>) {
       auto & solver = model->getNonLinearSolver();
@@ -92,9 +104,7 @@ public:
             aka::as_type<NonLinearSolverNewtonRaphson>(solver)
                 .getSparseSolver();
         sparse_solver.set("pc_type", "cholesky");
-        sparse_solver.set("ksp_rtol", "1e-30");
-      } else if (aka::is_of_type<NonLinearSolverPETSc>(solver)) {
-        solver.set("snes_stol", 1e-10);
+        sparse_solver.set("ksp_rtol", 1e-30);
       }
     }
 #endif

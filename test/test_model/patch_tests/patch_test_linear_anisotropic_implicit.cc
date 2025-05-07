@@ -93,15 +93,6 @@ TYPED_TEST(TestPatchTestSMMLinear, AnisotropicStatic) {
 
   this->model->solveStep();
 
-  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
-    ID reason = solver.get("convergence_reason");
-    Int n_iter = solver.get("n_iter");
-    Real error = solver.get("error");
-
-    std::cout << "Converged: : " << reason << " - in " << n_iter
-              << " iterations (" << error << ").\n";
-  }
-
   auto & mat = this->model->getMaterial(0);
 
   const auto & displacement = this->model->getDisplacement();

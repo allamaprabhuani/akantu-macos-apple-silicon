@@ -91,6 +91,8 @@ public:
         option = std::to_string(std::any_cast<Int>(value));
       } else if (value.type() == typeid(std::string)) {
         option = std::any_cast<std::string>(value);
+      } else if (value.type() == typeid(const char *)) {
+        option = std::any_cast<const char *>(value);
       }
 
       if (not option.empty()) {

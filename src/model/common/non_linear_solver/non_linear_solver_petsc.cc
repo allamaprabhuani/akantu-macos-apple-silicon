@@ -201,9 +201,9 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
     PetscInt maxf;
 
     SNESGetTolerances(snes, &atol, &rtol, &stol, &maxit, &maxf);
-    AKANTU_CUSTOM_EXCEPTION(
-        debug::SNESNotConvergedException(reason_str, n_iter, maxit, atol, rtol,
-                                         stol, norm, norm / petsc_a[0], ynorm));
+    AKANTU_CUSTOM_EXCEPTION(debug::SNESNotConvergedException(
+        reason_str, n_iter, maxit, atol, rtol, stol, norm, norm / petsc_a[0],
+        xnorm, ynorm));
   }
 }
 

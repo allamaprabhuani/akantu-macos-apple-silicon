@@ -211,7 +211,7 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
             << ": error " << this->error << (this->converged ? " < " : " > ")
             << this->convergence_criteria_normalized);
 
-  } while (not this->converged and this->n_iter <= this->max_iterations);
+  } while (not this->converged and this->n_iter < this->max_iterations);
 
   // this makes sure that you have correct strains and stresses after the
   // solveStep function (e.g., for dumping)
@@ -225,8 +225,9 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
   solver_callback.afterSolveStep(this->converged);
 
   if (not this->converged) {
-    AKANTU_CUSTOM_EXCEPTION(debug::NLSNotConvergedException(
-        this->convergence_criteria, this->n_iter, this->error));
+    AKANTU_CUSTOM_EXCEPTION(debug::NLSNewtonRaphsonNotConvergedException(
+        this->convergence_criteria_normalized, this->n_iter, this->error,
+        this->convergence_criteria_type));
 
     AKANTU_DEBUG_WARNING("[" << this->convergence_criteria_type
                              << "] Convergence not reached after "

@@ -20,8 +20,7 @@
 
 /* -------------------------------------------------------------------------- */
 #include "patch_test_linear_solid_mechanics_fixture.hh"
-/* --------------------------------------------------------------------------
- */
+/* -------------------------------------------------------------------------- */
 
 TYPED_TEST(TestPatchTestSMMLinear, Explicit) {
   if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {

@@ -94,19 +94,22 @@ public:
   SNESNotConvergedException(std::string reason, Int niter, Int max_iterations,
                             Real absolute_tolerance, Real relative_tolerance,
                             Real solution_tolerance, Real absolute_norm,
-                            Real relative_norm, Real solution_norm)
+                            Real relative_norm, Real solution_norm,
+                            Real update_norm)
       : NLSNotConvergedException(relative_tolerance, niter, relative_norm),
         reason(reason), max_iterations(max_iterations),
         absolute_tolerance(absolute_tolerance),
         relative_tolerance(relative_tolerance),
         solution_tolerance(solution_tolerance), absolute_norm(absolute_norm),
-        relative_norm(relative_norm), solution_norm(solution_norm) {
+        relative_norm(relative_norm), solution_norm(solution_norm),
+        update_norm(update_norm) {
     std::stringstream sstr;
     sstr << "The PETSc solver did not converge for the reason " << reason
          << "\nLast norm:\n - atol " << absolute_tolerance << " <> "
          << absolute_norm << "\n - rtol " << relative_tolerance << " <> "
          << relative_norm << "\n - stol " << solution_tolerance << " <> "
-         << solution_norm;
+         << update_norm / solution_norm << " (x: " << solution_norm
+         << " - dx: " << update_norm << ")";
     this->_info = sstr.str();
   }
   std::string reason{};
@@ -117,6 +120,7 @@ public:
   Real absolute_norm{};
   Real relative_norm{};
   Real solution_norm{};
+  Real update_norm{};
 };
 } // namespace debug
 

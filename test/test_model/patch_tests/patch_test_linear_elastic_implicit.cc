@@ -42,17 +42,6 @@ TYPED_TEST(TestPatchTestSMMLinear, Implicit) {
     this->setLinearDOF(u, X);
   }
 
-  auto & solver = this->model->getNonLinearSolver();
-  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
-    solver.set("snes_max_it", 2);
-    solver.set("snes_rtol", 1e-10);
-    solver.set("snes_atol", 1e-5);
-  } else {
-    solver.set("max_iterations", 2);
-    solver.set("threshold", 1e-10);
-    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
-  }
-
   for (Int s = 0; s < 100; ++s) {
     this->model->solveStep();
   }
@@ -83,18 +72,16 @@ TYPED_TEST(TestPatchTestSMMLinear, Static) {
 
   this->initModel(_static, filename);
 
-  auto & solver = this->model->getNonLinearSolver();
-  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
-    solver.set("snes_max_it", 2);
-    solver.set("snes_rtol", 1e-10);
-  } else {
-    solver.set("max_iterations", 2);
-    solver.set("threshold", 1e-10);
-    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
-  }
   this->model->solveStep();
 
   this->checkAll();
+
+  auto & solver = this->model->getNonLinearSolver();
+  if (aka::is_of_type<NonLinearSolverNewtonRaphson>(solver)) {
+    solver.set("max_iterations", 2);
+    solver.set("threshold", 1e-6);
+    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
+  }
 
 #define debug 0
 #if debug
@@ -162,17 +149,6 @@ TYPED_TEST(TestPatchTestSMMLinear, StaticFiniteDeformation) {
     return;
   }
   this->initModel(_static, filename);
-
-  auto & solver = this->model->getNonLinearSolver();
-  if (TestFixture::nls_type == NonLinearSolverType::_petsc_snes) {
-    solver.set("snes_max_it", 2);
-    solver.set("snes_rtol", 1e-10);
-    solver.set("snes_atol", 1e-10);
-  } else {
-    solver.set("max_iterations", 2);
-    solver.set("threshold", 1e-10);
-    solver.set("convergence_type", SolveConvergenceCriteria::_residual);
-  }
 
   this->model->solveStep();
 

@@ -81,8 +81,12 @@ namespace debug {
 class NLSNotConvergedException : public Exception {
 public:
   NLSNotConvergedException(Real threshold, Int niter, Real error)
-      : Exception("The non linear solver did not converge."),
-        threshold(threshold), niter(niter), error(error) {}
+      : Exception(""), threshold(threshold), niter(niter), error(error) {
+    std::stringstream sstr;
+    sstr << "The non linear solver did not converge after " << niter
+         << " iterations (error " << error << " > " << threshold << ")";
+    _info = sstr.str();
+  }
   Real threshold;
   Int niter;
   Real error;

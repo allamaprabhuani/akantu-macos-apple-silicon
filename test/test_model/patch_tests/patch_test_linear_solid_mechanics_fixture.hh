@@ -190,6 +190,48 @@ using model_types = gtest_list_t<
     tuple_filter_t<valid_types, cross_product_t<TestElementTypes, true_false,
                                                 solver_options>>>;
 
-TYPED_TEST_SUITE(TestPatchTestSMMLinear, model_types, );
+class NameGenerator {
+public:
+  template <typename T> static std::string GetName(int) {
+    std::string name{};
+    const auto element_type = std::tuple_element_t<0, T>::value;
+    const bool plane_strain = std::tuple_element_t<1, T>::value;
+    using options = std::tuple_element_t<2, T>;
+
+    using dm_type = std::tuple_element_t<0, options>;
+
+    const auto nls_type = std::tuple_element_t<1, options>::nls_type;
+    const auto ss_type = std::tuple_element_t<1, options>::ss_type;
+
+    name = std::to_string(element_type) + "/";
+
+    name += plane_strain ? "plane_strain/" : "plane_stress/";
+
+    if constexpr (std::is_same_v<DOFManagerDefault, dm_type>)
+      name += "default/";
+#ifdef AKANTU_USE_PETSC
+    if constexpr (std::is_same_v<DOFManagerPETSc, dm_type>)
+      name += "petsc/";
+#endif
+
+    if constexpr (nls_type == NonLinearSolverType::_auto)
+      name += "auto";
+    if constexpr (nls_type == NonLinearSolverType::_petsc_snes)
+      name += "petsc_snes";
+    if constexpr (nls_type == NonLinearSolverType::_newton_raphson)
+      name += "newton_raphson";
+
+    if constexpr (ss_type == SparseSolverType::_eigen)
+      name += "[eigen]";
+    if constexpr (ss_type == SparseSolverType::_mumps)
+      name += "[mumps]";
+    if constexpr (ss_type == SparseSolverType::_petsc)
+      name += "[petsc]";
+
+    return name;
+  }
+};
+
+TYPED_TEST_SUITE(TestPatchTestSMMLinear, model_types, NameGenerator);
 
 #endif /* AKANTU_PATCH_TEST_LINEAR_SOLID_MECHANICS_FIXTURE_HH_ */
