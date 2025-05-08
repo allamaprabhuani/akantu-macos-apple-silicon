@@ -1,18 +1,18 @@
-phasefield quadratic [
+phasefield quadratic no_split [
   name = chocolate
   E = 2
   gc = 2
   l0 = 2
 ]
 
-phasefield quadratic [
+phasefield quadratic no_split [
   name = chewing-gum
   E = 1
   gc = 1
   l0 = 1
 ]
 
-phasefield quadratic [
+phasefield quadratic no_split [
   name = candy
   E = 3
   gc = 3

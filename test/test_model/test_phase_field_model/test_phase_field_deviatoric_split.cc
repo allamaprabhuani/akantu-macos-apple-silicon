@@ -68,7 +68,6 @@ int main(int argc, char * argv[]) {
 
   const Real E = phasefield.getParam("E");
   const Real nu = phasefield.getParam("nu");
-  Real c22 = E * (1 - nu) / ((1 + nu) * (1 - 2 * nu));
 
   const Real lambda = nu * E / ((1. + nu) * (1. - 2. * nu));
   const Real mu = E / (2. + 2. * nu);
@@ -82,7 +81,6 @@ int main(int argc, char * argv[]) {
 
   Real max_strain_energy{0.};
   Real strain_energy_plus{0.};
-  Real strain_energy_minus{0.};
 
   for (UInt s = 0; s < nbSteps; ++s) {
     Real axial_strain{0.};
@@ -97,11 +95,8 @@ int main(int argc, char * argv[]) {
 
     if (axial_strain > 0) {
       strain_energy_plus = axial_strain * axial_strain * (0.5 * lambda + mu);
-      strain_energy_minus = 0.;
     } else {
       strain_energy_plus = 2. * axial_strain * axial_strain * mu / 3.;
-      strain_energy_minus =
-          axial_strain * axial_strain * (0.5 * lambda + mu / 3.);
     }
 
     if (strain_energy_plus > max_strain_energy) {

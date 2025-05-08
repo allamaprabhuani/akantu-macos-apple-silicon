@@ -82,7 +82,6 @@ int main(int argc, char * argv[]) {
 
   Real max_strain_energy{0.};
   Real strain_energy_plus{0.};
-  Real strain_energy_minus{0.};
 
   for (UInt s = 0; s < nbSteps; ++s) {
     Real axial_strain{0.};
@@ -97,15 +96,10 @@ int main(int argc, char * argv[]) {
 
     if (axial_strain > 0) {
       strain_energy_plus = axial_strain * axial_strain * (0.5 * lambda + mu);
-      strain_energy_minus = 0.;
     } else {
       strain_energy_plus = 0.5 * axial_strain * axial_strain * mu;
-      strain_energy_minus = axial_strain * axial_strain * 0.5 * (lambda + mu);
     }
 
-    // if (strain_energy_plus > max_strain_energy) {
-    //   max_strain_energy = strain_energy_plus;
-    // }
     max_strain_energy = strain_energy_plus;
 
     coupler.solve("static", "static");
@@ -116,11 +110,7 @@ int main(int argc, char * argv[]) {
     if (new_damage > analytical_damage) {
       analytical_damage = new_damage;
     }
-    // if (axial_strain < 0.) {
-    //   analytical_sigma = (1. - analytical_damage) * (1. - analytical_damage)
-    //   *
-    //                          axial_strain * mu +
-    //                      axial_strain * (lambda + mu);
+
     if (axial_strain < 0.) {
       analytical_sigma = (1. - analytical_damage) * (1. - analytical_damage) *
                              axial_strain * 4. * mu / 3. +

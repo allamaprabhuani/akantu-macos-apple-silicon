@@ -96,7 +96,6 @@ int main(int argc, char * argv[]) {
   Real error_damage{0.};
 
   Real strain_energy_plus{0.};
-  Real strain_energy_minus{0.};
   Real max_strain{0.};
 
   for (UInt s = 0; s < nbSteps; ++s) {
@@ -119,11 +118,8 @@ int main(int argc, char * argv[]) {
 
     if (axial_strain > 0) {
       strain_energy_plus = axial_strain * axial_strain * (0.5 * lambda + mu);
-      strain_energy_minus = 0.;
     } else {
       strain_energy_plus = 2. * axial_strain * axial_strain * mu / 3.;
-      strain_energy_minus =
-          axial_strain * axial_strain * (0.5 * lambda + mu / 3.);
     }
 
     new_damage = 2. * (l0 / gc) * strain_energy_plus /

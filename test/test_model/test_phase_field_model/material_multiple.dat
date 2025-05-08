@@ -1,4 +1,4 @@
-material phasefield [
+material phasefield no_split [
 	 name = plate
 	 rho = 1.
 	 E = 210.0
@@ -6,7 +6,7 @@ material phasefield [
 	 Plane_Stress = false
 ]
 
-material phasefield [
+material phasefield no_split [
 	 name = rigid
 	 rho = 1.
 	 E = 21.0
@@ -16,7 +16,7 @@ material phasefield [
 
 
 
-phasefield quadratic [
+phasefield quadratic no_split [
   name = plate
   E = 210.0
   nu = 0.3
@@ -26,7 +26,7 @@ phasefield quadratic [
 
 
 
-phasefield quadratic [
+phasefield quadratic no_split [
   name = rigid
   E = 21.0
   nu = 0.3

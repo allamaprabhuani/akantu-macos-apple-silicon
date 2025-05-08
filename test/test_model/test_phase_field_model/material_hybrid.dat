@@ -1,5 +1,5 @@
 model solid_mechanics_model [
-      material phasefield_anisotropic [
+      material phasefield volumetric_deviatoric [
 	 name = plate
 	 rho = 1.
 	 E = 210.0
@@ -9,12 +9,11 @@ model solid_mechanics_model [
 ]
 
 model phase_field_model [
-      phasefield quadratic [
+      phasefield quadratic volumetric_deviatoric [
        name = plate
        E = 210.0
        nu = 0.3
        gc = 5e-3
        l0 = 0.1
-			 isotropic = false
 	   ]	
 ]	

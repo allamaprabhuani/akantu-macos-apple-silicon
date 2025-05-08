@@ -2,7 +2,6 @@
 #include "aka_common.hh"
 #include "material.hh"
 #include "material_phasefield.hh"
-#include "material_phasefield_anisotropic.hh"
 #include "non_linear_solver.hh"
 #include "phase_field_model.hh"
 #include "solid_mechanics_model.hh"
@@ -93,7 +92,6 @@ int main(int argc, char * argv[]) {
 
     model.assembleInternalForces();
 
-    // TODO: change to match AT1 formulation
     analytical_damage =
         1. - 3. * gc / (8. * l0 * axial_strain * axial_strain * c22);
     analytical_damage = std::max(0., analytical_damage);

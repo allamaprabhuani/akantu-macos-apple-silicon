@@ -1,23 +1,21 @@
 model solid_mechanics_model [
-      material phasefield [
+      material phasefield no_split [
 	 name = plate
 	 rho = 1.
 	 E = 210.0
 	 nu = 0.3
 	 Plane_Stress = false
-   is_hybrid = false
 	 ]
 ]
 
 model phase_field_model [
-      phasefield linear [
+      phasefield linear no_split [
        name = plate
        E = 210.0
        nu = 0.3
        gc = 5e-3
        l0 = 20
        Plane_Stress = false
-       isotropic = true
        irreversibility_type = penalization
 			 irreversibility_tol = 0.001
 	   ]	

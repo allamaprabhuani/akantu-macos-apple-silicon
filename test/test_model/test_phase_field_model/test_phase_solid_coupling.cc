@@ -22,7 +22,6 @@
 #include "aka_common.hh"
 #include "material.hh"
 #include "material_phasefield.hh"
-#include "material_phasefield_anisotropic.hh"
 #include "non_linear_solver.hh"
 #include "non_linear_solver_newton_raphson.hh"
 #include "phase_field_model.hh"
