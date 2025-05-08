@@ -6,13 +6,15 @@
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
-EnergySplit::EnergySplit(Real E, Real nu, bool plane_stress)
-    : E(E), nu(nu), plane_stress(plane_stress) {
-  this->lambda = this->nu * this->E / ((1 + this->nu) * (1 - 2 * this->nu));
-  if (this->plane_stress) {
-    this->lambda = this->nu * this->E / ((1 + this->nu) * (1 - this->nu));
+void EnergySplit::updateMaterialProperties(Real E, Real nu, bool plane_stress) {
+  this->E = E;
+  this->nu = nu;
+  this->plane_stress = plane_stress;
+  lambda = nu * E / ((1 + nu) * (1 - 2 * nu));
+  if (plane_stress) {
+    lambda = nu * E / ((1 + nu) * (1 - nu));
   }
-  this->mu = this->E / (2 * (1 + this->nu));
+  mu = E / (2 * (1 + nu));
 }
 
 } // namespace akantu

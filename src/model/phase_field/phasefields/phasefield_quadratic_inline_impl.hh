@@ -3,8 +3,9 @@
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-inline void PhaseFieldQuadratic<dim>::computeDissipatedEnergyOnQuad(
+template <Int dim, template <Int> class EnergySplit_>
+inline void
+PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyOnQuad(
     const Real & dam, const Vector<Real> & grad_d, Real & edis,
     Real & g_c_quad) {
 
@@ -17,8 +18,9 @@ inline void PhaseFieldQuadratic<dim>::computeDissipatedEnergyOnQuad(
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-inline void PhaseFieldQuadratic<dim>::computeDamageEnergyDensityOnQuad(
+template <Int dim, template <Int> class EnergySplit_>
+inline void
+PhaseFieldQuadratic<dim, EnergySplit_>::computeDamageEnergyDensityOnQuad(
     const Real & phi_quad, Real & dam_energy_quad, const Real & g_c_quad) {
   dam_energy_quad = 2.0 * phi_quad + g_c_quad / this->l0;
 }

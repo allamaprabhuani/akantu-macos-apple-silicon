@@ -1,8 +1,18 @@
 /**
- * Copyright (©) 2010-2023 EPFL (Ecole Polytechnique Fédérale de Lausanne)
- * Laboratory (LSMS - Laboratoire de Simulation en Mécanique des Solides)
+ * @file   material_phasefield.cc
  *
- * This file is part of Akantu
+ * @author Shad Durussel <shad.durussel@epfl.ch>
+ *
+ * @date creation: Mon Mar 27 2023
+ * @date last modification: Mon Mar 27 2023
+ *
+ * @brief  Specialization of the material class for the phasefield material
+ *
+ *
+ * @section LICENSE
+ *
+ * Copyright (©) 2010-2021 EPFL (Ecole Polytechnique Fédérale de Lausanne)
+ * Laboratory (LSMS - Laboratoire de Simulation en Mécanique des Solides)
  *
  * Akantu is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free
@@ -16,91 +26,101 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Akantu. If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 /* -------------------------------------------------------------------------- */
 #include "material_phasefield.hh"
-#include "aka_common.hh"
 #include "solid_mechanics_model.hh"
+#include "volumetric_deviatoric_split.hh"
 
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-MaterialPhaseField<dim>::MaterialPhaseField(SolidMechanicsModel & model,
-                                            const ID & id)
-    : Parent(model, id),
-      effective_damage(this->registerInternal("effective_damage", 1)) {
-  this->registerParam("eta", eta, Real(0.), _pat_parsable,
-                      "Residual rigidity factor");
-  this->registerParam("is_hybrid", is_hybrid, false,
-                      _pat_parsable | _pat_readable, "Use hybrid formulation");
+template <Int dim, template <Int> class EnergySplit_>
+MaterialPhaseField<dim, EnergySplit_>::MaterialPhaseField(
+    SolidMechanicsModel & model, const ID & id)
+    : Parent(model, id) {
+  this->registerParam("eta", eta, Real(0.), _pat_parsable, "eta");
+  this->registerParam("is_isotropic", is_isotropic, false,
+                      _pat_parsable | _pat_readable,
+                      "Use isotropic formulation");
   this->registerParam("degrade_mass", degrade_mass, false,
                       _pat_parsable | _pat_readable,
                       "Degrade mass with damage");
 }
 
-/* -------------------------------------------------------------------------- */
-template <Int dim>
-void MaterialPhaseField<dim>::computeStress(ElementType el_type,
-                                            GhostType ghost_type) {
-  MaterialElastic<dim>::computeStress(el_type, ghost_type);
+template <Int dim, template <Int> class EnergySplit_>
+void MaterialPhaseField<dim, EnergySplit_>::computeStress(
+    ElementType el_type, GhostType ghost_type) {
 
-  if (this->is_hybrid) {
-    computeEffectiveDamage(el_type, ghost_type);
+  MaterialThermal<dim>::computeStress(el_type, ghost_type);
+  auto && arguments = Parent::getArguments(el_type, ghost_type);
 
-    for (auto && args : getArguments(el_type, ghost_type)) {
-      auto && dam = args["effective_damage"_n];
-      computeStressOnQuad(tuple::replace(args, "damage"_n = dam));
+  if (not this->finite_deformation) {
+    for (auto && args : arguments) {
+      this->computeStressOnQuad(args);
     }
   } else {
-    for (auto && args : getArguments(el_type, ghost_type)) {
-      computeStressOnQuad(args);
+    for (auto && args : arguments) {
+      auto && E = this->template gradUToE<dim>(args["grad_u"_n]);
+      this->computeStressOnQuad(tuple::replace(args, "grad_u"_n = E));
     }
   }
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-void MaterialPhaseField<dim>::computeTangentModuli(ElementType el_type,
-                                                   Array<Real> & tangent_matrix,
-                                                   GhostType ghost_type) {
-  computeEffectiveDamage(el_type, ghost_type);
-  MaterialElastic<dim>::computeTangentModuli(el_type, tangent_matrix,
-                                             ghost_type);
+template <Int dim, template <Int> class EnergySplit_>
+void MaterialPhaseField<dim, EnergySplit_>::initMaterial() {
+  MaterialDamage<dim>::initMaterial();
 
-  if (this->is_hybrid) {
-    computeEffectiveDamage(el_type, ghost_type);
+  this->energy_split = std::make_shared<EnergySplit_<dim>>();
+  if constexpr (dim == 2) {
+    this->energy_split->updateMaterialProperties(this->E, this->nu,
+                                                 this->plane_stress);
+  } else {
+    this->energy_split->updateMaterialProperties(this->E, this->nu, false);
+  }
+}
 
-    for (auto && args :
-         getArgumentsTangent(tangent_matrix, el_type, ghost_type)) {
-      auto && dam = args["effective_damage"_n];
-      computeTangentModuliOnQuad(tuple::replace(args, "damage"_n = dam));
+/* -------------------------------------------------------------------------- */
+// template <template <Int> class EnergySplit_>
+// void MaterialPhaseField<2, EnergySplit_>::initMaterial() {
+//   MaterialDamage<2>::initMaterial();
+// 
+//   this->energy_split = std::make_shared<EnergySplit_<2>>();
+//   this->energy_split->updateMaterialProperties(this->E, this->nu,
+//                                                this->plane_stress);
+// }
+
+/* -------------------------------------------------------------------------- */
+template <Int dim, template <Int> class EnergySplit_>
+void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuli(
+    ElementType el_type, Array<Real> & tangent_matrix, GhostType ghost_type) {
+
+  auto && arguments =
+      Parent::getArgumentsTangent(tangent_matrix, el_type, ghost_type);
+
+  if (not this->finite_deformation) {
+    for (auto && args : arguments) {
+      this->computeTangentModuliOnQuad(args);
     }
   } else {
-    for (auto && args :
-         getArgumentsTangent(tangent_matrix, el_type, ghost_type)) {
-      computeTangentModuliOnQuad(args);
+    for (auto && args : arguments) {
+      auto && E = this->template gradUToE<dim>(args["grad_u"_n]);
+      this->computeTangentModuliOnQuad(tuple::replace(args, "grad_u"_n = E));
     }
   }
+
+  // for (auto && args :
+  //      Parent::getArgumentsTangent(tangent_matrix, el_type, ghost_type)) {
+  //   computeTangentModuliOnQuad(args);
+  // }
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-void MaterialPhaseField<dim>::computeEffectiveDamage(ElementType el_type,
-                                                     GhostType ghost_type) {
 
-  for (auto && args : getArguments(el_type, ghost_type)) {
-    computeEffectiveDamageOnQuad(args);
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-template class MaterialPhaseField<1>;
-template class MaterialPhaseField<2>;
-template class MaterialPhaseField<3>;
-
-const bool material_is_allocated_phasefield [[maybe_unused]] =
-    instantiateMaterial<MaterialPhaseField>("phasefield");
+static bool material_is_allocated_phasefield =
+    instantiateMaterialPhaseField("phasefield");
 
 } // namespace akantu

@@ -7,12 +7,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-NoEnergySplit<dim>::NoEnergySplit(Real E, Real nu, bool plane_stress)
-    : EnergySplit(E, nu, plane_stress) {}
-
-/* -------------------------------------------------------------------------- */
-template <Int dim>
-void NoEnergySplit<dim>::computePhiOnQuad(const Matrix<Real> & strain_quad,
+inline void NoEnergySplit<dim>::computePhiOnQuad(const Matrix<Real> & strain_quad,
                                           Real & phi_quad) {
   Real trace = strain_quad.trace();
   phi_quad = 0.5 * this->lambda * trace * trace +
@@ -21,7 +16,7 @@ void NoEnergySplit<dim>::computePhiOnQuad(const Matrix<Real> & strain_quad,
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-void NoEnergySplit<dim>::computeSigmaOnQuad(const Matrix<Real> & strain_quad,
+inline void NoEnergySplit<dim>::computeSigmaOnQuad(const Matrix<Real> & strain_quad,
                                             const Real & sigma_th,
                                             Matrix<Real> & sigma_plus,
                                             Matrix<Real> & /*sigma_minus*/) {
@@ -33,7 +28,7 @@ void NoEnergySplit<dim>::computeSigmaOnQuad(const Matrix<Real> & strain_quad,
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-void NoEnergySplit<dim>::computeTangentCoefsOnQuad(
+inline void NoEnergySplit<dim>::computeTangentCoefsOnQuad(
     const Matrix<Real> & /*strain_quad*/, const Real & g_d,
     Matrix<Real> & tangent) {
 

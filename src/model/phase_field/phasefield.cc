@@ -63,9 +63,6 @@ PhaseField::PhaseField(PhaseFieldModel & model, const ID & id,
                       "critical local fracture energy density");
   this->registerParam("E", E, _pat_parsable | _pat_readable, "Young's modulus");
   this->registerParam("nu", nu, _pat_parsable | _pat_readable, "Poisson ratio");
-  this->registerParam("isotropic", isotropic, true,
-                      _pat_parsable | _pat_readable,
-                      "Use isotropic formulation");
   this->registerParam("irreversibility_type", irreversibility_type,
                       std::string("history"), _pat_parsable | _pat_readable,
                       "Type of irreversibility");

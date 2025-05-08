@@ -15,34 +15,41 @@ public:
   /* Constructors/Destructors                                                 */
   /* ------------------------------s------------------------------------------
    */
-  VolumetricDeviatoricSplit(Real E, Real nu, bool plane_stress = false);
+  VolumetricDeviatoricSplit() : EnergySplit() {
+    dev_dim = plane_stress ? dim : 3;
+  };
 
-  /* ------------------------------------------------------------------------ */
-  /* Methods                                                                  */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------*/
+  /* Methods */
+  /* ------------------------------------------------------------------------*/
 public:
   // compute strain energy density on quad
-  void computePhiOnQuad(const Matrix<Real> & strain_quad,
-                        Real & phi_quad) override;
+  inline void computePhiOnQuad(const Matrix<Real> & strain_quad,
+                               Real & phi_quad);
 
   // compute stress on quad
-  void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
-                          const Real & sigma_th, Matrix<Real> & sigma_plus,
-                          Matrix<Real> & sigma_minus) override;
+  inline void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
+                                 const Real & sigma_th,
+                                 Matrix<Real> & sigma_plus,
+                                 Matrix<Real> & sigma_minus);
 
   // compute tangent moduli coefficients on quad
-  void computeTangentCoefsOnQuad(const Matrix<Real> & strain_quad,
-                                 const Real & g_d,
-                                 Matrix<Real> & tangent) override;
+  inline void computeTangentCoefsOnQuad(const Matrix<Real> & strain_quad,
+                                        const Real & g_d,
+                                        Matrix<Real> & tangent);
 
-  /* ------------------------------------------------------------------------ */
-  /* Class Members                                                            */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+   */
+  /* Class Members */
+  /* ------------------------------------------------------------------------
+   */
 private:
   // dimension to consider in deviatoric split
   Int dev_dim;
 };
 
 } // namespace akantu
+
+#include "volumetric_deviatoric_split_inline_impl.hh"
 
 #endif

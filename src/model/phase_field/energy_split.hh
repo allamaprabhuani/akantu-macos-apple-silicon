@@ -20,26 +20,29 @@ public:
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
-  EnergySplit(Real E, Real nu, bool plane_stress = false);
+  EnergySplit(){};
   virtual ~EnergySplit() = default;
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
-  // compute strain energy density on quad
-  virtual void computePhiOnQuad(const Matrix<Real> & /*strain_quad*/,
-                                Real & /*phi_quad*/) = 0;
+  // update material properties
+  virtual void updateMaterialProperties(Real E, Real nu, bool plane_stress);
 
-  // compute stress on quad
-  virtual void computeSigmaOnQuad(const Matrix<Real> & /*strain_quad*/,
-                                  const Real & /*sigma_th*/,
-                                  Matrix<Real> & /*sigma_plus*/,
-                                  Matrix<Real> & /*sigma_minus*/) = 0;
+  // // compute strain energy density on quad
+  // virtual void computePhiOnQuad(const Matrix<Real> & /*strain_quad*/,
+  //                               Real & /*phi_quad*/) = 0;
 
-  // compute tangent moduli coefficients on quad
-  virtual void computeTangentCoefsOnQuad(const Matrix<Real> & /*strain_quad*/,
-                                         const Real & /*g_d*/,
-                                         Matrix<Real> & /*tangent*/) = 0;
+  // // compute stress on quad
+  // virtual void computeSigmaOnQuad(const Matrix<Real> & /*strain_quad*/,
+  //                                 const Real & /*sigma_th*/,
+  //                                 Matrix<Real> & /*sigma_plus*/,
+  //                                 Matrix<Real> & /*sigma_minus*/) = 0;
+
+  // // compute tangent moduli coefficients on quad
+  // virtual void computeTangentCoefsOnQuad(const Matrix<Real> & /*strain_quad*/,
+  //                                        const Real & /*g_d*/,
+  //                                        Matrix<Real> & /*tangent*/) = 0;
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

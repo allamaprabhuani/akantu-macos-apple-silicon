@@ -40,7 +40,9 @@
 
 namespace akantu {
 
-template <Int dim> class PhaseFieldQuadratic : public PhaseField {
+template <Int dim, template <Int> class EnergySplit_>
+requires ComputePhi<dim, EnergySplit_>
+class PhaseFieldQuadratic : public PhaseField {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -99,8 +101,8 @@ private:
   // dimension to consider in deviatoric split
   Int dev_dim;
 
-  // energy split
-  std::shared_ptr<EnergySplit> energy_split{nullptr};
+  /// energy split
+  std::shared_ptr<EnergySplit_<dim>> energy_split;
 };
 
 } // namespace akantu

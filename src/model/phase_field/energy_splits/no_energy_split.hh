@@ -14,26 +14,29 @@ public:
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
-  NoEnergySplit(Real E, Real nu, bool plane_stress = false);
+  NoEnergySplit() : EnergySplit() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
   // compute strain energy density on quad
-  void computePhiOnQuad(const Matrix<Real> & strain_quad,
-                        Real & phi_quad) override;
+  inline void computePhiOnQuad(const Matrix<Real> & strain_quad,
+                               Real & phi_quad);
 
   // compute stress on quad
-  void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
-                          const Real & sigma_th, Matrix<Real> & sigma_plus,
-                          Matrix<Real> & /*sigma_minus*/) override;
+  inline void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
+                                 const Real & sigma_th,
+                                 Matrix<Real> & sigma_plus,
+                                 Matrix<Real> & /*sigma_minus*/);
 
   // compute tangent moduli coefficients on quad
-  void computeTangentCoefsOnQuad(const Matrix<Real> & /*strain_quad*/,
-                                 const Real & g_d,
-                                 Matrix<Real> & tangent) override;
+  inline void computeTangentCoefsOnQuad(const Matrix<Real> & /*strain_quad*/,
+                                        const Real & g_d,
+                                        Matrix<Real> & tangent);
 };
 
 } // namespace akantu
+
+#include "no_energy_split_inline_impl.hh"
 
 #endif

@@ -7,18 +7,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-VolumetricDeviatoricSplit<dim>::VolumetricDeviatoricSplit(Real E, Real nu,
-                                                          bool plane_stress)
-    : EnergySplit(E, nu, plane_stress) {
-  this->dev_dim = dim;
-  if (not plane_stress) {
-    this->dev_dim = 3;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-template <Int dim>
-void VolumetricDeviatoricSplit<dim>::computePhiOnQuad(
+inline void VolumetricDeviatoricSplit<dim>::computePhiOnQuad(
     const Matrix<Real> & strain_quad, Real & phi_quad) {
   Real trace = strain_quad.trace();
   Real trace_plus = std::max(Real(0.), trace);
@@ -38,7 +27,7 @@ void VolumetricDeviatoricSplit<dim>::computePhiOnQuad(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-void VolumetricDeviatoricSplit<dim>::computeSigmaOnQuad(
+inline void VolumetricDeviatoricSplit<dim>::computeSigmaOnQuad(
     const Matrix<Real> & strain_quad, const Real & sigma_th,
     Matrix<Real> & sigma_plus, Matrix<Real> & sigma_minus) {
   Real trace = strain_quad.trace();
@@ -66,7 +55,7 @@ void VolumetricDeviatoricSplit<dim>::computeSigmaOnQuad(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-void VolumetricDeviatoricSplit<dim>::computeTangentCoefsOnQuad(
+inline void VolumetricDeviatoricSplit<dim>::computeTangentCoefsOnQuad(
     const Matrix<Real> & strain_quad, const Real & g_d,
     Matrix<Real> & tangent) {
 

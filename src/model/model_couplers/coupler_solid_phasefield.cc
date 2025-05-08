@@ -20,7 +20,6 @@
 
 /* -------------------------------------------------------------------------- */
 #include "coupler_solid_phasefield.hh"
-#include "dumpable_inline_impl.hh"
 #include "element_synchronizer.hh"
 #include "integrator_gauss.hh"
 #include "shape_lagrange.hh"
@@ -346,7 +345,7 @@ void CouplerSolidPhaseField::computeDamageOnQuadPoints(GhostType ghost_type) {
         tuple_dispatch<AllSpatialDimensions>(
             [&](auto && _) {
               constexpr auto && dim_ = aka::decay_v<decltype(_)>;
-              auto & mat = static_cast<MaterialPhaseField<dim_> &>(material);
+              auto & mat = static_cast<MaterialDamage<dim_> &>(material);
               auto & damage = mat.getDamage();
               auto & phase_damage = phasefield.getDamage();
               for (const auto & type :

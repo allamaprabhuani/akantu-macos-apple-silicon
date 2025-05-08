@@ -1,8 +1,6 @@
 /* -------------------------------------------------------------------------- */
-#include "no_energy_split.hh"
+#include "energy_split.hh"
 #include "phasefield.hh"
-#include "volumetric_deviatoric_split.hh"
-#include <memory>
 /* -------------------------------------------------------------------------- */
 
 #ifndef __AKANTU_PHASEFIELD_LINEAR_HH__
@@ -10,7 +8,9 @@
 
 namespace akantu {
 
-template <Int dim> class PhaseFieldLinear : public PhaseField {
+template <Int dim, template <Int> class EnergySplit_>
+requires ComputePhi<dim, EnergySplit_>
+class PhaseFieldLinear : public PhaseField {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -74,8 +74,8 @@ private:
   // recovery penalization parameter
   Real rho_rec;
 
-  // energy split
-  std::shared_ptr<EnergySplit> energy_split{nullptr};
+  /// energy split
+  std::shared_ptr<EnergySplit_<dim>> energy_split;
 };
 
 } // namespace akantu

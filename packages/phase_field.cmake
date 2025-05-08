@@ -31,10 +31,6 @@ package_declare_sources(phase_field
   model/phase_field/phasefield_selector.hh
   model/phase_field/phasefield_selector_tmpl.hh
 
-  model/phase_field/phasefields/phasefield_exponential.hh
-  model/phase_field/phasefields/phasefield_exponential.cc
-  model/phase_field/phasefields/phasefield_exponential_inline_impl.hh
-
   model/phase_field/phasefields/phasefield_quadratic.hh
   model/phase_field/phasefields/phasefield_quadratic.cc
   model/phase_field/phasefields/phasefield_quadratic_inline_impl.hh
@@ -47,6 +43,9 @@ package_declare_sources(phase_field
   model/phase_field/phase_field_model.hh
   model/phase_field/phase_field_model_inline_impl.hh
 
+  model/solid_mechanics/materials/material_damage/material_phasefield.cc
+  model/solid_mechanics/materials/material_damage/material_phasefield.hh
+  model/solid_mechanics/materials/material_damage/material_phasefield_inline_impl.hh
   model/model_couplers/coupler_solid_phasefield.hh
   model/model_couplers/coupler_solid_phasefield.cc
 
@@ -56,8 +55,8 @@ package_declare_sources(phase_field
   model/phase_field/energy_split.cc
 
   model/phase_field/energy_splits/volumetric_deviatoric_split.hh
-  model/phase_field/energy_splits/volumetric_deviatoric_split.cc
+  model/phase_field/energy_splits/volumetric_deviatoric_split_inline_impl.hh
 
   model/phase_field/energy_splits/no_energy_split.hh
-  model/phase_field/energy_splits/no_energy_split.cc
+  model/phase_field/energy_splits/no_energy_split_inline_impl.hh
   )

@@ -1,8 +1,18 @@
 /**
- * Copyright (©) 2010-2023 EPFL (Ecole Polytechnique Fédérale de Lausanne)
- * Laboratory (LSMS - Laboratoire de Simulation en Mécanique des Solides)
+ * @file   material_phasefield.hh
  *
- * This file is part of Akantu
+ * @author Shad Durussel <shad.durussel@epfl.ch>
+ *
+ * @date creation: Mon Mar 27 2023
+ * @date last modification: Mon Mar 27 2023
+ *
+ * @brief  Phasefield damage law
+ *
+ *
+ * @section LICENSE
+ *
+ * Copyright (©) 2010-2021 EPFL (Ecole Polytechnique Fédérale de Lausanne)
+ * Laboratory (LSMS - Laboratoire de Simulation en Mécanique des Solides)
  *
  * Akantu is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free
@@ -16,29 +26,67 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Akantu. If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 /* -------------------------------------------------------------------------- */
+#include "aka_common.hh"
+#include "energy_split.hh"
+#include "material.hh"
 #include "material_damage.hh"
+#include "no_energy_split.hh"
+#include "volumetric_deviatoric_split.hh"
 /* -------------------------------------------------------------------------- */
 
-#ifndef AKANTU_MATERIAL_PHASEFIELD_HH_
-#define AKANTU_MATERIAL_PHASEFIELD_HH_
+#ifndef __AKANTU_MATERIAL_PHASEFIELD_HH__
+#define __AKANTU_MATERIAL_PHASEFIELD_HH__
 
 namespace akantu {
 
-template <Int dim> class MaterialPhaseField : public MaterialDamage<dim> {
+/* ------------------------------------------------------------------------ */
+template <Int dim, template <Int> class EnergySplit_>
+concept ComputeSigma = requires(EnergySplit_<dim> energy_split,
+                                const Matrix<Real> & strain_quad,
+                                const Real & sigma_th,
+                                Matrix<Real> & sigma_plus,
+                                Matrix<Real> & sigma_minus) {
+  {
+    energy_split.computeSigmaOnQuad(strain_quad, sigma_th, sigma_plus,
+                                    sigma_minus)
+    } -> std::same_as<void>;
+};
+
+template <Int dim, template <Int> class EnergySplit_>
+concept ComputeTangentCoefs = requires(EnergySplit_<dim> energy_split,
+                                       const Matrix<Real> & strain_quad,
+                                       const Real & g_d,
+                                       Matrix<Real> & tangent) {
+  {
+    energy_split.computeTangentCoefsOnQuad(strain_quad, g_d, tangent)
+    } -> std::same_as<void>;
+};
+
+template <Int dim, template <Int> class EnergySplit_>
+concept ComputeSigmaTangent =
+    ComputeSigma<dim, EnergySplit_> && ComputeTangentCoefs<dim, EnergySplit_>;
+/* ------------------------------------------------------------------------ */
+
+template <Int dim, template <Int> class EnergySplit_>
+requires ComputeSigmaTangent<dim, EnergySplit_>
+class MaterialPhaseField : public MaterialDamage<dim> {
   using Parent = MaterialDamage<dim>;
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
   MaterialPhaseField(SolidMechanicsModel & model, const ID & id = "");
+  ~MaterialPhaseField() override = default;
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
+  void initMaterial() override;
   /// constitutive law for all element of a type
   void computeStress(ElementType el_type,
                      GhostType ghost_type = _not_ghost) override;
@@ -47,27 +95,12 @@ public:
   void computeTangentModuli(ElementType el_type, Array<Real> & tangent_matrix,
                             GhostType ghost_type = _not_ghost) override;
 
+  /* ------------------------------------------------------------------------ */
+
   /// get mass density degraded by damage
   void getRho(Ref<Vector<Real>> rhos, const Element & element) const override;
 
   bool hasMassMatrixChanged() override { return degrade_mass; };
-
-  /* ------------------------------------------------------------------------ */
-  decltype(auto) getArguments(ElementType el_type,
-                              GhostType ghost_type = _not_ghost) {
-    return zip_append(Parent::getArguments(el_type, ghost_type),
-                      "effective_damage"_n = make_view(
-                          this->effective_damage(el_type, ghost_type)));
-  }
-
-  decltype(auto) getArgumentsTangent(Array<Real> & tangent_matrix,
-                                     ElementType el_type,
-                                     GhostType ghost_type) {
-    return zip_append(
-        Parent::getArgumentsTangent(tangent_matrix, el_type, ghost_type),
-        "effective_damage"_n =
-            make_view(this->effective_damage(el_type, ghost_type)));
-  }
 
   /* ------------------------------------------------------------------------ */
   /* DataAccessor inherited members                                           */
@@ -85,11 +118,6 @@ public:
                          const Array<Element> & elements,
                          const SynchronizationTag & tag) override;
 
-  inline InternalField<Real> & getDamage() override {
-    this->was_stiffness_assembled = false;
-    return this->damage;
-  }
-
 protected:
   /// constitutive law for a given quadrature point
   template <class Args> inline void computeStressOnQuad(Args && args);
@@ -97,30 +125,54 @@ protected:
   /// compute the tangent stiffness matrix for a given quadrature point
   template <class Args> inline void computeTangentModuliOnQuad(Args && args);
 
-  /// Compute the effective damage
-  void computeEffectiveDamage(ElementType el_type,
-                              GhostType ghost_type = _not_ghost);
-
-  template <class Args> inline void computeEffectiveDamageOnQuad(Args && args);
-
-  auto hasStiffnessMatrixChanged() -> bool override {
-    return (not this->was_stiffness_assembled);
-  }
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  Real eta{0.};
+  /// Residual stiffness parameter
+  Real eta;
 
   /// Phasefield isotropic
-  bool is_hybrid;
+  bool is_isotropic;
+
+  // Dimension considered in volumetric-deviatoric split
+  Int dev_dim;
 
   bool degrade_mass;
 
-  // effective damage to conserve stiffness in compression
-  InternalField<Real> & effective_damage;
+  /// energy split
+  std::shared_ptr<EnergySplit_<dim>> energy_split;
 };
 
+} // namespace akantu
+/* -------------------------------------------------------------------------- */
+namespace akantu {
+namespace {
+bool instantiateMaterialPhaseField(const ID & id) {
+  return MaterialFactory::getInstance().registerAllocator(
+      id,
+      [](Int dim, const ID & energy_split, SolidMechanicsModel & model,
+         const ID & id) -> std::unique_ptr<Material> {
+        return tuple_dispatch<AllSpatialDimensions>(
+            [&](auto && _) -> std::unique_ptr<Material> {
+              constexpr auto && dim_ = aka::decay_v<decltype(_)>;
+
+              if (energy_split.empty() or energy_split == "no_split") {
+                return std::make_unique<
+                    MaterialPhaseField<dim_, NoEnergySplit>>(model, id);
+              }
+              if (energy_split == "volumetric_deviatoric") {
+                return std::make_unique<
+                    MaterialPhaseField<dim_, VolumetricDeviatoricSplit>>(model,
+                                                                         id);
+              }
+              AKANTU_ERROR("Unknown energy split type: " << energy_split);
+              return nullptr;
+            },
+            dim);
+      });
+}
+} // namespace
 } // namespace akantu
 
 /* -------------------------------------------------------------------------- */
@@ -129,4 +181,4 @@ protected:
 
 #include "material_phasefield_inline_impl.hh"
 
-#endif /* AKANTU_MATERIAL_PHASEFIELD_HH_ */
+#endif /* __AKANTU_MATERIAL_PHASEFIELD_HH__ */

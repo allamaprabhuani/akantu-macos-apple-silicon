@@ -23,6 +23,8 @@
 #include "aka_factory.hh"
 #include "constitutive_law.hh"
 #include "energy_split.hh"
+#include "no_energy_split.hh"
+#include "volumetric_deviatoric_split.hh"
 /* -------------------------------------------------------------------------- */
 
 #ifndef AKANTU_PHASEFIELD_HH_
@@ -35,6 +37,15 @@ class PhaseField;
 } // namespace akantu
 
 namespace akantu {
+
+template <Int dim, template <Int> class EnergySplit_>
+concept ComputePhi = requires(EnergySplit_<dim> energy_split,
+                              const Matrix<Real> & strain_quad,
+                              Real & phi_quad) {
+  {
+    energy_split.computePhiOnQuad(strain_quad, phi_quad)
+    } -> std::same_as<void>;
+};
 
 using PhaseFieldFactory =
     Factory<PhaseField, ID, Int, const ID &, PhaseFieldModel &, const ID &>;
@@ -179,9 +190,6 @@ protected:
   /// Finite deformation
   bool finite_deformation{false};
 
-  /// Isotropic formulation
-  bool isotropic{true};
-
   /// Use history
   bool use_history{true};
 
@@ -241,13 +249,23 @@ protected:
 
 namespace akantu {
 namespace {
-template <template <Int> class PF> bool instantiatePhaseField(const ID & id) {
+template <template <Int, template <Int> class> class PF>
+bool instantiatePhaseField(const ID & id) {
   return PhaseFieldFactory::getInstance().registerAllocator(
-      id, [](Int dim, const ID &, PhaseFieldModel & model, const ID & id) {
+      id, [](Int dim, const ID & energy_split, PhaseFieldModel & model,
+             const ID & id) {
         return tuple_dispatch<AllSpatialDimensions>(
             [&](auto && _) -> std::unique_ptr<PhaseField> {
               constexpr auto && dim_ = aka::decay_v<decltype(_)>;
-              return std::make_unique<PF<dim_>>(model, id);
+              if (energy_split == "no_split") {
+                return std::make_unique<PF<dim_, NoEnergySplit>>(model, id);
+              } else if (energy_split == "volumetric_deviatoric") {
+                return std::make_unique<PF<dim_, VolumetricDeviatoricSplit>>(
+                    model, id);
+              } else {
+                AKANTU_ERROR("Unknown energy split type: " << energy_split);
+                return nullptr;
+              }
             },
             dim);
       });

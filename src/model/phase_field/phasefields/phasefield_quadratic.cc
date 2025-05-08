@@ -33,37 +33,34 @@
 /* -------------------------------------------------------------------------- */
 #include "phasefield_quadratic.hh"
 #include "aka_common.hh"
-#include <algorithm>
 #include <cmath>
 
 namespace akantu {
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-PhaseFieldQuadratic<dim>::PhaseFieldQuadratic(PhaseFieldModel & model,
-                                              const ID & id)
+template <Int dim, template <Int> class EnergySplit_>
+PhaseFieldQuadratic<dim, EnergySplit_>::PhaseFieldQuadratic(
+    PhaseFieldModel & model, const ID & id)
     : PhaseField(model, id) {
   registerParam("irreversibility_tol", tol_ir, Real(1e-2),
                 _pat_parsable | _pat_readable, "Irreversibility tolerance");
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim> void PhaseFieldQuadratic<dim>::initPhaseField() {
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::initPhaseField() {
   PhaseField::initPhaseField();
 
   this->gamma = Real(this->g_c) / this->l0 * (1. / (tol_ir * tol_ir) - 1.);
 
-  if (this->isotropic) {
-    this->energy_split = std::make_shared<NoEnergySplit<dim>>(
-        this->E, this->nu, this->plane_stress);
-  } else {
-    this->energy_split = std::make_shared<VolumetricDeviatoricSplit<dim>>(
-        this->E, this->nu, this->plane_stress);
-  }
+  this->energy_split = std::make_shared<EnergySplit_<dim>>();
+  this->energy_split->updateMaterialProperties(this->E, this->nu,
+                                               this->plane_stress);
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim> void PhaseFieldQuadratic<dim>::updateInternalParameters() {
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::updateInternalParameters() {
   PhaseField::updateInternalParameters();
 
   for (const auto & type : getElementFilter().elementTypes(dim, _not_ghost)) {
@@ -82,16 +79,15 @@ template <Int dim> void PhaseFieldQuadratic<dim>::updateInternalParameters() {
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-void PhaseFieldQuadratic<dim>::computeDrivingForce(ElementType el_type,
-                                                   GhostType ghost_type) {
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::computeDrivingForce(
+    ElementType el_type, GhostType ghost_type) {
 
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
 
   for (auto && args : arguments) {
     auto & phi_quad = args["phi"_n];
     auto & strain = args["strain"_n];
-    // EnergySplit::computePhiOnQuad(strain, phi_quad);
     this->energy_split->computePhiOnQuad(strain, phi_quad);
   }
 
@@ -128,9 +124,9 @@ void PhaseFieldQuadratic<dim>::computeDrivingForce(ElementType el_type,
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-void PhaseFieldQuadratic<dim>::computeResidual(ElementType el_type,
-                                               GhostType ghost_type) {
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::computeResidual(
+    ElementType el_type, GhostType ghost_type) {
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
   for (auto && args : arguments) {
     auto & dam_energy_density_quad = args["damage_energy_density"_n];
@@ -145,9 +141,9 @@ void PhaseFieldQuadratic<dim>::computeResidual(ElementType el_type,
   }
 }
 
-template <Int dim>
-void PhaseFieldQuadratic<dim>::applyPenalization(ElementType el_type,
-                                                 GhostType ghost_type) {
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::applyPenalization(
+    ElementType el_type, GhostType ghost_type) {
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
   for (auto && args : arguments) {
     auto & dam_on_quad = args["damage"_n];
@@ -164,8 +160,9 @@ void PhaseFieldQuadratic<dim>::applyPenalization(ElementType el_type,
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-void PhaseFieldQuadratic<dim>::computeDissipatedEnergy(ElementType el_type) {
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergy(
+    ElementType el_type) {
   AKANTU_DEBUG_IN();
 
   auto && arguments = PhaseField::getArguments<dim>(el_type, _not_ghost);
@@ -183,8 +180,8 @@ void PhaseFieldQuadratic<dim>::computeDissipatedEnergy(ElementType el_type) {
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-void PhaseFieldQuadratic<dim>::computeDissipatedEnergyByElement(
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyByElement(
     ElementType type, Idx index, Vector<Real> & edis_on_quad_points) {
   auto gradd_it = this->gradd(type).begin(dim);
   auto gradd_end = this->gradd(type).begin(dim);
@@ -208,18 +205,14 @@ void PhaseFieldQuadratic<dim>::computeDissipatedEnergyByElement(
 }
 
 /* -------------------------------------------------------------------------- */
-template <Int dim>
-void PhaseFieldQuadratic<dim>::computeDissipatedEnergyByElement(
+template <Int dim, template <Int> class EnergySplit_>
+void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyByElement(
     const Element & element, Vector<Real> & edis_on_quad_points) {
   computeDissipatedEnergyByElement(element.type, element.element,
                                    edis_on_quad_points);
 }
 
 /* -------------------------------------------------------------------------- */
-template class PhaseFieldQuadratic<1>;
-template class PhaseFieldQuadratic<2>;
-template class PhaseFieldQuadratic<3>;
-
 const bool phase_field_quadratic_is_allocated [[maybe_unused]] =
     instantiatePhaseField<PhaseFieldQuadratic>("quadratic");
 
