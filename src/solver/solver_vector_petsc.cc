@@ -159,7 +159,22 @@ void SolverVectorPETSc::getValuesLocal(const Array<Int> & idx,
 
   if (x_ghosted == nullptr) {
     Vec x_local{};
+
+#if PETSC_VERSION_GE(3, 18, 0)
     VecCreateLocalVector(x, &x_local);
+#else
+    VecType roottype{};
+    PetscInt n{};
+
+    VecCreate(PETSC_COMM_SELF, &x_local);
+    VecGetLocalSize(x, &n);
+    VecSetSizes(x_local, n, n);
+    VecGetBlockSize(x, &n);
+    VecSetBlockSize(x_local, n);
+    VecGetType(x, &roottype);
+    VecSetType(x, roottype);
+#endif
+
     VecGetLocalVector(x, x_local);
 
     VecSetOption(x_local, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
