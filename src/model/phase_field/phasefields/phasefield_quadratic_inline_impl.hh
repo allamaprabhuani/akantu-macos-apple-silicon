@@ -4,6 +4,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 inline void
 PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyOnQuad(
     const Real & dam, const Vector<Real> & grad_d, Real & edis,
@@ -19,6 +20,7 @@ PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyOnQuad(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 inline void
 PhaseFieldQuadratic<dim, EnergySplit_>::computeDamageEnergyDensityOnQuad(
     const Real & phi_quad, Real & dam_energy_quad, const Real & g_c_quad) {

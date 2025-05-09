@@ -9,7 +9,7 @@
 namespace akantu {
 
 template <Int dim, template <Int> class EnergySplit_>
-requires ComputePhi<dim, EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 class PhaseFieldLinear : public PhaseField {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */

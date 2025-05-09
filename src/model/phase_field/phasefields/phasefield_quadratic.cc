@@ -39,6 +39,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 PhaseFieldQuadratic<dim, EnergySplit_>::PhaseFieldQuadratic(
     PhaseFieldModel & model, const ID & id)
     : PhaseField(model, id) {
@@ -48,6 +49,7 @@ PhaseFieldQuadratic<dim, EnergySplit_>::PhaseFieldQuadratic(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::initPhaseField() {
   PhaseField::initPhaseField();
 
@@ -60,6 +62,7 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::initPhaseField() {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::updateInternalParameters() {
   PhaseField::updateInternalParameters();
 
@@ -80,6 +83,7 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::updateInternalParameters() {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::computeDrivingForce(
     ElementType el_type, GhostType ghost_type) {
 
@@ -125,6 +129,7 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::computeDrivingForce(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::computeResidual(
     ElementType el_type, GhostType ghost_type) {
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
@@ -142,6 +147,7 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::computeResidual(
 }
 
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::applyPenalization(
     ElementType el_type, GhostType ghost_type) {
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
@@ -161,6 +167,7 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::applyPenalization(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergy(
     ElementType el_type) {
   AKANTU_DEBUG_IN();
@@ -181,6 +188,7 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergy(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyByElement(
     ElementType type, Idx index, Vector<Real> & edis_on_quad_points) {
   auto gradd_it = this->gradd(type).begin(dim);
@@ -206,6 +214,7 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyByElement(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldQuadratic<dim, EnergySplit_>::computeDissipatedEnergyByElement(
     const Element & element, Vector<Real> & edis_on_quad_points) {
   computeDissipatedEnergyByElement(element.type, element.element,

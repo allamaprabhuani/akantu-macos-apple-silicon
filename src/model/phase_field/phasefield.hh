@@ -38,15 +38,6 @@ class PhaseField;
 
 namespace akantu {
 
-template <Int dim, template <Int> class EnergySplit_>
-concept ComputePhi = requires(EnergySplit_<dim> energy_split,
-                              const Matrix<Real> & strain_quad,
-                              Real & phi_quad) {
-  {
-    energy_split.computePhiOnQuad(strain_quad, phi_quad)
-    } -> std::same_as<void>;
-};
-
 using PhaseFieldFactory =
     Factory<PhaseField, ID, Int, const ID &, PhaseFieldModel &, const ID &>;
 

@@ -38,6 +38,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 MaterialPhaseField<dim, EnergySplit_>::MaterialPhaseField(
     SolidMechanicsModel & model, const ID & id)
     : Parent(model, id) {
@@ -50,7 +51,9 @@ MaterialPhaseField<dim, EnergySplit_>::MaterialPhaseField(
                       "Degrade mass with damage");
 }
 
+/* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::computeStress(
     ElementType el_type, GhostType ghost_type) {
 
@@ -71,6 +74,7 @@ void MaterialPhaseField<dim, EnergySplit_>::computeStress(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::initMaterial() {
   MaterialDamage<dim>::initMaterial();
 
@@ -87,7 +91,7 @@ void MaterialPhaseField<dim, EnergySplit_>::initMaterial() {
 // template <template <Int> class EnergySplit_>
 // void MaterialPhaseField<2, EnergySplit_>::initMaterial() {
 //   MaterialDamage<2>::initMaterial();
-// 
+//
 //   this->energy_split = std::make_shared<EnergySplit_<2>>();
 //   this->energy_split->updateMaterialProperties(this->E, this->nu,
 //                                                this->plane_stress);
@@ -95,6 +99,7 @@ void MaterialPhaseField<dim, EnergySplit_>::initMaterial() {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuli(
     ElementType el_type, Array<Real> & tangent_matrix, GhostType ghost_type) {
 
@@ -119,8 +124,14 @@ void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuli(
 }
 
 /* -------------------------------------------------------------------------- */
+template class MaterialPhaseField<1, VolumetricDeviatoricSplit>;
+template class MaterialPhaseField<1, NoEnergySplit>;
+template class MaterialPhaseField<2, NoEnergySplit>;
+template class MaterialPhaseField<3, NoEnergySplit>;
+template class MaterialPhaseField<2, VolumetricDeviatoricSplit>;
+template class MaterialPhaseField<3, VolumetricDeviatoricSplit>;
 
-static bool material_is_allocated_phasefield =
+static bool material_is_allocated_phasefield [[maybe_unused]] =
     instantiateMaterialPhaseField("phasefield");
 
 } // namespace akantu

@@ -36,6 +36,7 @@
 /* -------------------------------------------------------------------------- */
 namespace akantu {
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 template <class Args>
 inline void
 MaterialPhaseField<dim, EnergySplit_>::computeStressOnQuad(Args && args) {
@@ -60,6 +61,7 @@ MaterialPhaseField<dim, EnergySplit_>::computeStressOnQuad(Args && args) {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 template <class Args>
 void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuliOnQuad(
     Args && args) {
@@ -82,6 +84,7 @@ void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuliOnQuad(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 inline void
 MaterialPhaseField<dim, EnergySplit_>::getRho(Ref<Vector<Real>> rhos,
                                               const Element & element) const {
@@ -126,9 +129,11 @@ MaterialPhaseField<dim, EnergySplit_>::getRho(Ref<Vector<Real>> rhos,
     r = std::min(rho_base, r);
   }
 }
+
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-inline Int MaterialPhaseField<dim, EnergySplit_>::getNbData(
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+Int MaterialPhaseField<dim, EnergySplit_>::getNbData(
     const Array<Element> & elements, const SynchronizationTag & tag) const {
 
   if (tag == SynchronizationTag::_smm_density && degrade_mass) {
@@ -142,7 +147,8 @@ inline Int MaterialPhaseField<dim, EnergySplit_>::getNbData(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-inline void MaterialPhaseField<dim, EnergySplit_>::packData(
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+void MaterialPhaseField<dim, EnergySplit_>::packData(
     CommunicationBuffer & buffer, const Array<Element> & elements,
     const SynchronizationTag & tag) const {
   Parent::packData(buffer, elements, tag);
@@ -153,9 +159,11 @@ inline void MaterialPhaseField<dim, EnergySplit_>::packData(
   }
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------- -----------
+ */
 template <Int dim, template <Int> class EnergySplit_>
-inline void MaterialPhaseField<dim, EnergySplit_>::unpackData(
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+void MaterialPhaseField<dim, EnergySplit_>::unpackData(
     CommunicationBuffer & buffer, const Array<Element> & elements,
     const SynchronizationTag & tag) {
   Parent::unpackData(buffer, elements, tag);

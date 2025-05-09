@@ -44,35 +44,9 @@
 namespace akantu {
 
 /* ------------------------------------------------------------------------ */
-template <Int dim, template <Int> class EnergySplit_>
-concept ComputeSigma = requires(EnergySplit_<dim> energy_split,
-                                const Matrix<Real> & strain_quad,
-                                const Real & sigma_th,
-                                Matrix<Real> & sigma_plus,
-                                Matrix<Real> & sigma_minus) {
-  {
-    energy_split.computeSigmaOnQuad(strain_quad, sigma_th, sigma_plus,
-                                    sigma_minus)
-    } -> std::same_as<void>;
-};
 
 template <Int dim, template <Int> class EnergySplit_>
-concept ComputeTangentCoefs = requires(EnergySplit_<dim> energy_split,
-                                       const Matrix<Real> & strain_quad,
-                                       const Real & g_d,
-                                       Matrix<Real> & tangent) {
-  {
-    energy_split.computeTangentCoefsOnQuad(strain_quad, g_d, tangent)
-    } -> std::same_as<void>;
-};
-
-template <Int dim, template <Int> class EnergySplit_>
-concept ComputeSigmaTangent =
-    ComputeSigma<dim, EnergySplit_> && ComputeTangentCoefs<dim, EnergySplit_>;
-/* ------------------------------------------------------------------------ */
-
-template <Int dim, template <Int> class EnergySplit_>
-requires ComputeSigmaTangent<dim, EnergySplit_>
+  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 class MaterialPhaseField : public MaterialDamage<dim> {
   using Parent = MaterialDamage<dim>;
   /* ------------------------------------------------------------------------ */
@@ -96,7 +70,6 @@ public:
                             GhostType ghost_type = _not_ghost) override;
 
   /* ------------------------------------------------------------------------ */
-
   /// get mass density degraded by damage
   void getRho(Ref<Vector<Real>> rhos, const Element & element) const override;
 
@@ -106,17 +79,14 @@ public:
   /* DataAccessor inherited members                                           */
   /* ------------------------------------------------------------------------ */
 public:
-  [[nodiscard]] inline Int
-  getNbData(const Array<Element> & elements,
-            const SynchronizationTag & tag) const override;
+  [[nodiscard]] Int getNbData(const Array<Element> & elements,
+                              const SynchronizationTag & tag) const override;
 
-  inline void packData(CommunicationBuffer & buffer,
-                       const Array<Element> & elements,
-                       const SynchronizationTag & tag) const override;
+  void packData(CommunicationBuffer & buffer, const Array<Element> & elements,
+                const SynchronizationTag & tag) const override;
 
-  inline void unpackData(CommunicationBuffer & buffer,
-                         const Array<Element> & elements,
-                         const SynchronizationTag & tag) override;
+  void unpackData(CommunicationBuffer & buffer, const Array<Element> & elements,
+                  const SynchronizationTag & tag) override;
 
 protected:
   /// constitutive law for a given quadrature point
