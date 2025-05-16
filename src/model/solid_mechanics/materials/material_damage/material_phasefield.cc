@@ -38,7 +38,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 MaterialPhaseField<dim, EnergySplit_>::MaterialPhaseField(
     SolidMechanicsModel & model, const ID & id)
     : Parent(model, id) {
@@ -53,7 +53,7 @@ MaterialPhaseField<dim, EnergySplit_>::MaterialPhaseField(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::computeStress(
     ElementType el_type, GhostType ghost_type) {
 
@@ -74,7 +74,7 @@ void MaterialPhaseField<dim, EnergySplit_>::computeStress(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::initMaterial() {
   MaterialDamage<dim>::initMaterial();
 
@@ -99,7 +99,7 @@ void MaterialPhaseField<dim, EnergySplit_>::initMaterial() {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuli(
     ElementType el_type, Array<Real> & tangent_matrix, GhostType ghost_type) {
 
@@ -132,6 +132,6 @@ template class MaterialPhaseField<2, VolumetricDeviatoricSplit>;
 template class MaterialPhaseField<3, VolumetricDeviatoricSplit>;
 
 static bool material_is_allocated_phasefield [[maybe_unused]] =
-    instantiateMaterialPhaseField("phasefield");
+    instantiateMaterialPhaseField<MaterialPhaseField>("phasefield");
 
 } // namespace akantu

@@ -103,8 +103,8 @@ inline void MaterialThermal<dim>::computeStressOnQuad(Args && args) {
   auto && epsilon = args["epsilon_th"_n];
   auto && sigma = args["sigma_th"_n];
   auto && deltaT = args["delta_T"_n];
-  epsilon = deltaT * this->alpha;
-  sigma = -this->E / (1. - 2. * this->nu) * epsilon;
+  epsilon = deltaT * this->alpha * (1 + this->nu);
+  sigma = -this->E / (1. - 2. * this->nu) * deltaT * this->alpha;
 }
 
 template <>

@@ -16,7 +16,8 @@ public:
   /* ------------------------------s------------------------------------------
    */
   VolumetricDeviatoricSplit() : EnergySplit() {
-    dev_dim = plane_stress ? dim : 3;
+    // dev_dim = plane_stress ? dim : 3;
+    dev_dim = dim;
   };
 
   /* ------------------------------------------------------------------------*/
@@ -29,7 +30,7 @@ public:
 
   // compute stress on quad
   inline void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
-                                 const Real & sigma_th,
+                                 const Real & epsilon_th,
                                  Matrix<Real> & sigma_plus,
                                  Matrix<Real> & sigma_minus);
 

@@ -6,7 +6,7 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 PhaseFieldLinear<dim, EnergySplit_>::PhaseFieldLinear(PhaseFieldModel & model,
                                                       const ID & id)
     : PhaseField(model, id) {
@@ -18,7 +18,7 @@ PhaseFieldLinear<dim, EnergySplit_>::PhaseFieldLinear(PhaseFieldModel & model,
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::initPhaseField() {
   PhaseField::initPhaseField();
 
@@ -42,7 +42,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::initPhaseField() {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::updateInternalParameters() {
   PhaseField::updateInternalParameters();
 
@@ -63,7 +63,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::updateInternalParameters() {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::computeDrivingForce(
     ElementType el_type, GhostType ghost_type) {
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
@@ -105,7 +105,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::computeDrivingForce(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::computeResidual(
     ElementType el_type, GhostType ghost_type) {
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
@@ -124,7 +124,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::computeResidual(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::applyPenalization(
     ElementType el_type, GhostType ghost_type) {
   auto && arguments = PhaseField::getArguments<dim>(el_type, ghost_type);
@@ -146,7 +146,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::applyPenalization(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::computeDissipatedEnergy(
     ElementType el_type) {
   AKANTU_DEBUG_IN();
@@ -167,7 +167,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::computeDissipatedEnergy(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::computeDissipatedEnergyByElement(
     ElementType type, Idx index, Vector<Real> & edis_on_quad_points) {
   auto gradd_it = this->gradd(type).begin(dim);
@@ -193,7 +193,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::computeDissipatedEnergyByElement(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::computeDissipatedEnergyByElement(
     const Element & element, Vector<Real> & edis_on_quad_points) {
   computeDissipatedEnergyByElement(element.type, element.element,
@@ -202,7 +202,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::computeDissipatedEnergyByElement(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputePhi<dim, EnergySplit_>
+requires CanComputePhi<dim, EnergySplit_>
 void PhaseFieldLinear<dim, EnergySplit_>::afterSolveStep() {
   // clamp negative damage to 0
   // for (auto & dam : this->getHandler().getDamage()) {
@@ -211,6 +211,12 @@ void PhaseFieldLinear<dim, EnergySplit_>::afterSolveStep() {
 }
 
 /* -------------------------------------------------------------------------- */
+template class PhaseFieldLinear<1, VolumetricDeviatoricSplit>;
+template class PhaseFieldLinear<2, VolumetricDeviatoricSplit>;
+template class PhaseFieldLinear<3, VolumetricDeviatoricSplit>;
+template class PhaseFieldLinear<1, NoEnergySplit>;
+template class PhaseFieldLinear<2, NoEnergySplit>;
+template class PhaseFieldLinear<3, NoEnergySplit>;
 
 const bool phase_field_linear_is_allocated [[maybe_unused]] =
     instantiatePhaseField<PhaseFieldLinear>("linear");

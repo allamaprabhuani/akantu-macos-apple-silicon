@@ -28,28 +28,26 @@ inline void VolumetricDeviatoricSplit<dim>::computePhiOnQuad(
 /* -------------------------------------------------------------------------- */
 template <Int dim>
 inline void VolumetricDeviatoricSplit<dim>::computeSigmaOnQuad(
-    const Matrix<Real> & strain_quad, const Real & sigma_th,
+    const Matrix<Real> & strain_quad, const Real & epsilon_th,
     Matrix<Real> & sigma_plus, Matrix<Real> & sigma_minus) {
-  Real trace = strain_quad.trace();
+  auto strain = strain_quad - epsilon_th * Matrix<Real>::Identity(dim, dim);
+  Real trace = strain.trace();
   Real trace_plus = std::max(Real(0.), trace);
   Real trace_minus = std::min(Real(0.), trace);
 
-  Real sigma_th_plus = std::max(Real(0.), sigma_th);
-  Real sigma_th_minus = std::min(Real(0.), sigma_th);
-
   Matrix<Real> strain_dev = Matrix<Real>::Zero(dev_dim, dev_dim);
   Matrix<Real> strain_tmp = Matrix<Real>::Zero(dev_dim, dev_dim);
-  strain_tmp.topLeftCorner(dim, dim) = strain_quad;
+  strain_tmp.topLeftCorner(dim, dim) = strain;
 
   strain_dev = strain_tmp -
                trace / Real(dev_dim) * Matrix<Real>::Identity(dev_dim, dev_dim);
 
   Real kappa = this->lambda + 2. * this->mu / Real(dev_dim);
 
-  sigma_plus = (kappa * trace_plus + sigma_th_plus) *
+  sigma_plus = (kappa * trace_plus) *
                    Matrix<Real>::Identity(dev_dim, dev_dim) +
                2. * this->mu * strain_dev;
-  sigma_minus = (kappa * trace_minus + sigma_th_minus) *
+  sigma_minus = (kappa * trace_minus) *
                 Matrix<Real>::Identity(dev_dim, dev_dim);
 }
 

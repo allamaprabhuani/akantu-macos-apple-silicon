@@ -248,7 +248,7 @@ bool instantiatePhaseField(const ID & id) {
         return tuple_dispatch<AllSpatialDimensions>(
             [&](auto && _) -> std::unique_ptr<PhaseField> {
               constexpr auto && dim_ = aka::decay_v<decltype(_)>;
-              if (energy_split == "no_split") {
+              if (energy_split.empty() or energy_split == "no_split") {
                 return std::make_unique<PF<dim_, NoEnergySplit>>(model, id);
               } else if (energy_split == "volumetric_deviatoric") {
                 return std::make_unique<PF<dim_, VolumetricDeviatoricSplit>>(

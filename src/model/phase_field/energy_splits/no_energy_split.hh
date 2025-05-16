@@ -25,7 +25,7 @@ public:
 
   // compute stress on quad
   inline void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
-                                 const Real & sigma_th,
+                                 const Real & epsilon_th,
                                  Matrix<Real> & sigma_plus,
                                  Matrix<Real> & /*sigma_minus*/);
 

@@ -46,7 +46,7 @@ namespace akantu {
 /* ------------------------------------------------------------------------ */
 
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 class MaterialPhaseField : public MaterialDamage<dim> {
   using Parent = MaterialDamage<dim>;
   /* ------------------------------------------------------------------------ */
@@ -118,6 +118,7 @@ protected:
 /* -------------------------------------------------------------------------- */
 namespace akantu {
 namespace {
+template <template <Int, template <Int> class> class Mat>
 bool instantiateMaterialPhaseField(const ID & id) {
   return MaterialFactory::getInstance().registerAllocator(
       id,
@@ -128,13 +129,11 @@ bool instantiateMaterialPhaseField(const ID & id) {
               constexpr auto && dim_ = aka::decay_v<decltype(_)>;
 
               if (energy_split.empty() or energy_split == "no_split") {
-                return std::make_unique<
-                    MaterialPhaseField<dim_, NoEnergySplit>>(model, id);
+                return std::make_unique<Mat<dim_, NoEnergySplit>>(model, id);
               }
               if (energy_split == "volumetric_deviatoric") {
-                return std::make_unique<
-                    MaterialPhaseField<dim_, VolumetricDeviatoricSplit>>(model,
-                                                                         id);
+                return std::make_unique<Mat<dim_, VolumetricDeviatoricSplit>>(
+                    model, id);
               }
               AKANTU_ERROR("Unknown energy split type: " << energy_split);
               return nullptr;

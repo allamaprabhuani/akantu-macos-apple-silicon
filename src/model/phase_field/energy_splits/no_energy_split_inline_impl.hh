@@ -7,8 +7,9 @@ namespace akantu {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-inline void NoEnergySplit<dim>::computePhiOnQuad(const Matrix<Real> & strain_quad,
-                                          Real & phi_quad) {
+inline void
+NoEnergySplit<dim>::computePhiOnQuad(const Matrix<Real> & strain_quad,
+                                     Real & phi_quad) {
   Real trace = strain_quad.trace();
   phi_quad = 0.5 * this->lambda * trace * trace +
              this->mu * strain_quad.doubleDot(strain_quad);
@@ -16,14 +17,13 @@ inline void NoEnergySplit<dim>::computePhiOnQuad(const Matrix<Real> & strain_qua
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
-inline void NoEnergySplit<dim>::computeSigmaOnQuad(const Matrix<Real> & strain_quad,
-                                            const Real & sigma_th,
-                                            Matrix<Real> & sigma_plus,
-                                            Matrix<Real> & /*sigma_minus*/) {
-  Real trace = strain_quad.trace();
-  sigma_plus =
-      2. * this->mu * strain_quad +
-      (this->lambda * trace + sigma_th) * Matrix<Real>::Identity(dim, dim);
+inline void NoEnergySplit<dim>::computeSigmaOnQuad(
+    const Matrix<Real> & strain_quad, const Real & sigma_th,
+    Matrix<Real> & sigma_plus, Matrix<Real> & /*sigma_minus*/) {
+  auto strain = strain_quad - sigma_th * Matrix<Real>::Identity(dim, dim);
+  Real trace = strain.trace();
+  sigma_plus = 2. * this->mu * strain +
+               this->lambda * trace * Matrix<Real>::Identity(dim, dim);
 }
 
 /* -------------------------------------------------------------------------- */

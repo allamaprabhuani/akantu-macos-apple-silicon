@@ -36,7 +36,7 @@
 /* -------------------------------------------------------------------------- */
 namespace akantu {
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 template <class Args>
 inline void
 MaterialPhaseField<dim, EnergySplit_>::computeStressOnQuad(Args && args) {
@@ -46,13 +46,13 @@ MaterialPhaseField<dim, EnergySplit_>::computeStressOnQuad(Args && args) {
   auto sigma = args["sigma"_n];
   auto strain = Material::gradUToEpsilon<dim>(args["grad_u"_n]);
 
-  auto && sigma_th = args["sigma_th"_n];
+  auto && epsilon_th = args["epsilon_th"_n];
 
   Real g_d = (1 - dam) * (1 - dam) + eta;
 
   Matrix<Real> sigma_plus = Matrix<Real>::Zero(dim, dim);
   Matrix<Real> sigma_minus = Matrix<Real>::Zero(dim, dim);
-  this->energy_split->computeSigmaOnQuad(strain, sigma_th, sigma_plus,
+  this->energy_split->computeSigmaOnQuad(strain, epsilon_th, sigma_plus,
                                          sigma_minus);
 
   sigma = g_d * sigma_plus.topLeftCorner(dim, dim) +
@@ -61,7 +61,7 @@ MaterialPhaseField<dim, EnergySplit_>::computeStressOnQuad(Args && args) {
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 template <class Args>
 void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuliOnQuad(
     Args && args) {
@@ -84,7 +84,7 @@ void MaterialPhaseField<dim, EnergySplit_>::computeTangentModuliOnQuad(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 inline void
 MaterialPhaseField<dim, EnergySplit_>::getRho(Ref<Vector<Real>> rhos,
                                               const Element & element) const {
@@ -132,9 +132,10 @@ MaterialPhaseField<dim, EnergySplit_>::getRho(Ref<Vector<Real>> rhos,
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
-Int MaterialPhaseField<dim, EnergySplit_>::getNbData(
-    const Array<Element> & elements, const SynchronizationTag & tag) const {
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+    Int MaterialPhaseField<dim, EnergySplit_>::getNbData(
+        const Array<Element> & elements, const SynchronizationTag & tag)
+const {
 
   if (tag == SynchronizationTag::_smm_density && degrade_mass) {
     return (this->spatial_dimension * this->spatial_dimension + 1) *
@@ -147,7 +148,7 @@ Int MaterialPhaseField<dim, EnergySplit_>::getNbData(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::packData(
     CommunicationBuffer & buffer, const Array<Element> & elements,
     const SynchronizationTag & tag) const {
@@ -162,7 +163,7 @@ void MaterialPhaseField<dim, EnergySplit_>::packData(
 /* --------------------------------------------------------------- -----------
  */
 template <Int dim, template <Int> class EnergySplit_>
-  requires CanComputeSigmaAndTangent<dim, EnergySplit_>
+requires CanComputeSigmaAndTangent<dim, EnergySplit_>
 void MaterialPhaseField<dim, EnergySplit_>::unpackData(
     CommunicationBuffer & buffer, const Array<Element> & elements,
     const SynchronizationTag & tag) {
