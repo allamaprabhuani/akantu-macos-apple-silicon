@@ -241,7 +241,7 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
     TaoGetTolerances(tao, &atol, &rtol, &ttol);
     TaoGetMaximumIterations(tao, &maxit);
     AKANTU_CUSTOM_EXCEPTION(debug::TAONotConvergedException(
-        this->reason, this->n_iter, ttol, atol, rtol, maxit));
+        this->reason, this->n_iter, atol, rtol, ttol, maxit));
   }
 }
 
