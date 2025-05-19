@@ -42,8 +42,8 @@ class NonLinearSolverTAO : public NonLinearSolver {
   /* ------------------------------------------------------------------------ */
 public:
   NonLinearSolverTAO(DOFManagerPETSc & dof_manager,
-                       const ModelSolverOptions & solver_options,
-                       const ID & id = "non_linear_solver_tao");
+                     const ModelSolverOptions & solver_options,
+                     const ID & id = "non_linear_solver_tao");
 
   ~NonLinearSolverTAO() override;
 
@@ -66,14 +66,13 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-
-  static PetscErrorCode FormFunctionGradient(Tao tao, Vec x, PetscReal* obj,
-                                             Vec grad, void* ctx);
+  static PetscErrorCode FormFunctionGradient(Tao tao, Vec x, PetscReal * obj,
+                                             Vec grad, void * ctx);
 
   static PetscErrorCode FormHessian(Tao tao, Vec x, Mat hess, Mat pre,
-                                    void* ctx);
+                                    void * ctx);
 
-  void computeObjectiveGradient(Vec x, PetscReal* obj, Vec grad);
+  void computeObjectiveGradient(Vec x, PetscReal * obj, Vec grad);
 
   void corrector(Vec x);
   void assembleResidual(Vec x, Vec f);
@@ -100,18 +99,26 @@ protected:
 };
 
 namespace debug {
-  class TAONotConvergedException : public NLSNotConvergedException {
-  public:
-    TAONotConvergedException(TaoConvergedReason reason, Int niter, Real error,
-                              Real absolute_tolerance, Real relative_tolerance,
-                              Int max_iterations)
-        : NLSNotConvergedException(relative_tolerance, niter, error),
-          reason(reason), absolute_tolerance(absolute_tolerance),
-          max_iterations(max_iterations) {}
-    TaoConvergedReason reason;
-    Real absolute_tolerance;
-    Int max_iterations;
-  };
+class TAONotConvergedException : public Exception {
+public:
+  TAONotConvergedException(TaoConvergedReason reason, Int niter, Real atol,
+                           Real rtol, Real ttol, Int max_iterations)
+      : Exception(""), reason(reason), niter(niter), atol(atol), rtol(rtol),
+        ttol(ttol), max_iterations(max_iterations) {
+    std::stringstream sstr;
+    sstr << "The TAO solver did not converge after " << niter
+         << " iterations (reason: " << reason
+         << ", max_iterations: " << max_iterations << ", atol: " << atol
+         << ", rtol: " << rtol << ", ttol: " << ttol << ")";
+    _info = sstr.str();
+  }
+  TaoConvergedReason reason;
+  Int niter;
+  Real atol;
+  Real rtol;
+  Real ttol;
+  Int max_iterations;
+};
 } // namespace debug
 
 } // namespace akantu
