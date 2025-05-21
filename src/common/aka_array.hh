@@ -218,7 +218,7 @@ public:
 
   ~Array() override;
 
-  Array() : Array(0){};
+  Array() : Array(0) {};
 
   /// Allocation of a new vector
   explicit Array(Int size, Int nb_component = 1, const ID & id = "");
@@ -407,5 +407,9 @@ inline std::ostream & operator<<(std::ostream & stream,
 } // namespace akantu
 
 #include "aka_array_tmpl.hh"
+// IWYU pragma: begin_exports, begin_keep
+#include "aka_array_filter.hh"
+#include "aka_array_view.hh"
+// IWYU pragma: end_exports, end_keep
 
 #endif /* AKANTU_ARRAY_HH_ */
