@@ -119,10 +119,11 @@ MaterialPhaseField<dim, EnergySplit_>::getRho(Ref<Vector<Real>> rhos,
                .colwise(),
            range(damage_it, damage_end), range(gradu_it, gradu_end))) {
 
-    Real trace = gradu.trace();
-    if (trace > 0) {
-      rho *= (1 - d) * (1 - d) + eta;
-    }
+    // TODO: Regularize mass degradation with energy split
+    // Real trace = gradu.trace();
+    // if (trace > 0) {
+    rho *= (1 - d) * (1 - d) + eta;
+    // }
   }
 
   for (auto & r : rhos) {
