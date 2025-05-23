@@ -89,6 +89,8 @@ public:
         option = sstr.str();
       } else if (value.type() == typeid(Int)) {
         option = std::to_string(std::any_cast<Int>(value));
+      } else if (value.type() == typeid(bool)) {
+        option = std::any_cast<bool>(value) ? "true" : "false";
       } else if (value.type() == typeid(std::string)) {
         option = std::any_cast<std::string>(value);
       } else if (value.type() == typeid(const char *)) {

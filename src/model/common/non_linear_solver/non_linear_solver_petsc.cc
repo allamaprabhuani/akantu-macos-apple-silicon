@@ -79,15 +79,12 @@ NonLinearSolverPETSc::NonLinearSolverPETSc(
 NonLinearSolverPETSc::~NonLinearSolverPETSc() { SNESDestroy(&snes); }
 
 /* -------------------------------------------------------------------------- */
-
 void NonLinearSolverPETSc::saveSolution() { AKANTU_TO_IMPLEMENT(); }
 
 /* -------------------------------------------------------------------------- */
-
 void NonLinearSolverPETSc::restoreSolution() { AKANTU_TO_IMPLEMENT(); }
 
 /* -------------------------------------------------------------------------- */
-
 void NonLinearSolverPETSc::corrector(Vec x) {
 
   auto & solution = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
@@ -100,7 +97,6 @@ void NonLinearSolverPETSc::corrector(Vec x) {
 }
 
 /* -------------------------------------------------------------------------- */
-
 void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
   corrector(x);
   auto & residual =
@@ -124,7 +120,6 @@ void NonLinearSolverPETSc::assembleResidual(Vec x, Vec f) {
 }
 
 /* -------------------------------------------------------------------------- */
-
 void NonLinearSolverPETSc::assembleJacobian(Vec x, Mat J) {
   corrector(x);
   callback->assembleMatrix("J");
@@ -135,7 +130,6 @@ void NonLinearSolverPETSc::assembleJacobian(Vec x, Mat J) {
 }
 
 /* -------------------------------------------------------------------------- */
-
 PetscErrorCode NonLinearSolverPETSc::FormFunction(SNES /*snes*/, Vec x, Vec f,
                                                   void * ctx) {
   reinterpret_cast<NonLinearSolverPETSc *>(ctx)->assembleResidual(x, f);
@@ -151,28 +145,29 @@ PetscErrorCode NonLinearSolverPETSc::FormJacobian(SNES /*snes*/, Vec x, Mat J,
 
 /* -------------------------------------------------------------------------- */
 void NonLinearSolverPETSc::solve(SolverCallback & callback) {
+  this->callback = &callback;
+
   callback.beforeSolveStep();
   this->dof_manager.updateGlobalBlockedDofs();
 
+  callback.predictor();
+
   callback.assembleMatrix("J");
-  auto & x = dynamic_cast<SolverVectorPETSc &>(dof_manager.getSolution());
-  x.zero();
 
-  this->callback = &callback;
-
+  auto & x = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
   auto & rhs = aka::as_type<SolverVectorPETSc>(dof_manager.getResidual());
+
+  x.zero();
   rhs.zero();
 
   auto & J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
+  J.saveMatrix("J_petsc");
 
   SNESSetFunction(snes, rhs, NonLinearSolverPETSc::FormFunction, this);
   SNESSetJacobian(snes, J, J, NonLinearSolverPETSc::FormJacobian, this);
   SNESSetConvergenceHistory(snes, petsc_a.data(), petsc_its.data(), petsc_na,
                             PETSC_TRUE);
 
-  callback.predictor();
-
-  // SNESView(snes, PETSC_VIEWER_STDOUT_WORLD);
   SNESSolve(snes, nullptr, x);
 
   // Helping to debug
@@ -181,6 +176,7 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
   SNESGetSolutionNorm(snes, &xnorm);
   SNESGetUpdateNorm(snes, &ynorm);
   SNESGetConvergedReason(snes, &reason);
+
   const char * reasonstr;
   SNESGetConvergedReasonString(snes, &reasonstr);
   reason_str = std::string(reasonstr);
@@ -197,13 +193,15 @@ void NonLinearSolverPETSc::solve(SolverCallback & callback) {
     PetscReal atol;
     PetscReal rtol;
     PetscReal stol;
+    PetscReal divtol;
     PetscInt maxit;
     PetscInt maxf;
 
     SNESGetTolerances(snes, &atol, &rtol, &stol, &maxit, &maxf);
+    SNESGetDivergenceTolerance(snes, &divtol);
     AKANTU_CUSTOM_EXCEPTION(debug::SNESNotConvergedException(
         reason_str, n_iter, maxit, atol, rtol, stol, norm, norm / petsc_a[0],
-        xnorm, ynorm));
+        xnorm, ynorm, divtol));
   }
 }
 

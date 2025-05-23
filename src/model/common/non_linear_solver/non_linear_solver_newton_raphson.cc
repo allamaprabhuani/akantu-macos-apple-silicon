@@ -131,6 +131,8 @@ NonLinearSolverNewtonRaphson::NonLinearSolverNewtonRaphson(
   this->registerParam("force_linear_recompute", force_linear_recompute, true,
                       _pat_modifiable,
                       "Force reassembly of the jacobian matrix");
+  this->registerParam("verbose_iteration", verbose_iteration, false,
+                      _pat_modifiable, "Make internal iterations verbose");
 }
 
 /* ------------------------------------------------------------------------ */
@@ -184,7 +186,12 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
             NonLinearSolverType::_newton_raphson_contact) {
       solver_callback.assembleMatrix("J");
     }
-    // this->dof_manager.getMatrix("J").saveMatrix("J_computed_by_default.mtx");
+
+    // static bool first{true};
+    // if (first) {
+    //   this->dof_manager.getMatrix("J").saveMatrix("J_default.mtx");
+    // }
+    // first = false;
     this->sparse_solver->solve();
     solver_callback.corrector();
 
@@ -210,6 +217,19 @@ void NonLinearSolverNewtonRaphson::solve(SolverCallback & solver_callback) {
             << std::setw(std::log10(this->max_iterations)) << this->n_iter
             << ": error " << this->error << (this->converged ? " < " : " > ")
             << this->convergence_criteria_normalized);
+
+    if (verbose_iteration and dof_manager.getCommunicator().whoAmI() == 0) {
+      std::cout << "[" << this->convergence_criteria_type
+                << "] Convergence iteration "
+                << std::setw(std::log10(this->max_iterations)) << this->n_iter
+                << ": error " << std::scientific << this->error
+                << (this->converged ? " < " : " > ")
+                << this->convergence_criteria_normalized << " ["
+                << this->convergence_criteria << "/"
+                << (this->convergence_criteria_normalized /
+                    this->convergence_criteria)
+                << "]\n";
+    }
 
   } while (not this->converged and this->n_iter < this->max_iterations);
 

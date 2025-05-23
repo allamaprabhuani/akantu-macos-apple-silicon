@@ -47,14 +47,14 @@ int main(int argc, char * argv[]) {
 
   Real analytical_damage{0.};
 
-  const Real gc = phasefield.getParam("gc");
+  // const Real gc = phasefield.getParam("gc");
   const Real l0 = phasefield.getParam("l0");
   const Real L = 1000.;
 
   Real error_damage{0.};
 
   auto & positions = phase.getMesh().getNodes();
-  auto & blocked_dofs = phase.getBlockedDOFs();
+  // auto & blocked_dofs = phase.getBlockedDOFs();
 
   phase.applyBC(BC::Dirichlet::FixedValue(1., _x), "blocked");
 
@@ -81,4 +81,3 @@ int main(int argc, char * argv[]) {
 
   return EXIT_SUCCESS;
 }
-

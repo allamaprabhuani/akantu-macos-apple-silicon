@@ -92,6 +92,9 @@ private:
   /// Force a re-computation of the jacobian matrix
   bool force_linear_recompute{true};
 
+  /// Verbose iterations
+  bool verbose_iteration{false};
+
 protected:
   /// flag do decide if one iteration only to be done
   bool linear{false};

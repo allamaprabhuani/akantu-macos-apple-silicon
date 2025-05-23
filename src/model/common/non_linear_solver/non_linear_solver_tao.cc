@@ -38,15 +38,23 @@ namespace akantu {
 NonLinearSolverTAO::NonLinearSolverTAO(
     DOFManagerPETSc & dof_manager, const ModelSolverOptions & solver_options,
     const ID & id)
-    : NonLinearSolver(dof_manager, solver_options, id) {
+    : ParsablePETSc<NonLinearSolver, Tao>(tao, TaoSetFromOptions, dof_manager,
+                                          solver_options, id) {
 
   if (solver_options.sparse_solver_type != SparseSolverType::_petsc)
     AKANTU_EXCEPTION(
         "petsc non linear solver works only with petsc sparse solver");
 
-  this->has_internal_set_param = true;
+  akantu_to_petsc_options = {
+      {"max_iterations", "snes_max_it"},
+      {"threshold", "snes_atol\", \"snes_rtol\" or \"snes_stol"},
+      {"convergence_type", "snes_atol\", \"snes_rtol\" or \"snes_stol"},
+      {"absolute_threshold", "tao_gatol"},
+      {"relative_threshold", "tao_grtol"}};
 
-  supported_type.insert(NonLinearSolverType::_petsc_tao);
+  // this->has_internal_set_param = true;
+
+  this->supported_type.insert(NonLinearSolverType::_petsc_tao);
 
   this->checkIfTypeIsSupported();
 
@@ -71,10 +79,10 @@ NonLinearSolverTAO::NonLinearSolverTAO(
 /* -------------------------------------------------------------------------- */
 NonLinearSolverTAO::~NonLinearSolverTAO() { TaoDestroy(&tao); }
 
-/* -------------------------------------------------------------------------- */
-void NonLinearSolverTAO::setTAOType(const ID & type) {
-  PetscOptionsSetValue(NULL, "-tao_type", type.c_str());
-}
+// /* --------------------------------------------------------------------------
+// */ void NonLinearSolverTAO::setTAOType(const ID & type) {
+//   PetscOptionsSetValue(NULL, "-tao_type", type.c_str());
+// }
 
 /* -------------------------------------------------------------------------- */
 
@@ -244,34 +252,5 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
         this->reason, this->n_iter, atol, rtol, ttol, maxit));
   }
 }
-
-/* -------------------------------------------------------------------------- */
-void NonLinearSolverTAO::updateInternalParameters() {
-
-  std::map<ID, ID> akantu_to_petsc_option = {
-      {"solver_type", "tao_type"},
-      {"max_iterations", "tao_max_it"},
-      {"absolute_threshold", "tao_gatol"},
-      {"relative_threshold", "tao_grtol"}};
-
-  for (auto && [param, param_akantu] : akantu_to_petsc_option) {
-    auto & value = this->get(param);
-    PetscOptionsSetValue(nullptr, ("-" + param_akantu).c_str(),
-                         value.to_string().c_str());
-  }
-  TaoSetFromOptions(tao);
-  PetscOptionsClear(nullptr);
-}
-/* -------------------------------------------------------------------------- */
-void NonLinearSolverTAO::parseSection(const ParserSection & section) {
-  auto parameters = section.getParameters();
-  for (auto && param : range(parameters.first, parameters.second)) {
-    PetscOptionsSetValue(nullptr, param.getName().c_str(),
-                         param.getValue().c_str());
-  }
-  TaoSetFromOptions(tao);
-  PetscOptionsClear(nullptr);
-}
-/* -------------------------------------------------------------------------- */
 
 } // namespace akantu

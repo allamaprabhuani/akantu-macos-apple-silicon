@@ -19,8 +19,8 @@
  */
 
 /* -------------------------------------------------------------------------- */
-#include "mesh.hh"
 #include "non_linear_solver.hh"
+#include "parsable_petsc.hh"
 #include "solver_vector_petsc.hh"
 /* -------------------------------------------------------------------------- */
 #include <petsctao.h>
@@ -36,7 +36,7 @@ class SolverVectorPETSc;
 
 namespace akantu {
 
-class NonLinearSolverTAO : public NonLinearSolver {
+class NonLinearSolverTAO : public ParsablePETSc<NonLinearSolver, Tao> {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -51,14 +51,12 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  /// set TAO solver type
-  void setTAOType(const ID & type);
+  // /// set TAO solver type
+  // void setTAOType(const ID & type);
+
   /// solve the system described by the jacobian matrix, and rhs contained in
   /// the dof manager
   void solve(SolverCallback & callback) override;
-
-  /// parse the arguments from the input file
-  void parseSection(const ParserSection & section) override;
 
   /// set solution bounds
   void setBounds(Vec lower_array, Vec upper_array);
@@ -77,7 +75,6 @@ protected:
   void corrector(Vec x);
   void assembleResidual(Vec x, Vec f);
   void assembleJacobian(Vec x, Mat J);
-  void updateInternalParameters() override;
 
   void saveSolution();
   void restoreSolution();
