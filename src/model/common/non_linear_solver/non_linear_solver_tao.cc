@@ -46,9 +46,9 @@ NonLinearSolverTAO::NonLinearSolverTAO(
         "petsc non linear solver works only with petsc sparse solver");
 
   akantu_to_petsc_options = {
-      {"max_iterations", "snes_max_it"},
-      {"threshold", "snes_atol\", \"snes_rtol\" or \"snes_stol"},
-      {"convergence_type", "snes_atol\", \"snes_rtol\" or \"snes_stol"},
+      {"max_iterations", "tao_max_it"},
+      {"threshold", "tao_gatol\", \"tao_grtol\" or \"tao_gttol"},
+      {"convergence_type", "tao_gatol\", \"tao_grtol\" or \"tao_gttol"},
       {"absolute_threshold", "tao_gatol"},
       {"relative_threshold", "tao_grtol"}};
 
@@ -192,7 +192,7 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
 
   callback.assembleMatrix("J");
   auto & x = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
-  x.zero();
+  // x.zero();
 
   this->callback = &callback;
 
