@@ -290,8 +290,7 @@ public:
   inline void computeShapes(const Ref<const VectorXr> real_coords, Int element,
                             ElementType type, Ref<VectorXr> shapes,
                             GhostType ghost_type = _not_ghost) const override {
-    this->template computeShapesImpl(real_coords, element, type, shapes,
-                                     ghost_type);
+    this->computeShapesImpl(real_coords, element, type, shapes, ghost_type);
   }
 
   /// compute the shape derivatives on a provided point
@@ -299,8 +298,8 @@ public:
   computeShapeDerivatives(const Ref<const VectorXr> real_coords, Int element,
                           ElementType type, Ref<MatrixXr> shape_derivatives,
                           GhostType ghost_type = _not_ghost) const override {
-    this->template computeShapeDerivativesImpl<kind>(
-        real_coords, element, type, shape_derivatives, ghost_type);
+    this->computeShapeDerivativesImpl(real_coords, element, type,
+                                      shape_derivatives, ghost_type);
   }
 
   /* ------------------------------------------------------------------------ */
