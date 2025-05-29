@@ -27,14 +27,14 @@
 #include <memory>
 #include <type_traits>
 /* -------------------------------------------------------------------------- */
-//#ifndef __AKANTU_AKA_ARRAY_TMPL_HH__
-//#define __AKANTU_AKA_ARRAY_TMPL_HH__
+// #ifndef __AKANTU_AKA_ARRAY_TMPL_HH__
+// #define __AKANTU_AKA_ARRAY_TMPL_HH__
 /* -------------------------------------------------------------------------- */
 
 namespace akantu {
 
 namespace debug {
-  struct ArrayException : public Exception {};
+struct ArrayException : public Exception {};
 } // namespace debug
 
 /* -------------------------------------------------------------------------- */
@@ -766,204 +766,82 @@ bool Array<T, is_scal>::isFinite() const noexcept {
 }
 
 /* ------------------------------------------------------------------------ */
-/* ArrayFilter                                                              */
-/* ------------------------------------------------------------------------ */
-template <typename T> class ArrayFilter {
-public:
-  /// const iterator
-  template <class original_iterator, typename filter_iterator>
-  class const_iterator {
-  public:
-    Idx getCurrentIndex() {
-      return (*this->filter_it * this->nb_item_per_elem +
-              this->sub_element_counter);
-    }
-
-    inline const_iterator() = default;
-    inline const_iterator(original_iterator origin_it,
-                          filter_iterator filter_it, Int nb_item_per_elem)
-        : origin_it(std::move(origin_it)), filter_it(std::move(filter_it)),
-          nb_item_per_elem(nb_item_per_elem), sub_element_counter(0){};
-
-    inline bool operator!=(const_iterator & other) const {
-      return !((*this) == other);
-    }
-    inline bool operator==(const_iterator & other) const {
-      return (this->origin_it == other.origin_it &&
-              this->filter_it == other.filter_it &&
-              this->sub_element_counter == other.sub_element_counter);
-    }
-
-    inline bool operator!=(const const_iterator & other) const {
-      return !((*this) == other);
-    }
-    inline bool operator==(const const_iterator & other) const {
-      return (this->origin_it == other.origin_it &&
-              this->filter_it == other.filter_it &&
-              this->sub_element_counter == other.sub_element_counter);
-    }
-
-    inline const_iterator & operator++() {
-      ++sub_element_counter;
-      if (sub_element_counter == nb_item_per_elem) {
-        sub_element_counter = 0;
-        ++filter_it;
-      }
-      return *this;
-    };
-
-    inline decltype(auto) operator*() {
-      return origin_it[nb_item_per_elem * (*filter_it) + sub_element_counter];
-    };
-
-  private:
-    original_iterator origin_it;
-    filter_iterator filter_it;
-    /// the number of item per element
-    Int nb_item_per_elem;
-    /// counter for every sub element group
-    Int sub_element_counter;
-  };
-
-  using vector_iterator = void; // iterator<Vector<T>>;
-  using array_type = Array<T>;
-  using const_vector_iterator =
-      const_iterator<typename array_type::const_vector_iterator,
-                     Array<Idx>::const_scalar_iterator>;
-  using value_type = typename array_type::value_type;
-
-private:
-  /* ---------------------------------------------------------------------- */
-  /* Constructors/Destructors                                               */
-  /* ---------------------------------------------------------------------- */
-public:
-  ArrayFilter(const Array<T> & array, const Array<Idx> & filter,
-              Int nb_item_per_elem)
-      : array(array), filter(filter), nb_item_per_elem(nb_item_per_elem){};
-
-  decltype(auto) begin_reinterpret(Int n, Int new_size) const {
-    Int new_nb_item_per_elem = this->nb_item_per_elem;
-    if (new_size != 0 && n != 0)
-      new_nb_item_per_elem = this->array.getNbComponent() *
-                             this->filter.size() * this->nb_item_per_elem /
-                             (n * new_size);
-
-    return const_vector_iterator(make_view(this->array, n).begin(),
-                                 this->filter.begin(), new_nb_item_per_elem);
-  };
-
-  decltype(auto) end_reinterpret(Int n, Int new_size) const {
-    Int new_nb_item_per_elem = this->nb_item_per_elem;
-    if (new_size != 0 && n != 0)
-      new_nb_item_per_elem = this->array.getNbComponent() *
-                             this->filter.size() * this->nb_item_per_elem /
-                             (n * new_size);
-
-    return const_vector_iterator(make_view(this->array, n).begin(),
-                                 this->filter.end(), new_nb_item_per_elem);
-  };
-
-  // vector_iterator begin_reinterpret(Int, Int) { throw; };
-  // vector_iterator end_reinterpret(Int, Int) { throw; };
-
-  /// return the size of the filtered array which is the filter size
-  Int size() const { return this->filter.size() * this->nb_item_per_elem; };
-  /// the number of components of the filtered array
-  Int getNbComponent() const { return this->array.getNbComponent(); };
-
-  /// tells if the container is empty
-  [[nodiscard]] bool empty() const { return (size() == 0); }
-  /* ---------------------------------------------------------------------- */
-  /* Class Members                                                          */
-  /* ---------------------------------------------------------------------- */
-private:
-  /// reference to array of data
-  const Array<T> & array;
-  /// reference to the filter used to select elements
-  const Array<Idx> & filter;
-  /// the number of item per element
-  Int nb_item_per_elem;
-};
-
-/* ------------------------------------------------------------------------ */
 /* Begin/End functions implementation                                       */
 /* ------------------------------------------------------------------------ */
 namespace detail {
-  template <class C> struct GetNbComponent {
-    static auto getNbComponent(const C & /*cont*/) { return 1; }
-  };
+template <class C> struct GetNbComponent {
+  static auto getNbComponent(const C & /*cont*/) { return 1; }
+};
 
-  template <typename T> struct GetNbComponent<Array<T>> {
-    static auto getNbComponent(const Array<T> & cont) {
-      return cont.getNbComponent();
-    }
-  };
+template <typename T> struct GetNbComponent<Array<T>> {
+  static auto getNbComponent(const Array<T> & cont) {
+    return cont.getNbComponent();
+  }
+};
 
-  template <class Tuple, size_t... Is>
-  constexpr auto take_front_impl(Tuple && t,
-                                 std::index_sequence<Is...> /*idxs*/) {
-    return std::make_tuple(std::get<Is>(std::forward<Tuple>(t))...);
+template <class Tuple, size_t... Is>
+constexpr auto take_front_impl(Tuple && t,
+                               std::index_sequence<Is...> /*idxs*/) {
+  return std::make_tuple(std::get<Is>(std::forward<Tuple>(t))...);
+}
+
+template <size_t N, class Tuple> constexpr auto take_front(Tuple && t) {
+  return take_front_impl(std::forward<Tuple>(t), std::make_index_sequence<N>{});
+}
+
+template <typename... T> std::string to_string_all(T &&... t) {
+  if (sizeof...(T) == 0) {
+    return "";
   }
 
-  template <size_t N, class Tuple> constexpr auto take_front(Tuple && t) {
-    return take_front_impl(std::forward<Tuple>(t),
-                           std::make_index_sequence<N>{});
+  std::stringstream ss;
+  bool noComma = true;
+  ss << "(";
+  (void)std::initializer_list<bool>{
+      (ss << (noComma ? "" : ", ") << t, noComma = false)...};
+  ss << ")";
+  return ss.str();
+}
+
+template <std::size_t N> struct InstantiationHelper {
+  template <typename type, typename T, typename... Ns>
+  static auto instantiate(T && data, Ns... ns) {
+    return std::make_unique<type>(data, ns...);
+  }
+};
+
+template <> struct InstantiationHelper<0> {
+  template <typename type, typename T> static auto instantiate(T && data) {
+    return data;
+  }
+};
+
+template <typename Arr, typename T, typename... Ns>
+decltype(auto) __attribute__((visibility("hidden")))
+get_iterator(Arr && array, T * data, Ns &&... ns) {
+  const bool is_const_arr = std::is_const<std::remove_reference_t<Arr>>::value;
+  using type = ViewIteratorHelper_t<sizeof...(Ns) - 1, T>;
+  using iterator = std::conditional_t<is_const_arr, const_view_iterator<type>,
+                                      view_iterator<type>>;
+  static_assert(sizeof...(Ns), "You should provide a least one size");
+
+  auto product = Idx(product_all(std::forward<Ns>(ns)...));
+  auto nb_component = array.getNbComponent();
+  // detail::GetNbComponent<std::decay_t<Arr>>::getNbComponent(
+  //     std::forward<decltype(array)>(array));
+  if (nb_component * array.size() != product) {
+    AKANTU_CUSTOM_EXCEPTION_INFO(
+        debug::ArrayException(),
+        "The iterator on " << debug::demangle(typeid(Arr).name())
+                           << to_string_all(array.size(), nb_component)
+                           << "is not compatible with the type "
+                           << debug::demangle(typeid(type).name()) << " "
+                           << to_string_all(ns...));
   }
 
-  template <typename... T> std::string to_string_all(T &&... t) {
-    if (sizeof...(T) == 0) {
-      return "";
-    }
-
-    std::stringstream ss;
-    bool noComma = true;
-    ss << "(";
-    (void)std::initializer_list<bool>{
-        (ss << (noComma ? "" : ", ") << t, noComma = false)...};
-    ss << ")";
-    return ss.str();
-  }
-
-  template <std::size_t N> struct InstantiationHelper {
-    template <typename type, typename T, typename... Ns>
-    static auto instantiate(T && data, Ns... ns) {
-      return std::make_unique<type>(data, ns...);
-    }
-  };
-
-  template <> struct InstantiationHelper<0> {
-    template <typename type, typename T> static auto instantiate(T && data) {
-      return data;
-    }
-  };
-
-  template <typename Arr, typename T, typename... Ns>
-  decltype(auto) __attribute__((visibility("hidden")))
-  get_iterator(Arr && array, T * data, Ns &&... ns) {
-    const bool is_const_arr =
-        std::is_const<std::remove_reference_t<Arr>>::value;
-    using type = ViewIteratorHelper_t<sizeof...(Ns) - 1, T>;
-    using iterator = std::conditional_t<is_const_arr, const_view_iterator<type>,
-                                        view_iterator<type>>;
-    static_assert(sizeof...(Ns), "You should provide a least one size");
-
-    auto product = Idx(product_all(std::forward<Ns>(ns)...));
-    auto nb_component = array.getNbComponent();
-    // detail::GetNbComponent<std::decay_t<Arr>>::getNbComponent(
-    //     std::forward<decltype(array)>(array));
-    if (nb_component * array.size() != product) {
-      AKANTU_CUSTOM_EXCEPTION_INFO(
-          debug::ArrayException(),
-          "The iterator on " << debug::demangle(typeid(Arr).name())
-                             << to_string_all(array.size(), nb_component)
-                             << "is not compatible with the type "
-                             << debug::demangle(typeid(type).name()) << " "
-                             << to_string_all(ns...));
-    }
-
-    return std::apply([&](auto... n) { return iterator(data, n...); },
-                      take_front<sizeof...(Ns) - 1>(std::make_tuple(ns...)));
-  }
+  return std::apply([&](auto... n) { return iterator(data, n...); },
+                    take_front<sizeof...(Ns) - 1>(std::make_tuple(ns...)));
+}
 } // namespace detail
 
 /* ------------------------------------------------------------------------ */
@@ -1041,158 +919,6 @@ inline auto Array<T, is_scal>::end_reinterpret(Ns &&... ns) const {
       std::forward<Ns>(ns)...);
 }
 
-/* ------------------------------------------------------------------------ */
-/* Views                                                                    */
-/* ------------------------------------------------------------------------ */
-namespace detail {
-  template <typename Array, typename... Ns> class ArrayView {
-    using tuple = std::tuple<Ns...>;
-
-  public:
-    using size_type = Idx;
-    using pointer = decltype(std::declval<Array>().data());
-
-    ~ArrayView() = default;
-    constexpr ArrayView(Array && array, Ns... ns) noexcept
-        : array(array), sizes(std::move(ns)...) {}
-
-    constexpr ArrayView(const ArrayView & array_view) = default;
-    constexpr ArrayView(ArrayView && array_view) noexcept = default;
-
-    constexpr ArrayView & operator=(const ArrayView & array_view) = default;
-    constexpr ArrayView & operator=(ArrayView && array_view) noexcept = default;
-
-    auto begin() {
-      return std::apply(
-          [&](auto &&... ns) {
-            return detail::get_iterator(array.get(), array.get().data(),
-                                        std::forward<decltype(ns)>(ns)...);
-          },
-          sizes);
-    }
-
-    auto begin() const {
-      return std::apply(
-          [&](auto &&... ns) {
-            return detail::get_iterator(array.get(), array.get().data(),
-                                        std::forward<decltype(ns)>(ns)...);
-          },
-          sizes);
-    }
-
-    auto end() {
-      return std::apply(
-          [&](auto &&... ns) {
-            return detail::get_iterator(
-                array.get(),
-                array.get().data() +
-                    detail::product_all(std::forward<decltype(ns)>(ns)...),
-                std::forward<decltype(ns)>(ns)...);
-          },
-          sizes);
-    }
-
-    auto end() const {
-      return std::apply(
-          [&](auto &&... ns) {
-            return detail::get_iterator(
-                array.get(),
-                array.get().data() +
-                    detail::product_all(std::forward<decltype(ns)>(ns)...),
-                std::forward<decltype(ns)>(ns)...);
-          },
-          sizes);
-    }
-
-    auto cbegin() const { return this->begin(); }
-    auto cend() const { return this->end(); }
-
-    constexpr auto size() const {
-      return std::get<std::tuple_size<tuple>::value - 1>(sizes);
-    }
-
-    constexpr auto dims() const { return std::tuple_size<tuple>::value - 1; }
-
-  private:
-    std::reference_wrapper<std::remove_reference_t<Array>> array;
-    tuple sizes;
-  };
-
-  /* ---------------------------------------------------------------------- */
-  template <typename T, typename... Ns>
-  class ArrayView<const ArrayFilter<T> &, Ns...> {
-    using tuple = std::tuple<Ns...>;
-
-  public:
-    constexpr ArrayView(const ArrayFilter<T> & array, Ns... ns)
-        : array(array), sizes(std::move(ns)...) {}
-
-    constexpr ArrayView(const ArrayView & array_view) = default;
-    constexpr ArrayView(ArrayView && array_view) = default;
-
-    constexpr ArrayView & operator=(const ArrayView & array_view) = default;
-    constexpr ArrayView & operator=(ArrayView && array_view) = default;
-
-    auto begin() const {
-      return std::apply(
-          [&](auto &&... ns) {
-            return array.get().begin_reinterpret(
-                std::forward<decltype(ns)>(ns)...);
-          },
-          sizes);
-    }
-
-    auto end() const {
-      return std::apply(
-          [&](auto &&... ns) {
-            return array.get().end_reinterpret(
-                std::forward<decltype(ns)>(ns)...);
-          },
-          sizes);
-    }
-
-    auto cbegin() const { return this->begin(); }
-    auto cend() const { return this->end(); }
-
-    constexpr auto size() const {
-      return std::get<std::tuple_size<tuple>::value - 1>(sizes);
-    }
-
-    constexpr auto dims() const { return std::tuple_size<tuple>::value - 1; }
-
-  private:
-    std::reference_wrapper<const ArrayFilter<T>> array;
-    tuple sizes;
-  };
-} // namespace detail
-
-/* ------------------------------------------------------------------------ */
-template <typename Array, typename... Ns,
-          std::enable_if_t<aka::conjunction<
-              std::is_integral<std::decay_t<Ns>>...>::value> * = nullptr>
-decltype(auto) make_view(Array && array, const Ns... ns) {
-  AKANTU_DEBUG_ASSERT((detail::product_all(ns...) != 0),
-                      "You must specify non zero dimensions");
-  // auto size = std::forward<decltype(array)>(array).size() *
-  //             std::forward<decltype(array)>(array).getNbComponent() /
-  //             detail::product_all(ns...);
-  auto array_size = std::forward<decltype(array)>(array).size();
-  auto nb_component = std::forward<decltype(array)>(array).getNbComponent();
-  // detail::GetNbComponent<std::decay_t<Array>>::getNbComponent(
-  //     std::forward<decltype(array)>(array));
-  auto product_all = detail::product_all(ns...);
-  auto size = array_size * nb_component / product_all;
-
-  return detail::ArrayView<Array, std::common_type_t<size_t, Ns>...,
-                           std::common_type_t<size_t, decltype(size)>>(
-      std::forward<Array>(array), std::move(ns)..., size);
-}
-
-template <typename Array, typename... Ns>
-decltype(auto) make_const_view(const Array & array, const Ns... ns) {
-  return make_view(array, std::move(ns)...);
-}
-
 } // namespace akantu
 
-//#endif /* __AKANTU_AKA_ARRAY_TMPL_HH__ */
+// #endif /* __AKANTU_AKA_ARRAY_TMPL_HH__ */
