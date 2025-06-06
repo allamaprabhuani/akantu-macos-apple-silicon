@@ -94,9 +94,7 @@ void PhaseFieldLinear<dim, EnergySplit_>::computeDrivingForce(
     driving_energy_quad *= 0;
   }
 
-  if (not this->use_tao) {
-    computeResidual(el_type, ghost_type);
-  }
+  computeResidual(el_type, ghost_type);
 
   if (this->use_penalization) {
     applyPenalization(el_type, ghost_type);

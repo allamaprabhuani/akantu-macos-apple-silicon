@@ -16,7 +16,6 @@ model phase_field_model [
        gc = 5e-3
        l0 = 20
        Plane_Stress = false
-       irreversibility_type = penalization
-			 irreversibility_tol = 0.001
+       irreversibility_type = tao
 	   ]	
 ]	
