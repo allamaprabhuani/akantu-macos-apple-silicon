@@ -15,10 +15,7 @@ public:
   /* Constructors/Destructors                                                 */
   /* ------------------------------s------------------------------------------
    */
-  VolumetricDeviatoricSplit() : EnergySplit() {
-    // dev_dim = plane_stress ? dim : 3;
-    dev_dim = dim;
-  };
+  VolumetricDeviatoricSplit() : EnergySplit(){};
 
   /* ------------------------------------------------------------------------*/
   /* Methods */
@@ -38,15 +35,6 @@ public:
   inline void computeTangentCoefsOnQuad(const Matrix<Real> & strain_quad,
                                         const Real & g_d,
                                         Matrix<Real> & tangent);
-
-  /* ------------------------------------------------------------------------
-   */
-  /* Class Members */
-  /* ------------------------------------------------------------------------
-   */
-private:
-  // dimension to consider in deviatoric split
-  Int dev_dim;
 };
 
 } // namespace akantu
