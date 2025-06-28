@@ -136,8 +136,6 @@ void NonLinearSolverTAO::assembleJacobian(Vec x, Mat J) {
   callback->assembleMatrix("J");
   auto & _J = aka::as_type<SparseMatrixPETSc>(dof_manager.getMatrix("J"));
   if (_J.getMat() != J) {
-    // PetscPrint(_J);
-    // PetscPrint(J);
     MatCopy(_J, J, SAME_NONZERO_PATTERN);
   }
 }
@@ -192,7 +190,7 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
 
   callback.assembleMatrix("J");
   auto & x = aka::as_type<SolverVectorPETSc>(dof_manager.getSolution());
-  // x.zero();
+  x.zero();
 
   this->callback = &callback;
 
@@ -225,16 +223,6 @@ void NonLinearSolverTAO::solve(SolverCallback & callback) {
   // auto & model_x = this->dof_manager.getDOFs("displacement");
   dof_manager.splitSolutionPerDOFs();
   callback.restoreLastConvergedStep();
-
-  // \TODO: not efficient, TAO returns full solution, pseudo_time add it to
-  // previous one, need to substract in model or script
-  auto & us = this->dof_manager.getDOFs("damage");
-  const auto & blocked_dofs = this->dof_manager.getBlockedDOFs("damage");
-  for (auto && [u, bld] : zip(make_view(us), make_view(blocked_dofs))) {
-    if (not bld) {
-      u = 0;
-    }
-  }
 
   callback.corrector();
   bool converged = reason >= 0;

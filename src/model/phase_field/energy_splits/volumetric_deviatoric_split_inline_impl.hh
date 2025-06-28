@@ -12,16 +12,12 @@ inline void VolumetricDeviatoricSplit<dim>::computePhiOnQuad(
   Real trace = strain_quad.trace();
   Real trace_plus = std::max(Real(0.), trace);
 
-  Matrix<Real> strain_dev = Matrix<Real>::Zero(dev_dim, dev_dim);
-  Matrix<Real> strain_tmp = Matrix<Real>::Zero(dev_dim, dev_dim);
-  strain_tmp.topLeftCorner(dim, dim) = strain_quad;
+  Matrix<Real> strain_dev =
+      strain_quad - trace / 3. * Matrix<Real>::Identity(dim, dim);
 
-  strain_dev = strain_tmp -
-               trace / Real(dev_dim) * Matrix<Real>::Identity(dev_dim, dev_dim);
+  Real kappa = this->lambda + 2. / 3. * this->mu;
 
-  Real kpa = this->lambda + 2. * this->mu / Real(dev_dim);
-
-  phi_quad = 0.5 * kpa * trace_plus * trace_plus +
+  phi_quad = 0.5 * kappa * trace_plus * trace_plus +
              this->mu * strain_dev.doubleDot(strain_dev);
 }
 
@@ -35,20 +31,14 @@ inline void VolumetricDeviatoricSplit<dim>::computeSigmaOnQuad(
   Real trace_plus = std::max(Real(0.), trace);
   Real trace_minus = std::min(Real(0.), trace);
 
-  Matrix<Real> strain_dev = Matrix<Real>::Zero(dev_dim, dev_dim);
-  Matrix<Real> strain_tmp = Matrix<Real>::Zero(dev_dim, dev_dim);
-  strain_tmp.topLeftCorner(dim, dim) = strain;
+  Matrix<Real> strain_dev =
+      strain - trace / 3 * Matrix<Real>::Identity(dim, dim);
 
-  strain_dev = strain_tmp -
-               trace / Real(dev_dim) * Matrix<Real>::Identity(dev_dim, dev_dim);
+  Real kappa = this->lambda + 2. / 3. * this->mu;
 
-  Real kappa = this->lambda + 2. * this->mu / Real(dev_dim);
-
-  sigma_plus = (kappa * trace_plus) *
-                   Matrix<Real>::Identity(dev_dim, dev_dim) +
+  sigma_plus = (kappa * trace_plus) * Matrix<Real>::Identity(dim, dim) +
                2. * this->mu * strain_dev;
-  sigma_minus = (kappa * trace_minus) *
-                Matrix<Real>::Identity(dev_dim, dev_dim);
+  sigma_minus = (kappa * trace_minus) * Matrix<Real>::Identity(dim, dim);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -59,7 +49,7 @@ inline void VolumetricDeviatoricSplit<dim>::computeTangentCoefsOnQuad(
 
   constexpr auto n = (dim * (dim - 1) / 2 + dim);
 
-  Real kappa = this->lambda + 2. * this->mu / Real(dev_dim);
+  Real kappa = this->lambda + 2. / 3. * this->mu;
 
   Real g_d_hyd = strain_quad.trace() > 0 ? g_d : 1;
 
@@ -68,10 +58,8 @@ inline void VolumetricDeviatoricSplit<dim>::computeTangentCoefsOnQuad(
     return;
   }
 
-  auto Miiii =
-      g_d_hyd * kappa + g_d * 2. * this->mu * (1. - 1. / Real(dev_dim));
-  [[maybe_unused]] auto Miijj =
-      g_d_hyd * kappa - g_d * 2. * this->mu / Real(dev_dim);
+  auto Miiii = g_d_hyd * kappa + g_d * 2. * this->mu * (1. - 1. / 3.);
+  [[maybe_unused]] auto Miijj = g_d_hyd * kappa - g_d * 2. * this->mu / 3.;
   [[maybe_unused]] auto Mijij = g_d * this->mu;
 
   tangent(0, 0) = Miiii;
