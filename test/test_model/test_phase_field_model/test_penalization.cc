@@ -54,24 +54,22 @@ int main(int argc, char * argv[]) {
   model.addDumpField("damage");
   model.dump();
 
-  UInt nbSteps = 1500;
+  UInt nbSteps = 1000;
   Real increment = 1e-5;
 
   auto & stress = model.getMaterial(0).getArray<Real>("stress", _quadrangle_4);
   auto & damage = model.getMaterial(0).getArray<Real>("damage", _quadrangle_4);
 
-  Real analytical_damage{0.};
   Real new_damage{0.};
+  Real analytical_damage{0.};
   Real analytical_sigma{0.};
+  Real axial_strain{0.};
 
   auto & phasefield = phase.getPhaseField(0);
 
   const Real E = phasefield.getParam("E");
   const Real nu = phasefield.getParam("nu");
   Real c22 = E * (1 - nu) / ((1 + nu) * (1 - 2 * nu));
-
-  const Real lambda = nu * E / ((1. + nu) * (1. - 2. * nu));
-  const Real mu = E / (2. + 2. * nu);
 
   const Real gc = phasefield.getParam("gc");
   const Real l0 = phasefield.getParam("l0");
@@ -80,45 +78,22 @@ int main(int argc, char * argv[]) {
 
   Real error_damage{0.};
 
-  Real max_strain_energy{0.};
-  Real strain_energy_plus{0.};
-
   for (UInt s = 0; s < nbSteps; ++s) {
-    Real axial_strain{0.};
     if (s < 500) {
-      axial_strain = increment * s;
-    } else if (s < 1000) {
-      axial_strain = (1500 - 2 * double(s)) * increment;
+      axial_strain += increment;
     } else {
-      axial_strain = (3 * double(s) - 3500) * increment;
+      axial_strain -= increment;
     }
     applyDisplacement(model, axial_strain);
-
-    if (axial_strain > 0) {
-      strain_energy_plus = axial_strain * axial_strain * (0.5 * lambda + mu);
-    } else {
-      strain_energy_plus = 0.5 * axial_strain * axial_strain * mu;
-    }
-
-    max_strain_energy = strain_energy_plus;
 
     coupler.solve("static", "static");
     phase.savePreviousState();
 
-    new_damage = 2. * (l0 / gc) * max_strain_energy /
-                 (2. * (l0 / gc) * max_strain_energy + 1.);
-    if (new_damage > analytical_damage) {
-      analytical_damage = new_damage;
-    }
-
-    if (axial_strain < 0.) {
-      analytical_sigma = (1. - analytical_damage) * (1. - analytical_damage) *
-                             axial_strain * 4. * mu / 3. +
-                         axial_strain * (lambda + 2. * mu / 3.);
-    } else {
-      analytical_sigma = (lambda + 2. * mu) * axial_strain *
-                         (1. - analytical_damage) * (1. - analytical_damage);
-    }
+    new_damage = axial_strain * axial_strain * c22 /
+                 (gc / l0 + axial_strain * axial_strain * c22);
+    analytical_damage = std::max(analytical_damage, new_damage);
+    analytical_sigma =
+        c22 * axial_strain * (1 - analytical_damage) * (1 - analytical_damage);
 
     error_stress =
         std::abs(analytical_sigma - stress(0, 3)) / std::abs(analytical_sigma);
@@ -154,7 +129,8 @@ int main(int argc, char * argv[]) {
   return EXIT_SUCCESS;
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
 void applyDisplacement(SolidMechanicsModel & model, Real & increment) {
   auto & displacement = model.getDisplacement();
 
@@ -179,4 +155,5 @@ void applyDisplacement(SolidMechanicsModel & model, Real & increment) {
   }
 }
 
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ */
