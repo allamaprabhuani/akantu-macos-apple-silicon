@@ -81,6 +81,8 @@ int main(int argc, char * argv[]) {
   upper_bound.set(1.);
   tao_solver.setBounds(lower_bound, upper_bound);
 
+  auto & dof_damage = DOFManager.getDOFs("damage");
+
   Real dam{0.};
   Real analytical_damage{0.};
   Real analytical_sigma{0.};
@@ -118,7 +120,9 @@ int main(int argc, char * argv[]) {
 
     model.assembleInternalForces();
 
-    lower_bound.set(damage(0));
+    lower_bound.set(0.);
+    upper_bound.set(1.);
+    DOFManager.assembleToGlobalArray("damage", dof_damage, upper_bound, -1.);
     tao_solver.setBounds(lower_bound, upper_bound);
 
     dam = 1. - 3. * gc / (8. * l0 * axial_strain * axial_strain * c22);

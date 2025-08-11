@@ -143,6 +143,7 @@ void NonLinearSolverTAO::assembleJacobian(Vec x, Mat J) {
 /* -------------------------------------------------------------------------- */
 void NonLinearSolverTAO::setBounds(const Vec lower_bound,
                                    const Vec upper_bound) {
+  // /!\ Solver compute an increment, bounds sould be on this increment
   TaoSetVariableBounds(tao, lower_bound, upper_bound);
 }
 

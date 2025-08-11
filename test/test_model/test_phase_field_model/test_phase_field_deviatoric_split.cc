@@ -61,8 +61,9 @@ int main(int argc, char * argv[]) {
   auto & damage = model.getMaterial(0).getArray<Real>("damage", _quadrangle_4);
 
   Real analytical_damage{0.};
-  Real new_damage{0.};
   Real analytical_sigma{0.};
+  Real max_strain_energy{0.};
+  Real strain_energy_plus{0.};
 
   auto & phasefield = phase.getPhaseField(0);
 
@@ -71,16 +72,13 @@ int main(int argc, char * argv[]) {
 
   const Real lambda = nu * E / ((1. + nu) * (1. - 2. * nu));
   const Real mu = E / (2. + 2. * nu);
+  const Real kappa = lambda + 2. * mu / 3.;
 
   const Real gc = phasefield.getParam("gc");
   const Real l0 = phasefield.getParam("l0");
 
   Real error_stress{0.};
-
   Real error_damage{0.};
-
-  Real max_strain_energy{0.};
-  Real strain_energy_plus{0.};
 
   for (UInt s = 0; s < nbSteps; ++s) {
     Real axial_strain{0.};
@@ -94,24 +92,21 @@ int main(int argc, char * argv[]) {
     applyDisplacement(model, axial_strain);
 
     if (axial_strain > 0) {
-      strain_energy_plus = axial_strain * axial_strain * (0.5 * lambda + mu);
+      strain_energy_plus = axial_strain * axial_strain * 0.5 * kappa + mu *
+                           axial_strain * axial_strain  * 5. / 9.;
     } else {
-      strain_energy_plus = 2. * axial_strain * axial_strain * mu / 3.;
+      strain_energy_plus = 5. * axial_strain * axial_strain * mu / 9.;
     }
 
     if (strain_energy_plus > max_strain_energy) {
       max_strain_energy = strain_energy_plus;
     }
-    // max_strain_energy = strain_energy_plus;
 
     coupler.solve("static", "static");
     phase.savePreviousState();
 
-    new_damage = 2. * (l0 / gc) * max_strain_energy /
-                 (2. * (l0 / gc) * max_strain_energy + 1.);
-    if (new_damage > analytical_damage) {
-      analytical_damage = new_damage;
-    }
+    analytical_damage = 2. * (l0 / gc) * max_strain_energy /
+                        (2. * (l0 / gc) * max_strain_energy + 1.);
 
     if (axial_strain < 0.) {
       analytical_sigma = (1. - analytical_damage) * (1. - analytical_damage) *

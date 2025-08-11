@@ -21,11 +21,13 @@
 /* -------------------------------------------------------------------------- */
 #include "aka_common.hh"
 #include "py_aka_array.hh"
+#include "py_constitutive_laws_handler.hh"
 /* -------------------------------------------------------------------------- */
 #include <coupler_solid_phasefield.hh>
 #include <non_linear_solver.hh>
 #include <phase_field_element_filter.hh>
 #include <phase_field_model.hh>
+#include <phasefield.hh>
 /* -------------------------------------------------------------------------- */
 #include <pybind11/pybind11.h>
 /* -------------------------------------------------------------------------- */
@@ -50,6 +52,7 @@ namespace akantu {
 /* -------------------------------------------------------------------------- */
 
 void register_phase_field_model(py::module & mod) {
+  register_constitutive_laws_handler<PhaseField, Model>(mod);
 
   mod.attr("PhaseFieldModelOptions") = mod.attr("ModelOptions");
 
@@ -109,6 +112,14 @@ void register_phase_field_model(py::module & mod) {
       .def_function_nocopy(getDamage)
       .def_function_nocopy(getInternalForce)
       .def_function_nocopy(getBlockedDOFs)
+      .def(
+          "getInternalReal",
+          [](PhaseFieldModel & self, Idx phase_field_id,
+             const std::string & name) -> decltype(auto) {
+            return self.getConstitutiveLaw(phase_field_id).getInternal<Real>(name);
+          },
+          py::arg("phase_field_id"), py::arg("name"),
+          py::return_value_policy::reference)
       .def(
           "getPhaseField",
           [](PhaseFieldModel & self, Idx phase_field_id) -> decltype(auto) {
