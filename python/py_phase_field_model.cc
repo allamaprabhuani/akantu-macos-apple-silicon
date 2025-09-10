@@ -56,8 +56,8 @@ void register_phase_field_model(py::module & mod) {
 
   mod.attr("PhaseFieldModelOptions") = mod.attr("ModelOptions");
 
-  py::class_<PhaseFieldModel, Model>(mod, "PhaseFieldModel",
-                                     py::multiple_inheritance())
+  py::class_<PhaseFieldModel, ConstitutiveLawsHandler<PhaseField, Model>>(
+      mod, "PhaseFieldModel", py::multiple_inheritance())
       .def(py::init<Mesh &, Int, const ID &, std::shared_ptr<DOFManager>,
                     const ModelType>(),
            py::arg("mesh"), py::arg("spatial_dimension") = _all_dimensions,
@@ -112,14 +112,6 @@ void register_phase_field_model(py::module & mod) {
       .def_function_nocopy(getDamage)
       .def_function_nocopy(getInternalForce)
       .def_function_nocopy(getBlockedDOFs)
-      .def(
-          "getInternalReal",
-          [](PhaseFieldModel & self, Idx phase_field_id,
-             const std::string & name) -> decltype(auto) {
-            return self.getConstitutiveLaw(phase_field_id).getInternal<Real>(name);
-          },
-          py::arg("phase_field_id"), py::arg("name"),
-          py::return_value_policy::reference)
       .def(
           "getPhaseField",
           [](PhaseFieldModel & self, Idx phase_field_id) -> decltype(auto) {

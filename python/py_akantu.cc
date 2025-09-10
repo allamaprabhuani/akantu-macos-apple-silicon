@@ -59,6 +59,7 @@
 
 #if defined(AKANTU_PHASE_FIELD)
 #include "py_phase_field_model.hh"
+#include "py_phasefield.hh"
 #endif
 
 #if defined(AKANTU_STRUCTURAL_MECHANICS)
@@ -123,6 +124,7 @@ void register_all(pybind11::module & mod) {
 
 #if defined(AKANTU_PHASE_FIELD)
   register_phase_field_model(mod);
+  register_phasefield(mod);
   register_phase_field_coupler(mod);
   register_phase_field_element_filter(mod);
 #endif

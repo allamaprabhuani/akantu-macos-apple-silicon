@@ -86,6 +86,7 @@ package_is_activated(phase_field _is_activated)
 if (_is_activated)
   list(APPEND PYAKANTU_SRCS
     py_phase_field_model.cc
+    py_phasefield.cc
     )
 endif()
 
