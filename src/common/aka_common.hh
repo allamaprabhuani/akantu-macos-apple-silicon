@@ -149,7 +149,6 @@ enum AnalysisMethod {
   _explicit_consistent_mass = 3,
   _explicit_contact = 4,
   _implicit_contact = 5,
-  _static_constrained_opt = 6
 };
 
 /// enum DOFSupportType defines which kind of dof that can exists
@@ -214,7 +213,6 @@ enum class SparseSolverType {
 // clang-format off
 #define AKANTU_TIME_STEP_SOLVER_TYPE                                    \
   (static)                                                             \
-  (static_constrained_opt)                                             \
   (dynamic)                                                            \
   (dynamic_lumped)                                                     \
   (not_defined)
@@ -227,7 +225,6 @@ AKANTU_CLASS_ENUM_INPUT_STREAM(TimeStepSolverType, AKANTU_TIME_STEP_SOLVER_TYPE)
 /// Type of time stepping solver
 enum class TimeStepSolverType {
   _static,         ///< Static solution
-  _static_constrained_opt, ///< Static solution with constrained optimization
   _dynamic,        ///< Dynamic solver
   _dynamic_lumped, ///< Dynamic solver with lumped mass
   _not_defined,    ///< For not defined cases

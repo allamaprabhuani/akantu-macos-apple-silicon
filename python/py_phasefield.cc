@@ -98,26 +98,6 @@ void register_phasefield(py::module & mod) {
           },
           py::arg("energy_id"), py::arg("element"));
 
-  // register_phasefield_classes<PhaseFieldLinear<2, VolumetricDeviatoricSplit>>(
-  //     mod, "PhaseFieldLinear2DVolumetricDeviatoricSplit");
-  // register_phasefield_classes<PhaseFieldLinear<3, VolumetricDeviatoricSplit>>(
-  //     mod, "PhaseFieldLinear3DVolumetricDeviatoricSplit");
-  // register_phasefield_classes<PhaseFieldLinear<2, NoEnergySplit>>(
-  //     mod, "PhaseFieldLinear2DNoEnergySplit");
-  // register_phasefield_classes<PhaseFieldLinear<3, NoEnergySplit>>(
-  //     mod, "PhaseFieldLinear3DNoEnergySplit");
-
-  // register_phasefield_classes<
-  //     PhaseFieldQuadratic<2, VolumetricDeviatoricSplit>>(
-  //     mod, "PhaseFieldQuadratic2DVolumetricDeviatoricSplit");
-  // register_phasefield_classes<
-  //     PhaseFieldQuadratic<3, VolumetricDeviatoricSplit>>(
-  //     mod, "PhaseFieldQuadratic3DVolumetricDeviatoricSplit");
-  // register_phasefield_classes<PhaseFieldQuadratic<2, NoEnergySplit>>(
-  //     mod, "PhaseFieldQuadratic2DNoEnergySplit");
-  // register_phasefield_classes<PhaseFieldQuadratic<3, NoEnergySplit>>(
-  //     mod, "PhaseFieldQuadratic3DNoEnergySplit");
-
   py::class_<PhaseFieldFactory>(mod, "PhaseFieldFactory")
       .def_static(
           "getInstance",

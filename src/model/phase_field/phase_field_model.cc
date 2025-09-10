@@ -107,14 +107,6 @@ void PhaseFieldModel::corrector() {
 void PhaseFieldModel::initSolver(TimeStepSolverType time_step_solver_type) {
   DOFManager & dof_manager = this->getDOFManager();
 
-  // #if defined(AKANTU_USE_PETSC)
-  //       auto & solver = this->getNonLinearSolver();
-  //
-  //       if (aka::is_of_type<NonLinearSolverTAO>(solver)) {
-  //             aka::as_type<NonLinearSolverTAO>(solver).setTAOType("cpcg");
-  //       }
-  // #endif
-
   this->allocNodalField(this->damage, 1, "damage");
   this->allocNodalField(this->external_force, 1, "external_force");
   this->allocNodalField(this->internal_force, 1, "internal_force");
@@ -159,12 +151,6 @@ PhaseFieldModel::getDefaultSolverID(const AnalysisMethod & method) {
   case _implicit_dynamic: {
     return std::make_tuple("implicit", TimeStepSolverType::_dynamic);
   }
-#if defined(AKANTU_USE_PETSC)
-  case _static_constrained_opt: {
-    return std::make_tuple("static_constrained_opt",
-                           TimeStepSolverType::_static_constrained_opt);
-  }
-#endif
   default:
     return std::make_tuple("unknown", TimeStepSolverType::_not_defined);
   }
@@ -197,15 +183,6 @@ ModelSolverOptions PhaseFieldModel::getDefaultSolverOptions(
     options.solution_type["damage"] = IntegrationScheme::_damage;
     break;
   }
-#if defined(AKANTU_USE_PETSC)
-  case TimeStepSolverType::_static_constrained_opt: {
-    options.non_linear_solver_type = NonLinearSolverType::_petsc_tao;
-    options.integration_scheme_type["damage"] =
-        IntegrationSchemeType::_pseudo_time;
-    options.solution_type["damage"] = IntegrationScheme::_not_defined;
-    break;
-  }
-#endif
   default:
     AKANTU_EXCEPTION(type << " is not a valid time step solver type");
   }
@@ -266,24 +243,6 @@ void PhaseFieldModel::afterSolveStep(bool converged) {
   if (not converged) {
     return;
   }
-
-  // for (auto && values : zip(*damage, *previous_damage)) {
-  //   auto & dam = std::get<0>(values);
-  //   auto & prev_dam = std::get<1>(values);
-
-  //   prev_dam = dam;
-  // }
-
-  // for (auto && values : zip(*damage, *blocked_dofs)) {
-  //   auto & dam = std::get<0>(values);
-  //   auto & blocked = std::get<1>(values);
-
-  //   if (!blocked && dam > 0.98) {
-  //     dam = 1.;
-  //     blocked = true;
-  //   }
-  //   std::cout << dam << std::endl;
-  // }
 
   for_each_constitutive_law(
       [](auto && phasefield) { phasefield.afterSolveStep(); });
@@ -369,12 +328,8 @@ Int PhaseFieldModel::getNbData(const Array<Element> & elements,
     size += nb_nodes_per_element * sizeof(Real);
     break;
   }
-  // case SynchronizationTag::_pfm_damage: {
-  //   size += nb_nodes_per_element * sizeof(Real);
-  //   break;
-  // }
   default: {
-    // AKANTU_ERROR("Unknown ghost synchronization tag : " << tag);
+    AKANTU_ERROR("Unknown ghost synchronization tag : " << tag);
   }
   }
   size += Parent::getNbData(elements, tag);
@@ -391,12 +346,8 @@ void PhaseFieldModel::packData(CommunicationBuffer & buffer,
     packNodalDataHelper(*damage, buffer, elements, mesh);
     break;
   }
-  // case SynchronizationTag::_pfm_damage: {
-  //   packNodalDataHelper(*damage, buffer, elements, mesh);
-  //   break;
-  // }
   default: {
-    // AKANTU_ERROR("Unknown ghost synchronization tag : " << tag);
+    AKANTU_ERROR("Unknown ghost synchronization tag : " << tag);
   }
   }
 
@@ -412,12 +363,8 @@ void PhaseFieldModel::unpackData(CommunicationBuffer & buffer,
     unpackNodalDataHelper(*damage, buffer, elements, mesh);
     break;
   }
-  // case SynchronizationTag::_pfm_damage: {
-  //   unpackNodalDataHelper(*damage, buffer, elements, mesh);
-  //   break;
-  // }
   default: {
-    // AKANTU_ERROR("Unknown ghost synchronization tag : " << tag);
+    AKANTU_ERROR("Unknown ghost synchronization tag : " << tag);
   }
   }
 

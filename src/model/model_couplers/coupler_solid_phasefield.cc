@@ -356,8 +356,8 @@ void CouplerSolidPhaseField::computeDamageOnQuadPoints(GhostType ghost_type) {
                 fem.interpolateOnIntegrationPoints(phase->getDamage(),
                                                    phase_damage_on_qpoints_vect,
                                                    1, type, ghost_type);
-                // Doesn't work because phase_damage_on_qpoints is not
-                // interpolated after solve step
+                // Doesn't work on its own because phase_damage_on_qpoints is
+                // not interpolated after solve step
                 damage_on_qpoints_vect.copy(phase_damage_on_qpoints_vect);
               }
             },
@@ -411,17 +411,10 @@ void CouplerSolidPhaseField::solve(const ID & solid_solver_id,
 
   solid->solveStep(solid_solver_id);
 
-  // solid->synchronize(SynchronizationTag::_smm_gradu);
-
   AKANTU_DEBUG_INFO("exchange strain for local elements");
   this->computeStrainOnQuadPoints(_not_ghost);
 
-  // AKANTU_DEBUG_INFO("exchange strain for ghost elements");
-  // this->computeStrainOnQuadPoints(_ghost);
-
   phase->solveStep(phase_solver_id);
-
-  // phase->synchronize(SynchronizationTag::_pfm_damage);
 
   AKANTU_DEBUG_INFO("exchange damage for local elements");
   this->computeDamageOnQuadPoints(_not_ghost);
