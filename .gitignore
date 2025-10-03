@@ -35,3 +35,8 @@ setup.cfg
 .ccls
 VERSION
 examples/c++/perf-test-akantu-cohesive/cube.msh
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride

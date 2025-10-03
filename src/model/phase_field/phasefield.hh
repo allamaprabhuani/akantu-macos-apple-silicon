@@ -125,6 +125,8 @@ protected:
     return zip(
         "phi"_n = phi(el_type, ghost_type),
         "previous_phi"_n = phi.previous(el_type, ghost_type),
+        "phi_minus"_n = phi_minus(el_type, ghost_type),
+        "phi_plus"_n = phi_plus(el_type, ghost_type),
         "strain"_n = make_view<dim, dim>(strain(el_type, ghost_type)),
         "driving_force"_n = driving_force(el_type, ghost_type),
         "damage_energy_density"_n = damage_energy_density(el_type, ghost_type),
@@ -161,6 +163,18 @@ public:
   AKANTU_GET_MACRO_BY_ELEMENT_TYPE_CONST(Damage, damage_on_qpoints, Real);
   AKANTU_GET_MACRO_AUTO_NOT_CONST(Damage, damage_on_qpoints);
   AKANTU_GET_MACRO_AUTO(Damage, damage_on_qpoints);
+
+  AKANTU_GET_MACRO_BY_ELEMENT_TYPE_CONST(Phi, phi, Real);
+  AKANTU_GET_MACRO_AUTO(Phi, phi);
+  AKANTU_GET_MACRO_AUTO_NOT_CONST(Phi, phi);
+
+  AKANTU_GET_MACRO_BY_ELEMENT_TYPE_CONST(PhiMinus, phi_minus, Real);
+  AKANTU_GET_MACRO_AUTO(PhiMinus, phi_minus);
+  AKANTU_GET_MACRO_AUTO_NOT_CONST(PhiMinus, phi_minus);
+
+  AKANTU_GET_MACRO_BY_ELEMENT_TYPE_CONST(PhiPlus, phi_plus, Real);
+  AKANTU_GET_MACRO_AUTO(PhiPlus, phi_plus);
+  AKANTU_GET_MACRO_AUTO_NOT_CONST(PhiPlus, phi_plus);
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -211,6 +225,12 @@ protected:
 
   /// phi arrays ordered by element types
   InternalField<Real> & phi;
+
+  /// phi_minus arrays ordered by element types (compressive part)
+  InternalField<Real> & phi_minus;
+
+  /// phi_plus arrays ordered by element types (positive part before history)
+  InternalField<Real> & phi_plus;
 
   /// strain arrays ordered by element types
   InternalField<Real> & strain;

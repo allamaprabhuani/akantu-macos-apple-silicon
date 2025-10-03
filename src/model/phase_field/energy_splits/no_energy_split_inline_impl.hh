@@ -17,6 +17,14 @@ NoEnergySplit<dim>::computePhiOnQuad(const Matrix<Real> & strain_quad,
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
+inline void
+NoEnergySplit<dim>::computePhiMinusOnQuad(const Matrix<Real> & /*strain_quad*/,
+                                          Real & phi_minus_quad) {
+  phi_minus_quad = 0.0;
+}
+
+/* -------------------------------------------------------------------------- */
+template <Int dim>
 inline void NoEnergySplit<dim>::computeSigmaOnQuad(
     const Matrix<Real> & strain_quad, const Real & sigma_th,
     Matrix<Real> & sigma_plus, Matrix<Real> & /*sigma_minus*/) {

@@ -25,6 +25,10 @@ public:
   inline void computePhiOnQuad(const Matrix<Real> & strain_quad,
                                Real & phi_quad);
 
+  // compute compressive strain energy density on quad
+  inline void computePhiMinusOnQuad(const Matrix<Real> & strain_quad,
+                                    Real & phi_minus_quad);
+
   // compute stress on quad
   inline void computeSigmaOnQuad(const Matrix<Real> & strain_quad,
                                  const Real & epsilon_th,

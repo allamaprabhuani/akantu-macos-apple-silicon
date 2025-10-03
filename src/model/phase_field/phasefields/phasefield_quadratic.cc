@@ -91,8 +91,12 @@ void PhaseFieldQuadratic<dim, EnergySplit_>::computeDrivingForce(
 
   for (auto && args : arguments) {
     auto & phi_quad = args["phi"_n];
+    auto & phi_plus_quad = args["phi_plus"_n];
+    auto & phi_minus_quad = args["phi_minus"_n];
     auto & strain = args["strain"_n];
     this->energy_split->computePhiOnQuad(strain, phi_quad);
+    phi_plus_quad = phi_quad;
+    this->energy_split->computePhiMinusOnQuad(strain, phi_minus_quad);
   }
 
   if (this->use_history) {

@@ -86,6 +86,42 @@ void register_phasefield(py::module & mod) {
           [](PhaseField & self) -> decltype(auto) { return self.getStrain(); },
           py::return_value_policy::reference)
       .def(
+          "getPhi",
+          [](PhaseField & self, ElementType el_type,
+             GhostType ghost_type = _not_ghost) -> decltype(auto) {
+            return self.getPhi(el_type, ghost_type);
+          },
+          py::arg("el_type"), py::arg("ghost_type") = _not_ghost,
+          py::return_value_policy::reference)
+      .def(
+          "getPhi",
+          [](PhaseField & self) -> decltype(auto) { return self.getPhi(); },
+          py::return_value_policy::reference)
+      .def(
+          "getPhiMinus",
+          [](PhaseField & self, ElementType el_type,
+             GhostType ghost_type = _not_ghost) -> decltype(auto) {
+            return self.getPhiMinus(el_type, ghost_type);
+          },
+          py::arg("el_type"), py::arg("ghost_type") = _not_ghost,
+          py::return_value_policy::reference)
+      .def(
+          "getPhiMinus",
+          [](PhaseField & self) -> decltype(auto) { return self.getPhiMinus(); },
+          py::return_value_policy::reference)
+      .def(
+          "getPhiPlus",
+          [](PhaseField & self, ElementType el_type,
+             GhostType ghost_type = _not_ghost) -> decltype(auto) {
+            return self.getPhiPlus(el_type, ghost_type);
+          },
+          py::arg("el_type"), py::arg("ghost_type") = _not_ghost,
+          py::return_value_policy::reference)
+      .def(
+          "getPhiPlus",
+          [](PhaseField & self) -> decltype(auto) { return self.getPhiPlus(); },
+          py::return_value_policy::reference)
+      .def(
           "getEnergy",
           [](PhaseField & self, ID energy_id) -> Real {
             return self.getEnergy(energy_id);
@@ -96,7 +132,26 @@ void register_phasefield(py::module & mod) {
           [](PhaseField & self, ID energy_id, Element element) -> Real {
             return self.getEnergy(energy_id, element);
           },
-          py::arg("energy_id"), py::arg("element"));
+          py::arg("energy_id"), py::arg("element"))
+      .def(
+          "getInternalReal",
+          [](PhaseField & self, const std::string & field_name, ElementType el_type) -> decltype(auto) {
+            if (field_name == "strain") {
+              return self.getStrain(el_type);
+            } else if (field_name == "phi") {
+              return self.getPhi(el_type);
+            } else if (field_name == "phi_minus") {
+              return self.getPhiMinus(el_type);
+            } else if (field_name == "phi_plus") {
+              return self.getPhiPlus(el_type);
+            } else if (field_name == "damage") {
+              return self.getDamage(el_type);
+            } else {
+              throw std::invalid_argument("Unknown field name: " + field_name);
+            }
+          },
+          py::arg("field_name"), py::arg("el_type"),
+          py::return_value_policy::reference);
 
   py::class_<PhaseFieldFactory>(mod, "PhaseFieldFactory")
       .def_static(

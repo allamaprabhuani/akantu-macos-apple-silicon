@@ -39,6 +39,8 @@ PhaseField::PhaseField(PhaseFieldModel & model, const ID & id,
       damage_on_qpoints(this->registerInternal("damage", 1, fe_engine_id)),
       gradd(this->registerInternal("grad_d", spatial_dimension, fe_engine_id)),
       phi(this->registerInternal("phi", 1, fe_engine_id)),
+      phi_minus(this->registerInternal("phi_minus", 1, fe_engine_id)),
+      phi_plus(this->registerInternal("phi_plus", 1, fe_engine_id)),
       strain(this->registerInternal(
           "strain", spatial_dimension * spatial_dimension, fe_engine_id)),
       driving_force(this->registerInternal("driving_force", 1, fe_engine_id)),
@@ -53,6 +55,8 @@ PhaseField::PhaseField(PhaseFieldModel & model, const ID & id,
           this->registerInternal("dissipated_energy", 1, fe_engine_id)) {
 
   this->phi.setDefaultValue(0.);
+  this->phi_minus.setDefaultValue(0.);
+  this->phi_plus.setDefaultValue(0.);
   this->damage_on_qpoints.setDefaultValue(0.);
   this->phi.initializeHistory();
   this->damage_on_qpoints.initializeHistory();

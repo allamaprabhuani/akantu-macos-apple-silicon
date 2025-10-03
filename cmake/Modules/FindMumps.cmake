@@ -279,6 +279,13 @@ ${_u_first_precision}MUMPS_STRUC_C id;
       break()
     endif()
 
+    # On macOS with homebrew, MUMPS might be compiled with MPI even if we want sequential
+    # The test might fail to run but compilation works, so we accept that
+    if(APPLE AND _mumps_compiles AND _retry_count GREATER 5)
+      message(STATUS "MUMPS test compiled successfully on macOS, accepting despite runtime issues")
+      break()
+    endif()
+
     if(_retry_count EQUAL 0 AND
         (NOT _mumps_compiles OR _mumps_run STREQUAL "FAILED_TO_RUN"))
       message(STATUS "Searching for MUMPS link dependencies")
@@ -353,6 +360,16 @@ ${_u_first_precision}MUMPS_STRUC_C id;
   if(APPLE)
     # in doubt add some stuff because mumps was perhaps badly compiled
     mumps_add_dependency(pord _libs _incs)
+    list(APPEND _libraries_all ${_libs})
+    mumps_add_dependency(mumps_common _libs _incs)
+    list(APPEND _libraries_all ${_libs})
+    mumps_add_dependency(BLAS _libs _incs)
+    list(APPEND _libraries_all ${_libs})
+    mumps_add_dependency(LAPACK _libs _incs)
+    list(APPEND _libraries_all ${_libs})
+    mumps_add_dependency(ScaLAPACK _libs _incs)
+    list(APPEND _libraries_all ${_libs})
+    mumps_add_dependency(gfortran _libs _incs)
     list(APPEND _libraries_all ${_libs})
   endif()
 

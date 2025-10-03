@@ -23,6 +23,18 @@ inline void VolumetricDeviatoricSplit<dim>::computePhiOnQuad(
 
 /* -------------------------------------------------------------------------- */
 template <Int dim>
+inline void VolumetricDeviatoricSplit<dim>::computePhiMinusOnQuad(
+    const Matrix<Real> & strain_quad, Real & phi_minus_quad) {
+  Real trace = strain_quad.trace();
+  Real trace_minus = std::min(Real(0.), trace);
+
+  Real kappa = this->lambda + 2. / 3. * this->mu;
+
+  phi_minus_quad = 0.5 * kappa * trace_minus * trace_minus;
+}
+
+/* -------------------------------------------------------------------------- */
+template <Int dim>
 inline void VolumetricDeviatoricSplit<dim>::computeSigmaOnQuad(
     const Matrix<Real> & strain_quad, const Real & epsilon_th,
     Matrix<Real> & sigma_plus, Matrix<Real> & sigma_minus) {
