@@ -146,21 +146,17 @@ You have two options: **Option A (Recommended for beginners)** uses ccmake with 
 mkdir build
 cd build
 
-# Open interactive configuration
-CC=gcc-15 CXX=g++-15 FC=gfortran-15 ccmake ..
+# Open interactive configuration with MUMPS_DIR set
+CC=gcc-15 CXX=g++-15 FC=gfortran-15 MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps ccmake ..
 ```
 
 Configure these settings (use arrow keys to navigate, Enter to edit):
 
-1. **Press `c` to configure** (scans your system)
+1. **Press `c` to configure** (scans your system - MUMPS should be auto-detected via MUMPS_DIR)
 
 2. **Set these required options**:
    - `AKANTU_PARALLEL`: **ON** (required - Homebrew MUMPS is MPI-enabled)
    - `AKANTU_USE_SYSTEM_MUMPS`: **ON**
-   - `MUMPS_INCLUDE_DIR`: `/opt/homebrew/opt/brewsci-mumps/include`
-   - `MUMPS_LIBRARY_DMUMPS`: `/opt/homebrew/opt/brewsci-mumps/lib/libdmumps.dylib`
-   - `MUMPS_LIBRARY_COMMON`: `/opt/homebrew/opt/brewsci-mumps/lib/libmumps_common.dylib`
-   - `MUMPS_LIBRARY_PORD`: `/opt/homebrew/opt/brewsci-mumps/lib/libpord.dylib`
    - `SCOTCH_LIBRARY`: `/opt/homebrew/lib/libscotch.dylib;/opt/homebrew/lib/libscotcherr.dylib;/opt/homebrew/lib/libscotcherrexit.dylib`
 
 3. **Recommended for phase field research**:
@@ -236,13 +232,37 @@ conda list | grep mpi4py
 conda remove mpi4py  # If found
 ```
 
-## Step 8: Verify Installation
+### 7d. Setup Environment Variables (Required for macOS)
+
+On macOS, you need to set environment variables for akantu to find the Scotch error libraries. Create a setup script:
 
 ```bash
-python3 -c "import akantu; print('Success!'); print('Available functions:', len(dir(akantu)))"
+source ~/akantu-macos-apple-silicon/setup_akantu_env.sh
 ```
 
-**Expected**: Shows "Success!" and approximately 221 functions.
+Or add to your `~/.zshrc` for permanent setup:
+
+```bash
+echo 'source ~/akantu-macos-apple-silicon/setup_akantu_env.sh' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**What this does:**
+- Sets `DYLD_INSERT_LIBRARIES` to preload Scotch error handling libraries
+- Sets `DYLD_LIBRARY_PATH` to include Homebrew and system library paths
+- Sets `PYTHONPATH` to include akantu's installation directory
+
+## Step 8: Verify Installation
+
+Make sure you're using the conda python (not system python):
+
+```bash
+python -c "import akantu; print('Success!'); print('Available functions:', len(dir(akantu)))"
+```
+
+**Expected**: Shows "Success!" and approximately 265 functions.
+
+**Important**: Use `python` (conda python), not `/usr/bin/python3` (system python).
 
 ---
 
