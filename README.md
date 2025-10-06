@@ -234,27 +234,35 @@ conda remove mpi4py  # If found
 
 ### 7d. Setup Environment Variables (Required for macOS)
 
-On macOS, you need to set environment variables for akantu to find the Scotch error libraries. Create a setup script:
+Add these environment variables to your `~/.zshrc`:
 
 ```bash
-source ~/akantu-macos-apple-silicon/setup_akantu_env.sh
-```
+cat >> ~/.zshrc << 'EOF'
 
-Or add to your `~/.zshrc` for permanent setup:
+# Akantu environment variables
+export DYLD_INSERT_LIBRARIES="/opt/homebrew/lib/libscotcherr.dylib:/opt/homebrew/lib/libscotcherrexit.dylib"
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:/usr/local/lib:${DYLD_LIBRARY_PATH}"
+export PYTHONPATH="/usr/local/lib/python3.10/site-packages:${PYTHONPATH}"
 
-```bash
-echo 'source ~/akantu-macos-apple-silicon/setup_akantu_env.sh' >> ~/.zshrc
+# Force all python commands to use conda python
+alias python3='/Users/allamaprabhuani/miniconda3/bin/python3'
+alias python='/Users/allamaprabhuani/miniconda3/bin/python'
+alias pip='/Users/allamaprabhuani/miniconda3/bin/pip'
+alias pip3='/Users/allamaprabhuani/miniconda3/bin/pip3'
+EOF
+
 source ~/.zshrc
 ```
 
 **What this does:**
-- Sets `DYLD_INSERT_LIBRARIES` to preload Scotch error handling libraries
+- Sets `DYLD_INSERT_LIBRARIES` to preload Scotch error handling libraries (required)
 - Sets `DYLD_LIBRARY_PATH` to include Homebrew and system library paths
 - Sets `PYTHONPATH` to include akantu's installation directory
+- Forces all `python` commands to use conda Python instead of system Python
 
 ## Step 8: Verify Installation
 
-Make sure you're using the conda python (not system python):
+Open a new terminal (or run `source ~/.zshrc`) and test:
 
 ```bash
 python -c "import akantu; print('Success!'); print('Available functions:', len(dir(akantu)))"
@@ -262,7 +270,7 @@ python -c "import akantu; print('Success!'); print('Available functions:', len(d
 
 **Expected**: Shows "Success!" and approximately 265 functions.
 
-**Important**: Use `python` (conda python), not `/usr/bin/python3` (system python).
+**Note**: If you set up the aliases in step 7d, `python` now points to conda Python automatically.
 
 ---
 
