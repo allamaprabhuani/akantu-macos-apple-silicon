@@ -179,14 +179,10 @@ Configure these settings (use arrow keys to navigate, Enter to edit):
 mkdir build
 cd build
 
-CC=gcc-15 CXX=g++-15 FC=gfortran-15 cmake .. \
+CC=gcc-15 CXX=g++-15 FC=gfortran-15 MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps cmake .. \
   -DAKANTU_PARALLEL=ON \
   -DAKANTU_PYTHON_INTERFACE=ON \
   -DAKANTU_USE_SYSTEM_MUMPS=ON \
-  -DMUMPS_INCLUDE_DIR=/opt/homebrew/opt/brewsci-mumps/include \
-  -DMUMPS_LIBRARY_DMUMPS=/opt/homebrew/opt/brewsci-mumps/lib/libdmumps.dylib \
-  -DMUMPS_LIBRARY_COMMON=/opt/homebrew/opt/brewsci-mumps/lib/libmumps_common.dylib \
-  -DMUMPS_LIBRARY_PORD=/opt/homebrew/opt/brewsci-mumps/lib/libpord.dylib \
   -DSCOTCH_LIBRARY="/opt/homebrew/lib/libscotch.dylib;/opt/homebrew/lib/libscotcherr.dylib;/opt/homebrew/lib/libscotcherrexit.dylib"
 ```
 
@@ -381,13 +377,9 @@ cd akantu
 mkdir build
 cd build
 
-cmake .. \
+CC=gcc-15 CXX=g++-15 FC=gfortran-15 MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps cmake .. \
   -DAKANTU_PARALLEL=ON \
   -DAKANTU_USE_SYSTEM_MUMPS=ON \
-  -DMUMPS_INCLUDE_DIR=/opt/homebrew/opt/brewsci-mumps/include \
-  -DMUMPS_LIBRARY_DMUMPS=/opt/homebrew/opt/brewsci-mumps/lib/libdmumps.dylib \
-  -DMUMPS_LIBRARY_COMMON=/opt/homebrew/opt/brewsci-mumps/lib/libmumps_common.dylib \
-  -DMUMPS_LIBRARY_PORD=/opt/homebrew/opt/brewsci-mumps/lib/libpord.dylib \
   -DSCOTCH_LIBRARY="/opt/homebrew/lib/libscotch.dylib;/opt/homebrew/lib/libscotcherr.dylib;/opt/homebrew/lib/libscotcherrexit.dylib"
 ```
 
