@@ -209,4 +209,3 @@ See [COPYING](COPYING) and [COPYING.lesser](COPYING.lesser) for details.
 - **This Fork**: https://github.com/allamaprabhuani/akantu-macos-apple-silicon
 - **Original**: https://gitlab.com/akantu/akantu
 - **Documentation**: https://akantu.readthedocs.io
-- **Issues**: https://github.com/allamaprabhuani/akantu-macos-apple-silicon/issues
