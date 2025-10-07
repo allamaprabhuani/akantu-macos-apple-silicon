@@ -1,0 +1,15 @@
+SHA256 Checksum for Akantu Wheel
+
+File: akantu-5.0.7-py3-none-macosx_26_0_arm64.whl
+SHA256: 6856b2c638e4cd7177c9db9218396e7e72cfd48603371a5edbc8b28fb3ea55de
+Size: 38.6 MB
+
+Verify with:
+  shasum -a 256 akantu-5.0.7-py3-none-macosx_26_0_arm64.whl
+
+Build info:
+- Version: 5.0.7
+- Platform: macOS 26.0+ Apple Silicon (arm64)
+- Python: 3.10
+- Compiler: GCC 15.2.0
+- Configuration: Parallel-enabled with MUMPS and Scotch
