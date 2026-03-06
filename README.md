@@ -64,6 +64,7 @@ CC=gcc-15 CXX=g++-15 FC=gfortran-15 MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps cm
   -DAKANTU_PARALLEL=ON \
   -DAKANTU_PYTHON_INTERFACE=ON \
   -DAKANTU_USE_SYSTEM_MUMPS=ON \
+  -DPYTHON_EXECUTABLE=$(which python) \
   -DSCOTCH_LIBRARY="/opt/homebrew/lib/libscotch.dylib;/opt/homebrew/lib/libscotcherr.dylib;/opt/homebrew/lib/libscotcherrexit.dylib"
 
 make -j$(sysctl -n hw.ncpu)
