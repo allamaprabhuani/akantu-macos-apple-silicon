@@ -87,7 +87,10 @@ sudo cp /usr/local/lib/python3.10/site-packages/akantu/akantu/__init__.py \
 # Add to shell profile (~/.zshrc)
 export DYLD_INSERT_LIBRARIES="/opt/homebrew/lib/libscotcherr.dylib:/opt/homebrew/lib/libscotcherrexit.dylib"
 export DYLD_LIBRARY_PATH="/opt/homebrew/lib:/usr/local/lib:${DYLD_LIBRARY_PATH}"
-export PYTHONPATH="/usr/local/lib/python3.10/site-packages:${PYTHONPATH}"
+export PYTHONPATH="$HOME/miniconda3/lib/python3.10/site-packages:${PYTHONPATH}"
+
+export PYTHONPATH="/usr/local/lib/python3.10/site-packages:${PYTHONPATH}" (Depending upon your python path)
+
 
 # Reload
 source ~/.zshrc
