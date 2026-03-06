@@ -79,24 +79,89 @@ sudo install_name_tool -id /usr/local/lib/libiohelper.dylib /usr/local/lib/libio
 
 #### Step 4: Setup Python (if enabled)
 
+##### Fix Akantu Python Module Import
+
+If `import akantu` fails due to the module structure, you may need to manually copy the `__init__.py` file so Python can correctly detect the package.
+
+This depends on whether you are using **system Python** or **Miniconda Python**.
+
+---
+
+##### a. Standard Python (System / Homebrew)
+
+If your Python interpreter is located in `/usr/local/bin/python3`.
+
+###### Fix module structure
+
 ```bash
-# Fix module structure
 sudo cp /usr/local/lib/python3.10/site-packages/akantu/akantu/__init__.py \
         /usr/local/lib/python3.10/site-packages/akantu/__init__.py
+```
 
-# Add to shell profile (~/.zshrc)
+###### Add to shell profile (`~/.zshrc`)
+
+```bash
+export DYLD_INSERT_LIBRARIES="/opt/homebrew/lib/libscotcherr.dylib:/opt/homebrew/lib/libscotcherrexit.dylib"
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:/usr/local/lib:${DYLD_LIBRARY_PATH}"
+export PYTHONPATH="/usr/local/lib/python3.10/site-packages:${PYTHONPATH}"
+```
+
+---
+
+##### b. Miniconda Python
+
+If your Python interpreter is located in `~/miniconda3/bin/python`.
+
+###### Fix module structure
+
+```bash
+cp $HOME/miniconda3/lib/python3.10/site-packages/akantu/akantu/__init__.py \
+   $HOME/miniconda3/lib/python3.10/site-packages/akantu/__init__.py
+```
+
+###### Add to shell profile (`~/.zshrc`)
+
+```bash
 export DYLD_INSERT_LIBRARIES="/opt/homebrew/lib/libscotcherr.dylib:/opt/homebrew/lib/libscotcherrexit.dylib"
 export DYLD_LIBRARY_PATH="/opt/homebrew/lib:/usr/local/lib:${DYLD_LIBRARY_PATH}"
 export PYTHONPATH="$HOME/miniconda3/lib/python3.10/site-packages:${PYTHONPATH}"
+```
 
-export PYTHONPATH="/usr/local/lib/python3.10/site-packages:${PYTHONPATH}" (Depending upon your python path)
+---
 
+##### Reload shell
 
-# Reload
+```bash
 source ~/.zshrc
+```
 
-# Verify
+---
+
+##### Verify installation
+
+```bash
 python3 -c "import akantu; print('Success')"
+```
+
+---
+
+##### Check which Python you are using
+
+```bash
+which python
+```
+
+Typical outputs:
+
+```
+/usr/local/bin/python3
+```
+
+or
+
+```
+/Users/username/miniconda3/bin/python
+```
 ```
 
 ---
