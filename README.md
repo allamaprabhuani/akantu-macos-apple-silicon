@@ -65,7 +65,6 @@ CC=gcc-15 CXX=g++-15 FC=gfortran-15 MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps cm
   -DAKANTU_PARALLEL=ON \
   -DAKANTU_PYTHON_INTERFACE=ON \
   -DAKANTU_USE_SYSTEM_MUMPS=ON \
-  -DPYTHON_EXECUTABLE=$(which python) \
   -DSCOTCH_LIBRARY="/opt/homebrew/lib/libscotch.dylib;/opt/homebrew/lib/libscotcherr.dylib;/opt/homebrew/lib/libscotcherrexit.dylib"
 
 make -j$(sysctl -n hw.ncpu)
@@ -89,92 +88,48 @@ sudo install_name_tool -id /usr/local/lib/libakantu.5.0.dylib /usr/local/lib/lib
 sudo install_name_tool -id /usr/local/lib/libiohelper.dylib /usr/local/lib/libiohelper.dylib
 ```
 
-#### Step 4: Setup Python (if enabled)
+#### Step 4: Setup Python for conda base
 
-##### Fix Akantu Python Module Import
-
-If `import akantu` fails due to the module structure, you may need to manually copy the `__init__.py` file so Python can correctly detect the package.
-
-This depends on whether you are using **system Python** or **Miniconda Python**.
-
----
-
-##### a. Standard Python (System / Homebrew)
-
-If your Python interpreter is located in `/usr/local/bin/python3`.
-
-###### Fix module structure
+The compiled `.so` is installed to `/usr/local/lib/python3.10/site-packages/akantu/`. Copy it directly into conda's site-packages so no `PYTHONPATH` override is needed:
 
 ```bash
-sudo cp /usr/local/lib/python3.10/site-packages/akantu/akantu/__init__.py \
-        /usr/local/lib/python3.10/site-packages/akantu/__init__.py
+cp /usr/local/lib/python3.10/site-packages/akantu/py11_akantu.cpython-310-darwin.so \
+   ~/miniconda3/lib/python3.10/site-packages/akantu/
 ```
 
-###### Add to shell profile (`~/.zshrc`)
+Then create conda activate/deactivate scripts so the library paths are set only when conda base is active (avoids polluting other environments):
 
 ```bash
-export DYLD_INSERT_LIBRARIES="/opt/homebrew/lib/libscotcherr.dylib:/opt/homebrew/lib/libscotcherrexit.dylib"
-export DYLD_LIBRARY_PATH="/opt/homebrew/lib:/usr/local/lib:${DYLD_LIBRARY_PATH}"
-export PYTHONPATH="/usr/local/lib/python3.10/site-packages:${PYTHONPATH}"
+mkdir -p ~/miniconda3/etc/conda/activate.d
+mkdir -p ~/miniconda3/etc/conda/deactivate.d
+
+cat > ~/miniconda3/etc/conda/activate.d/akantu_libs.sh << 'EOF'
+#!/bin/bash
+# libscotch on macOS uses flat namespace and requires libscotcherr to be preloaded
+export DYLD_INSERT_LIBRARIES="/opt/homebrew/opt/scotch/lib/libscotcherr.dylib:/opt/homebrew/opt/scotch/lib/libscotcherrexit.dylib"
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:/usr/local/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
+EOF
+
+cat > ~/miniconda3/etc/conda/deactivate.d/akantu_libs.sh << 'EOF'
+#!/bin/bash
+unset DYLD_INSERT_LIBRARIES
+unset DYLD_LIBRARY_PATH
+EOF
+
+chmod +x ~/miniconda3/etc/conda/activate.d/akantu_libs.sh
+chmod +x ~/miniconda3/etc/conda/deactivate.d/akantu_libs.sh
 ```
 
----
-
-##### b. Miniconda Python
-
-If your Python interpreter is located in `~/miniconda3/bin/python`.
-
-###### Fix module structure
+Reload conda and verify:
 
 ```bash
-cp $HOME/miniconda3/lib/python3.10/site-packages/akantu/akantu/__init__.py \
-   $HOME/miniconda3/lib/python3.10/site-packages/akantu/__init__.py
+conda activate base
+python3 -c "import akantu; print('Version:', akantu.__version__); print('MPI:', akantu.has_mpi())"
 ```
 
-###### Add to shell profile (`~/.zshrc`)
+> **Note**: Do not use `conda run` to invoke Python with akantu — macOS strips `DYLD_*` variables from subprocesses launched by `conda run`. Always activate the environment in your terminal first.
 
-```bash
-export DYLD_INSERT_LIBRARIES="/opt/homebrew/lib/libscotcherr.dylib:/opt/homebrew/lib/libscotcherrexit.dylib"
-export DYLD_LIBRARY_PATH="/opt/homebrew/lib:/usr/local/lib:${DYLD_LIBRARY_PATH}"
-export PYTHONPATH="$HOME/miniconda3/lib/python3.10/site-packages:${PYTHONPATH}"
-```
-
----
-
-##### Reload shell
-
-```bash
-source ~/.zshrc
-```
-
----
-
-##### Verify installation
-
-```bash
-python3 -c "import akantu; print('Success')"
-```
-
----
-
-##### Check which Python you are using
-
-```bash
-which python
-```
-
-Typical outputs:
-
-```
-/usr/local/bin/python3
-```
-
-or
-
-```
-/Users/username/miniconda3/bin/python
-```
-```
+> **Note**: Do not add `DYLD_INSERT_LIBRARIES` or `DYLD_LIBRARY_PATH` to `~/.zshrc` globally — this affects all processes and other conda environments. The `activate.d` script scopes them to conda base only.
 
 ---
 
@@ -247,13 +202,15 @@ python3 --version  # Check version
 - Set `MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps` in cmake command
 - Verify: `ls /opt/homebrew/opt/brewsci-mumps/lib/`
 
-**Scotch errors at runtime**
-- Set environment variables in Step 4 above
-- Verify: `echo $DYLD_INSERT_LIBRARIES`
+**Scotch errors at runtime** (`symbol not found in flat namespace '_SCOTCH_errorPrint'`)
+- `libscotch` on macOS does not embed its dependency on `libscotcherr` — it must be preloaded
+- Ensure the conda `activate.d` script is in place (Step 4) and that you ran `conda activate base` in your terminal
+- Do **not** use `conda run` — macOS strips `DYLD_*` variables from subprocesses launched that way
+- Verify: `echo $DYLD_INSERT_LIBRARIES` (should show the scotcherr paths after activation)
 
 **Python import fails**
-- Check PYTHONPATH: `echo $PYTHONPATH`
-- Verify module location: `ls /usr/local/lib/python3.10/site-packages/akantu/`
+- Verify the `.so` was copied: `ls ~/miniconda3/lib/python3.10/site-packages/akantu/py11_akantu*.so`
+- Verify conda activation scripts exist: `ls ~/miniconda3/etc/conda/activate.d/`
 
 ## Attribution & Citation
 
