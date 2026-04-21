@@ -61,6 +61,7 @@ cd akantu-macos-apple-silicon
 mkdir build && cd build
 
 CC=gcc-15 CXX=g++-15 FC=gfortran-15 MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
   -DAKANTU_PARALLEL=ON \
   -DAKANTU_PYTHON_INTERFACE=ON \
   -DAKANTU_USE_SYSTEM_MUMPS=ON \
@@ -70,6 +71,16 @@ CC=gcc-15 CXX=g++-15 FC=gfortran-15 MUMPS_DIR=/opt/homebrew/opt/brewsci-mumps cm
 make -j$(sysctl -n hw.ncpu)
 sudo make install
 ```
+
+> **Important:** `-DCMAKE_BUILD_TYPE=Release` is required. Without
+> it CMake leaves the build type empty, which means no `-O3`,
+> no `-DNDEBUG`, no `-DAKANTU_NDEBUG`, and every internal assertion
+> fires in the hot element-wise loops. Measured effect: roughly a
+> 20-30x slowdown on phase-field fracture benchmarks.
+>
+> Example on the Kalthoff-Winkler benchmark (29k nodes, 1500
+> explicit steps, Apple M4 Pro): debug build 3552 ms/step, Release
+> build 156 ms/step - a 22.8x speedup for a one-flag change.
 
 #### Step 3: Fix Library Paths
 
